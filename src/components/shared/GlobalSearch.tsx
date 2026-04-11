@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Users, Wallet, CreditCard, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { members, transactions } from '@/data/dummyData';
@@ -17,6 +18,7 @@ export default function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -32,7 +34,7 @@ export default function GlobalSearch() {
     members.filter(m => m.name.toLowerCase().includes(q) || m.phone.includes(q) || m.shopName.toLowerCase().includes(q))
       .slice(0, 5).forEach(m => results.push({ type: 'member', id: m.id, title: m.name, subtitle: `${m.shopName} • ${m.phone}`, path: `/members/${m.id}` }));
     transactions.filter(t => t.memberName.toLowerCase().includes(q) || t.transactionId?.toLowerCase().includes(q) || t.id.toLowerCase().includes(q))
-      .slice(0, 5).forEach(t => results.push({ type: 'transaction', id: t.id, title: `${t.type === 'collection' ? 'Collection' : 'Expense'} - ৳${t.amount}`, subtitle: `${t.memberName} • ${t.date} • ${t.status}`, path: t.type === 'collection' ? '/collections' : '/expenses' }));
+      .slice(0, 5).forEach(tx => results.push({ type: 'transaction', id: tx.id, title: `${tx.type === 'collection' ? t('nav.collections') : t('nav.expenses')} - ৳${tx.amount}`, subtitle: `${tx.memberName} • ${tx.date} • ${tx.status}`, path: tx.type === 'collection' ? '/collections' : '/expenses' }));
   }
 
   const grouped = {
@@ -41,13 +43,13 @@ export default function GlobalSearch() {
   };
 
   const icons = { member: Users, transaction: Wallet, payment: CreditCard };
-  const labels = { member: 'Members', transaction: 'Transactions', payment: 'Payments' };
+  const labels = { member: t('search.members'), transaction: t('search.transactions'), payment: t('search.payments') };
 
   return (
     <div ref={ref} className="relative hidden md:block">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
-        placeholder="Search members, transactions..."
+        placeholder={t('search.placeholder')}
         className="pl-9 w-72 h-9"
         value={query}
         onChange={e => { setQuery(e.target.value); setOpen(true); }}
@@ -86,7 +88,7 @@ export default function GlobalSearch() {
       )}
       {open && query.length >= 2 && results.length === 0 && (
         <div className="absolute top-full mt-1 w-96 bg-popover border border-border rounded-lg shadow-lg z-50 p-4 text-center text-sm text-muted-foreground">
-          No results found for "{query}"
+          {t('search.noResults', { query })}
         </div>
       )}
     </div>

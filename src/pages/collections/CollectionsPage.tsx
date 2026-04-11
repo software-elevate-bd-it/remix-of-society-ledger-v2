@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,22 +26,23 @@ const collectionSchema = z.object({
 
 type CollectionFormData = z.infer<typeof collectionSchema>;
 
-const columns: Column<Transaction>[] = [
-  { key: 'memberName', label: 'Member', sortable: true },
-  { key: 'category', label: 'Category' },
-  { key: 'amount', label: 'Amount', render: (t) => `৳${t.amount.toLocaleString()}`, sortable: true },
-  { key: 'method', label: 'Method', render: (t) => <span className="capitalize">{t.method}</span> },
-  { key: 'status', label: 'Status', render: (t) => (
-    <Badge variant={t.status === 'approved' ? 'default' : t.status === 'pending' ? 'secondary' : 'destructive'}>{t.status}</Badge>
-  )},
-  { key: 'transactionId', label: 'TXN ID', render: (t) => t.transactionId || '-' },
-  { key: 'date', label: 'Date', sortable: true },
-];
-
 export default function CollectionsPage() {
   const collections = transactions.filter(t => t.type === 'collection');
   const [open, setOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const { t } = useTranslation();
+
+  const columns: Column<Transaction>[] = [
+    { key: 'memberName', label: t('nav.members'), sortable: true },
+    { key: 'category', label: t('common.category') },
+    { key: 'amount', label: t('common.amount'), render: (tx) => `৳${tx.amount.toLocaleString()}`, sortable: true },
+    { key: 'method', label: t('common.method'), render: (tx) => <span className="capitalize">{tx.method}</span> },
+    { key: 'status', label: t('common.status'), render: (tx) => (
+      <Badge variant={tx.status === 'approved' ? 'default' : tx.status === 'pending' ? 'secondary' : 'destructive'}>{tx.status}</Badge>
+    )},
+    { key: 'transactionId', label: t('collections.transactionId'), render: (tx) => tx.transactionId || '-' },
+    { key: 'date', label: t('common.date'), sortable: true },
+  ];
 
   const form = useForm<CollectionFormData>({
     resolver: zodResolver(collectionSchema),
@@ -49,15 +51,15 @@ export default function CollectionsPage() {
 
   const method = form.watch('method');
 
-  const handleSubmit = (data: CollectionFormData) => {
+  const handleSubmit = (_data: CollectionFormData) => {
     setOpen(false);
     form.reset();
-    toast.success('Collection recorded! SMS notification sent.');
+    toast.success(t('collections.collectionRecorded'));
   };
 
   const copyPaymentLink = (link: string) => {
     navigator.clipboard.writeText(`https://somiteehq.com/pay/${link}`);
-    toast.success('Payment link copied!');
+    toast.success(t('collections.paymentLinkCopied'));
   };
 
   return (
@@ -65,16 +67,16 @@ export default function CollectionsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div>
-            <h1 className="text-2xl font-heading font-bold">Collections</h1>
-            <p className="text-muted-foreground">Manage monthly fees and payments</p>
+            <h1 className="text-2xl font-heading font-bold">{t('collections.title')}</h1>
+            <p className="text-muted-foreground">{t('collections.subtitle')}</p>
           </div>
-          <HelpModal title="Collections" description="Record and manage all incoming payments from members." steps={['Click Record Collection to add a new payment', 'Select member, amount, and payment method', 'For bKash/Nagad/Bank, enter transaction ID', 'Payment will be marked as Pending until approved', 'Auto SMS is sent on successful recording']} />
+          <HelpModal title={t('collections.helpTitle')} description={t('collections.helpDesc')} steps={[t('collections.helpStep1'), t('collections.helpStep2'), t('collections.helpStep3'), t('collections.helpStep4'), t('collections.helpStep5')]} />
         </div>
         <div className="flex gap-2">
           <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-            <DialogTrigger asChild><Button variant="outline"><Link2 className="h-4 w-4 mr-2" /> Payment Links</Button></DialogTrigger>
+            <DialogTrigger asChild><Button variant="outline"><Link2 className="h-4 w-4 mr-2" /> {t('collections.paymentLinks')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle className="font-heading">Member Payment Links</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-heading">{t('collections.memberPaymentLinks')}</DialogTitle></DialogHeader>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {members.map(m => (
                   <div key={m.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
@@ -86,32 +88,32 @@ export default function CollectionsPage() {
             </DialogContent>
           </Dialog>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Record Collection</Button></DialogTrigger>
+            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> {t('collections.recordCollection')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle className="font-heading">Record Payment</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-heading">{t('collections.recordPayment')}</DialogTitle></DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                   <FormField control={form.control} name="memberId" render={({ field }) => (
-                    <FormItem><FormLabel>Member *</FormLabel><FormControl>
+                    <FormItem><FormLabel>{t('nav.members')} *</FormLabel><FormControl>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger><SelectValue placeholder="Select member" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t('collections.selectMember')} /></SelectTrigger>
                         <SelectContent>{members.map(m => <SelectItem key={m.id} value={m.id}>{m.name} - {m.shopName}</SelectItem>)}</SelectContent>
                       </Select>
                     </FormControl><FormMessage /></FormItem>
                   )} />
                   <div className="grid grid-cols-2 gap-3">
                     <FormField control={form.control} name="amount" render={({ field }) => (
-                      <FormItem><FormLabel>Amount *</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>{t('common.amount')} *</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="method" render={({ field }) => (
-                      <FormItem><FormLabel>Method *</FormLabel><FormControl>
+                      <FormItem><FormLabel>{t('common.method')} *</FormLabel><FormControl>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="cash">{t('collections.cash')}</SelectItem>
                             <SelectItem value="bkash">bKash</SelectItem>
                             <SelectItem value="nagad">Nagad</SelectItem>
-                            <SelectItem value="bank">Bank Transfer</SelectItem>
+                            <SelectItem value="bank">{t('collections.bankTransfer')}</SelectItem>
                             <SelectItem value="sslcommerz">SSLCommerz</SelectItem>
                           </SelectContent>
                         </Select>
@@ -119,23 +121,23 @@ export default function CollectionsPage() {
                     )} />
                   </div>
                   <FormField control={form.control} name="category" render={({ field }) => (
-                    <FormItem><FormLabel>Category *</FormLabel><FormControl>
+                    <FormItem><FormLabel>{t('common.category')} *</FormLabel><FormControl>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Monthly Fee">Monthly Fee</SelectItem>
-                          <SelectItem value="Late Fee">Late Fee</SelectItem>
-                          <SelectItem value="Custom">Custom</SelectItem>
+                          <SelectItem value="Monthly Fee">{t('members.monthlyFee')}</SelectItem>
+                          <SelectItem value="Late Fee">{t('collections.lateFee')}</SelectItem>
+                          <SelectItem value="Custom">{t('collections.custom')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl><FormMessage /></FormItem>
                   )} />
                   {(method === 'bkash' || method === 'nagad' || method === 'bank') && (
                     <FormField control={form.control} name="transactionId" render={({ field }) => (
-                      <FormItem><FormLabel>Transaction ID {method === 'bank' ? '(Required)' : '(Optional)'}</FormLabel><FormControl><Input placeholder="Enter transaction ID" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>{t('collections.transactionId')} {method === 'bank' ? `(${t('collections.required')})` : `(${t('members.optional')})`}</FormLabel><FormControl><Input placeholder={t('collections.transactionId')} {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                   )}
-                  <Button type="submit" className="w-full"><Wallet className="h-4 w-4 mr-2" /> Save Collection</Button>
+                  <Button type="submit" className="w-full"><Wallet className="h-4 w-4 mr-2" /> {t('collections.saveCollection')}</Button>
                 </form>
               </Form>
             </DialogContent>

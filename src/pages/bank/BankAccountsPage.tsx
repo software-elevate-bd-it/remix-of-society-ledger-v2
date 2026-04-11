@@ -1,12 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import StatsCard from '@/components/shared/StatsCard';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import HelpModal from '@/components/shared/HelpModal';
 import { bankAccounts, bankTransactions, BankAccount, BankTransaction } from '@/data/dummyData';
-import { Landmark, Plus, ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from 'lucide-react';
+import { Landmark, Plus, ArrowLeftRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -32,21 +32,22 @@ const txSchema = z.object({
   transferTo: z.string().optional(),
 });
 
-const txColumns: Column<BankTransaction>[] = [
-  { key: 'date', label: 'Date', sortable: true },
-  { key: 'type', label: 'Type', render: (t) => (
-    <Badge variant={t.type === 'deposit' ? 'default' : t.type === 'withdraw' ? 'destructive' : 'secondary'}>{t.type}</Badge>
-  )},
-  { key: 'amount', label: 'Amount', render: (t) => `৳${t.amount.toLocaleString()}` },
-  { key: 'note', label: 'Note' },
-  { key: 'reference', label: 'Reference', render: (t) => t.reference || '-' },
-];
-
 export default function BankAccountsPage() {
   const [accounts, setAccounts] = useState(bankAccounts);
   const [addOpen, setAddOpen] = useState(false);
   const [txOpen, setTxOpen] = useState(false);
+  const { t } = useTranslation();
   const total = accounts.reduce((s, b) => s + b.balance, 0);
+
+  const txColumns: Column<BankTransaction>[] = [
+    { key: 'date', label: t('common.date'), sortable: true },
+    { key: 'type', label: t('common.type'), render: (tx) => (
+      <Badge variant={tx.type === 'deposit' ? 'default' : tx.type === 'withdraw' ? 'destructive' : 'secondary'}>{t(`bank.${tx.type}`)}</Badge>
+    )},
+    { key: 'amount', label: t('common.amount'), render: (tx) => `৳${tx.amount.toLocaleString()}` },
+    { key: 'note', label: t('common.note') },
+    { key: 'reference', label: 'Reference', render: (tx) => tx.reference || '-' },
+  ];
 
   const bankForm = useForm<z.infer<typeof bankSchema>>({ resolver: zodResolver(bankSchema), defaultValues: { bankName: '', accountName: '', accountNumber: '', openingBalance: 0 } });
   const txForm = useForm<z.infer<typeof txSchema>>({ resolver: zodResolver(txSchema), defaultValues: { bankAccountId: '', type: 'deposit', amount: 0, note: '', transferTo: '' } });
@@ -56,81 +57,81 @@ export default function BankAccountsPage() {
     setAccounts([...accounts, newAccount]);
     setAddOpen(false);
     bankForm.reset();
-    toast.success('Bank account added');
+    toast.success(t('bank.bankAdded'));
   };
 
   const handleTx = (data: z.infer<typeof txSchema>) => {
     setTxOpen(false);
     txForm.reset();
-    toast.success(`Bank ${data.type} recorded`);
+    toast.success(t('bank.transactionRecorded', { type: data.type }));
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div><h1 className="text-2xl font-heading font-bold">Bank Accounts</h1><p className="text-muted-foreground">Total Balance: ৳{total.toLocaleString()}</p></div>
-          <HelpModal title="Bank Accounts" description="Manage all bank accounts for your somitee." steps={['Add bank accounts with opening balance', 'Record deposits, withdrawals, and transfers', 'View bank ledger and statements in tabs']} />
+          <div><h1 className="text-2xl font-heading font-bold">{t('bank.title')}</h1><p className="text-muted-foreground">{t('bank.totalBalance')}: ৳{total.toLocaleString()}</p></div>
+          <HelpModal title={t('bank.helpTitle')} description={t('bank.helpDesc')} steps={[t('bank.helpStep1'), t('bank.helpStep2'), t('bank.helpStep3')]} />
         </div>
         <div className="flex gap-2">
           <Dialog open={txOpen} onOpenChange={setTxOpen}>
-            <DialogTrigger asChild><Button variant="outline"><ArrowLeftRight className="h-4 w-4 mr-2" /> Transaction</Button></DialogTrigger>
+            <DialogTrigger asChild><Button variant="outline"><ArrowLeftRight className="h-4 w-4 mr-2" /> {t('bank.transaction')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle className="font-heading">Bank Transaction</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-heading">{t('bank.transaction')}</DialogTitle></DialogHeader>
               <Form {...txForm}>
                 <form onSubmit={txForm.handleSubmit(handleTx)} className="space-y-4">
                   <FormField control={txForm.control} name="bankAccountId" render={({ field }) => (
-                    <FormItem><FormLabel>Bank Account *</FormLabel><FormControl>
+                    <FormItem><FormLabel>{t('bank.title')} *</FormLabel><FormControl>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger><SelectValue placeholder="Select bank" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t('bank.selectBank')} /></SelectTrigger>
                         <SelectContent>{accounts.map(b => <SelectItem key={b.id} value={b.id}>{b.bankName} - {b.accountNumber}</SelectItem>)}</SelectContent>
                       </Select>
                     </FormControl><FormMessage /></FormItem>
                   )} />
                   <div className="grid grid-cols-2 gap-3">
                     <FormField control={txForm.control} name="type" render={({ field }) => (
-                      <FormItem><FormLabel>Type *</FormLabel><FormControl>
+                      <FormItem><FormLabel>{t('common.type')} *</FormLabel><FormControl>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="deposit">Deposit</SelectItem>
-                            <SelectItem value="withdraw">Withdraw</SelectItem>
-                            <SelectItem value="transfer">Transfer</SelectItem>
+                            <SelectItem value="deposit">{t('bank.deposit')}</SelectItem>
+                            <SelectItem value="withdraw">{t('bank.withdraw')}</SelectItem>
+                            <SelectItem value="transfer">{t('bank.transfer')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={txForm.control} name="amount" render={({ field }) => (
-                      <FormItem><FormLabel>Amount *</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>{t('common.amount')} *</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                   </div>
                   <FormField control={txForm.control} name="note" render={({ field }) => (
-                    <FormItem><FormLabel>Note *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('common.note')} *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <Button type="submit" className="w-full">Record Transaction</Button>
+                  <Button type="submit" className="w-full">{t('common.save')}</Button>
                 </form>
               </Form>
             </DialogContent>
           </Dialog>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Add Bank Account</Button></DialogTrigger>
+            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> {t('bank.addBankAccount')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle className="font-heading">Add Bank Account</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-heading">{t('bank.addBankAccount')}</DialogTitle></DialogHeader>
               <Form {...bankForm}>
                 <form onSubmit={bankForm.handleSubmit(handleAddBank)} className="space-y-4">
                   <FormField control={bankForm.control} name="bankName" render={({ field }) => (
-                    <FormItem><FormLabel>Bank Name *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('bank.bankName')} *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={bankForm.control} name="accountName" render={({ field }) => (
-                    <FormItem><FormLabel>Account Name *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('bank.accountName')} *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={bankForm.control} name="accountNumber" render={({ field }) => (
-                    <FormItem><FormLabel>Account Number *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('bank.accountNumber')} *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={bankForm.control} name="openingBalance" render={({ field }) => (
-                    <FormItem><FormLabel>Opening Balance</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('bank.openingBalance')}</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <Button type="submit" className="w-full">Add Account</Button>
+                  <Button type="submit" className="w-full">{t('common.save')}</Button>
                 </form>
               </Form>
             </DialogContent>
@@ -147,10 +148,10 @@ export default function BankAccountsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">A/C: {bank.accountNumber}</p>
+              <p className="text-sm text-muted-foreground">{t('bank.accountNumber')}: {bank.accountNumber}</p>
               <p className="text-xs text-muted-foreground">{bank.accountName}</p>
               <p className="text-2xl font-heading font-bold mt-2">৳{bank.balance.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Opening: ৳{bank.openingBalance.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">{t('bank.openingBalance')}: ৳{bank.openingBalance.toLocaleString()}</p>
             </CardContent>
           </Card>
         ))}
@@ -160,14 +161,14 @@ export default function BankAccountsPage() {
         <CardContent className="pt-6">
           <Tabs defaultValue="ledger">
             <TabsList>
-              <TabsTrigger value="ledger">Bank Ledger</TabsTrigger>
-              <TabsTrigger value="statement">Bank Statement</TabsTrigger>
+              <TabsTrigger value="ledger">{t('bank.bankLedger')}</TabsTrigger>
+              <TabsTrigger value="statement">{t('bank.bankStatement')}</TabsTrigger>
             </TabsList>
             <TabsContent value="ledger">
-              <DataTable data={bankTransactions} columns={txColumns} searchKey="note" emptyMessage="No bank transactions" />
+              <DataTable data={bankTransactions} columns={txColumns} searchKey="note" emptyMessage={t('bank.noBankTransactions')} />
             </TabsContent>
             <TabsContent value="statement">
-              <DataTable data={bankTransactions} columns={txColumns} searchKey="note" emptyMessage="No statements" />
+              <DataTable data={bankTransactions} columns={txColumns} searchKey="note" emptyMessage={t('bank.noStatements')} />
             </TabsContent>
           </Tabs>
         </CardContent>

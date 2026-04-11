@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,6 +34,7 @@ export default function MembersPage() {
   const [open, setOpen] = useState(false);
   const [memberList, setMemberList] = useState(members);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const form = useForm<MemberFormData>({
     resolver: zodResolver(memberSchema),
@@ -40,37 +42,28 @@ export default function MembersPage() {
   });
 
   const columns: Column<Member>[] = [
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'shopName', label: 'Shop', sortable: true },
-    { key: 'phone', label: 'Phone' },
-    { key: 'monthlyFee', label: 'Monthly Fee', render: (m) => `৳${m.monthlyFee}` },
-    { key: 'totalDue', label: 'Due', render: (m) => m.totalDue > 0 ? <span className="text-destructive font-medium">৳{m.totalDue}</span> : <span className="text-green-600">Paid</span> },
-    { key: 'status', label: 'Status', render: (m) => <Badge variant={m.status === 'active' ? 'default' : 'secondary'}>{m.status}</Badge> },
-    { key: 'id', label: 'Action', render: (m) => (
-      <Button size="sm" variant="ghost" onClick={() => navigate(`/members/${m.id}`)}><Eye className="h-3 w-3 mr-1" /> View</Button>
+    { key: 'name', label: t('common.name'), sortable: true },
+    { key: 'shopName', label: t('members.shopName'), sortable: true },
+    { key: 'phone', label: t('common.phone') },
+    { key: 'monthlyFee', label: t('members.monthlyFee'), render: (m) => `৳${m.monthlyFee}` },
+    { key: 'totalDue', label: t('members.due'), render: (m) => m.totalDue > 0 ? <span className="text-destructive font-medium">৳{m.totalDue}</span> : <span className="text-green-600">{t('common.paid')}</span> },
+    { key: 'status', label: t('common.status'), render: (m) => <Badge variant={m.status === 'active' ? 'default' : 'secondary'}>{t(`common.${m.status}`)}</Badge> },
+    { key: 'id', label: t('common.actions'), render: (m) => (
+      <Button size="sm" variant="ghost" onClick={() => navigate(`/members/${m.id}`)}><Eye className="h-3 w-3 mr-1" /> {t('common.view')}</Button>
     )},
   ];
 
   const handleAdd = (data: MemberFormData) => {
     const newMember: Member = {
-      id: `m${Date.now()}`,
-      name: data.name,
-      shopName: data.shopName,
-      phone: data.phone,
-      address: data.address || '',
-      nid: data.nid,
-      status: 'active',
-      somiteeId: 's1',
-      joinDate: new Date().toISOString().split('T')[0],
-      monthlyFee: data.monthlyFee,
-      totalDue: 0,
-      totalPaid: 0,
-      paymentLink: `pay-${data.name.toLowerCase().replace(/\s/g, '-')}-${Date.now()}`,
+      id: `m${Date.now()}`, name: data.name, shopName: data.shopName, phone: data.phone,
+      address: data.address || '', nid: data.nid, status: 'active', somiteeId: 's1',
+      joinDate: new Date().toISOString().split('T')[0], monthlyFee: data.monthlyFee,
+      totalDue: 0, totalPaid: 0, paymentLink: `pay-${data.name.toLowerCase().replace(/\s/g, '-')}-${Date.now()}`,
     };
     setMemberList([newMember, ...memberList]);
     setOpen(false);
     form.reset();
-    toast.success('Member added successfully');
+    toast.success(t('members.memberAdded'));
   };
 
   return (
@@ -78,50 +71,50 @@ export default function MembersPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div>
-            <h1 className="text-2xl font-heading font-bold">Members</h1>
-            <p className="text-muted-foreground">{memberList.length} total members</p>
+            <h1 className="text-2xl font-heading font-bold">{t('members.title')}</h1>
+            <p className="text-muted-foreground">{t('members.totalMembers', { count: memberList.length })}</p>
           </div>
-          <HelpModal title="Members Management" description="Manage all shop owner members in your somitee." steps={['Click Add Member to register new members', 'Fill in the form with member details', 'Click View to see member profile and ledger', 'Use search to find specific members']} />
+          <HelpModal title={t('members.helpTitle')} description={t('members.helpDesc')} steps={[t('members.helpStep1'), t('members.helpStep2'), t('members.helpStep3'), t('members.helpStep4')]} />
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> Add Member</Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> {t('members.addMember')}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-            <DialogHeader><DialogTitle className="font-heading">Add New Member</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="font-heading">{t('members.addNewMember')}</DialogTitle></DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleAdd)} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <FormField control={form.control} name="name" render={({ field }) => (
-                    <FormItem><FormLabel>Name *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('common.name')} *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="shopName" render={({ field }) => (
-                    <FormItem><FormLabel>Shop Name *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('members.shopName')} *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem><FormLabel>Phone *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('common.phone')} *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="monthlyFee" render={({ field }) => (
-                    <FormItem><FormLabel>Monthly Fee</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('members.monthlyFee')}</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <FormField control={form.control} name="address" render={({ field }) => (
-                  <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t('common.address')}</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <div className="grid grid-cols-2 gap-3">
                   <FormField control={form.control} name="nid" render={({ field }) => (
-                    <FormItem><FormLabel>NID (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('members.nid')} ({t('members.optional')})</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="password" render={({ field }) => (
-                    <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="Auto-generated if empty" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('common.password')}</FormLabel><FormControl><Input type="password" placeholder={t('members.autoGenerated')} {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <div className="space-y-1">
-                  <Label>Profile Image</Label>
+                  <Label>{t('members.profileImage')}</Label>
                   <Input type="file" accept="image/*" />
-                  <p className="text-xs text-muted-foreground">Optional profile photo</p>
+                  <p className="text-xs text-muted-foreground">{t('members.optional')}</p>
                 </div>
-                <Button type="submit" className="w-full"><UserPlus className="h-4 w-4 mr-2" /> Add Member</Button>
+                <Button type="submit" className="w-full"><UserPlus className="h-4 w-4 mr-2" /> {t('members.addMember')}</Button>
               </form>
             </Form>
           </DialogContent>
@@ -130,13 +123,7 @@ export default function MembersPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <DataTable
-            data={memberList}
-            columns={columns}
-            searchKey="name"
-            emptyMessage="No members yet"
-            emptyAction={{ label: 'Add First Member', onClick: () => setOpen(true) }}
-          />
+          <DataTable data={memberList} columns={columns} searchKey="name" emptyMessage={t('members.noMembers')} emptyAction={{ label: t('members.addFirstMember'), onClick: () => setOpen(true) }} />
         </CardContent>
       </Card>
     </div>
