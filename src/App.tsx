@@ -18,6 +18,10 @@ import BankAccountsPage from "@/pages/bank/BankAccountsPage";
 import CashBookPage from "@/pages/cashbook/CashBookPage";
 import PaymentsPage from "@/pages/payments/PaymentsPage";
 import ReportsPage from "@/pages/reports/ReportsPage";
+import IncomeExpenseReport from "@/pages/reports/IncomeExpenseReport";
+import CashFlowReport from "@/pages/reports/CashFlowReport";
+import MemberDueReport from "@/pages/reports/MemberDueReport";
+import BankCashReport from "@/pages/reports/BankCashReport";
 import SMSPage from "@/pages/sms/SMSPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import SomiteesPage from "@/pages/somitees/SomiteesPage";
@@ -58,6 +62,10 @@ const App = () => (
             <Route path="cashbook" element={<CashBookPage />} />
             <Route path="payments" element={<PaymentsPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="reports/income-expense" element={<IncomeExpenseReport />} />
+            <Route path="reports/cash-flow" element={<CashFlowReport />} />
+            <Route path="reports/member-due" element={<MemberDueReport />} />
+            <Route path="reports/bank-cash" element={<BankCashReport />} />
             <Route path="sms" element={<SMSPage />} />
             <Route path="my-ledger" element={<LedgerPage />} />
             <Route path="settings" element={<SettingsPage />} />

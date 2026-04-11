@@ -1,8 +1,9 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export interface Column<T> {
   key: string;
@@ -28,6 +29,7 @@ export default function DataTable<T extends Record<string, any>>({
   const [page, setPage] = useState(0);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
+  const [perPage, setPerPage] = useState(pageSize);
 
   const filtered = useMemo(() => {
     let result = data;
@@ -44,8 +46,8 @@ export default function DataTable<T extends Record<string, any>>({
     return result;
   }, [data, search, searchKey, sortKey, sortAsc]);
 
-  const totalPages = Math.ceil(filtered.length / pageSize);
-  const paged = filtered.slice(page * pageSize, (page + 1) * pageSize);
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paged = filtered.slice(page * perPage, (page + 1) * perPage);
 
   if (data.length === 0) {
     return (
@@ -55,6 +57,20 @@ export default function DataTable<T extends Record<string, any>>({
       </div>
     );
   }
+
+  const pageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    if (totalPages <= 7) {
+      for (let i = 0; i < totalPages; i++) pages.push(i);
+    } else {
+      pages.push(0);
+      if (page > 2) pages.push('ellipsis');
+      for (let i = Math.max(1, page - 1); i <= Math.min(totalPages - 2, page + 1); i++) pages.push(i);
+      if (page < totalPages - 3) pages.push('ellipsis');
+      pages.push(totalPages - 1);
+    }
+    return pages;
+  };
 
   return (
     <div className="space-y-3 animate-fade-in">
@@ -98,13 +114,46 @@ export default function DataTable<T extends Record<string, any>>({
       </div>
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>Showing {page * pageSize + 1}-{Math.min((page + 1) * pageSize, filtered.length)} of {filtered.length}</span>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-2">
+            <span>Showing {page * perPage + 1}-{Math.min((page + 1) * perPage, filtered.length)} of {filtered.length}</span>
+            <Select value={String(perPage)} onValueChange={(v) => { setPerPage(Number(v)); setPage(0); }}>
+              <SelectTrigger className="h-8 w-[70px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-xs">per page</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(0)}>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(page - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
+            {pageNumbers().map((p, i) =>
+              p === 'ellipsis' ? (
+                <span key={`e-${i}`} className="px-2">…</span>
+              ) : (
+                <Button
+                  key={p}
+                  variant={page === p ? 'default' : 'outline'}
+                  size="icon"
+                  className="h-8 w-8 text-xs"
+                  onClick={() => setPage(p)}
+                >
+                  {p + 1}
+                </Button>
+              )
+            )}
             <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
               <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(totalPages - 1)}>
+              <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

@@ -4,15 +4,16 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore, UserRole } from '@/stores/authStore';
 import {
   LayoutDashboard, Users, Wallet, Receipt, Building2, CreditCard,
-  FileText, Settings, LogOut, Menu, X, ChevronRight,
+  FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
-  ShieldCheck, Globe, HelpCircle
+  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
@@ -24,6 +25,7 @@ interface NavItem {
   icon: React.ElementType;
   roles: UserRole[];
   badge?: string;
+  children?: { labelKey: string; path: string; icon: React.ElementType }[];
 }
 
 const navItems: NavItem[] = [
@@ -39,7 +41,15 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.bankAccounts', path: '/bank-accounts', icon: Landmark, roles: ['main_user'] },
   { labelKey: 'nav.cashBook', path: '/cashbook', icon: FileText, roles: ['main_user'] },
   { labelKey: 'nav.payments', path: '/payments', icon: CreditCard, roles: ['main_user', 'member'] },
-  { labelKey: 'nav.reports', path: '/reports', icon: BarChart3, roles: ['main_user'] },
+  {
+    labelKey: 'nav.reports', path: '/reports', icon: BarChart3, roles: ['main_user'],
+    children: [
+      { labelKey: 'reports.incomeVsExpense', path: '/reports/income-expense', icon: TrendingUp },
+      { labelKey: 'reports.cashFlow', path: '/reports/cash-flow', icon: DollarSign },
+      { labelKey: 'reports.memberDue', path: '/reports/member-due', icon: Users },
+      { labelKey: 'reports.bankVsCash', path: '/reports/bank-cash', icon: Banknote },
+    ]
+  },
   { labelKey: 'nav.sms', path: '/sms', icon: MessageSquare, roles: ['main_user'] },
   { labelKey: 'nav.myLedger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
   { labelKey: 'nav.settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
@@ -54,6 +64,7 @@ export default function DashboardLayout() {
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
 
   const filteredNav = navItems.filter((item) => user && item.roles.includes(user.role));
 
@@ -65,6 +76,10 @@ export default function DashboardLayout() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const toggleMenu = (path: string) => {
+    setOpenMenus(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]);
   };
 
   const breadcrumbs = location.pathname.split('/').filter(Boolean);
@@ -80,15 +95,51 @@ export default function DashboardLayout() {
 
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
           {filteredNav.map((item) => {
-            const active = location.pathname === item.path;
+            const active = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+            const hasChildren = item.children && item.children.length > 0;
+            const isOpen = openMenus.includes(item.path);
+
+            if (hasChildren && sidebarOpen) {
+              return (
+                <Collapsible key={item.path} open={isOpen} onOpenChange={() => toggleMenu(item.path)}>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full ${
+                        active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate flex-1 text-left">{t(item.labelKey)}</span>
+                      <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                    {item.children!.map((child) => {
+                      const childActive = location.pathname === child.path;
+                      return (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          className={`flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                            childActive ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                          }`}
+                        >
+                          <child.icon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{t(child.labelKey)}</span>
+                        </Link>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
+
             return (
               <Link
                 key={item.path}
-                to={item.path}
+                to={hasChildren ? item.children![0].path : item.path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                  active ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'
                 }`}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
