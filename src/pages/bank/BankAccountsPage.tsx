@@ -52,7 +52,8 @@ export default function BankAccountsPage() {
   const txForm = useForm<z.infer<typeof txSchema>>({ resolver: zodResolver(txSchema), defaultValues: { bankAccountId: '', type: 'deposit', amount: 0, note: '', transferTo: '' } });
 
   const handleAddBank = (data: z.infer<typeof bankSchema>) => {
-    setAccounts([...accounts, { id: `b${Date.now()}`, ...data, balance: data.openingBalance, somiteeId: 's1' }]);
+    const newAccount: BankAccount = { id: `b${Date.now()}`, bankName: data.bankName, accountName: data.accountName, accountNumber: data.accountNumber, openingBalance: data.openingBalance, balance: data.openingBalance, somiteeId: 's1' };
+    setAccounts([...accounts, newAccount]);
     setAddOpen(false);
     bankForm.reset();
     toast.success('Bank account added');
