@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore, UserRole } from '@/stores/authStore';
 import {
   LayoutDashboard, Users, Wallet, Receipt, Building2, CreditCard,
@@ -8,8 +9,8 @@ import {
   ShieldCheck, Globe, HelpCircle
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
-
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   path: string;
   icon: React.ElementType;
   roles: UserRole[];
@@ -26,29 +27,30 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['super_admin', 'main_user', 'member'] },
-  { label: 'Somitee Management', path: '/somitees', icon: Building2, roles: ['super_admin'] },
-  { label: 'Subscriptions', path: '/subscriptions', icon: CreditCard, roles: ['super_admin'] },
-  { label: 'Global Analytics', path: '/analytics', icon: BarChart3, roles: ['super_admin'] },
-  { label: 'Global Settings', path: '/global-settings', icon: Globe, roles: ['super_admin'] },
-  { label: 'Members', path: '/members', icon: Users, roles: ['main_user'] },
-  { label: 'Collections', path: '/collections', icon: Wallet, roles: ['main_user', 'member'] },
-  { label: 'Expenses', path: '/expenses', icon: Receipt, roles: ['main_user'] },
-  { label: 'Ledger', path: '/ledger', icon: BookOpen, roles: ['main_user'] },
-  { label: 'Bank Accounts', path: '/bank-accounts', icon: Landmark, roles: ['main_user'] },
-  { label: 'Cash Book', path: '/cashbook', icon: FileText, roles: ['main_user'] },
-  { label: 'Payments', path: '/payments', icon: CreditCard, roles: ['main_user', 'member'] },
-  { label: 'Reports', path: '/reports', icon: BarChart3, roles: ['main_user'] },
-  { label: 'SMS', path: '/sms', icon: MessageSquare, roles: ['main_user'] },
-  { label: 'My Ledger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
-  { label: 'Settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
-  { label: 'FAQ & Help', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
+  { labelKey: 'nav.dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['super_admin', 'main_user', 'member'] },
+  { labelKey: 'nav.somiteeManagement', path: '/somitees', icon: Building2, roles: ['super_admin'] },
+  { labelKey: 'nav.subscriptions', path: '/subscriptions', icon: CreditCard, roles: ['super_admin'] },
+  { labelKey: 'nav.globalAnalytics', path: '/analytics', icon: BarChart3, roles: ['super_admin'] },
+  { labelKey: 'nav.globalSettings', path: '/global-settings', icon: Globe, roles: ['super_admin'] },
+  { labelKey: 'nav.members', path: '/members', icon: Users, roles: ['main_user'] },
+  { labelKey: 'nav.collections', path: '/collections', icon: Wallet, roles: ['main_user', 'member'] },
+  { labelKey: 'nav.expenses', path: '/expenses', icon: Receipt, roles: ['main_user'] },
+  { labelKey: 'nav.ledger', path: '/ledger', icon: BookOpen, roles: ['main_user'] },
+  { labelKey: 'nav.bankAccounts', path: '/bank-accounts', icon: Landmark, roles: ['main_user'] },
+  { labelKey: 'nav.cashBook', path: '/cashbook', icon: FileText, roles: ['main_user'] },
+  { labelKey: 'nav.payments', path: '/payments', icon: CreditCard, roles: ['main_user', 'member'] },
+  { labelKey: 'nav.reports', path: '/reports', icon: BarChart3, roles: ['main_user'] },
+  { labelKey: 'nav.sms', path: '/sms', icon: MessageSquare, roles: ['main_user'] },
+  { labelKey: 'nav.myLedger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
+  { labelKey: 'nav.settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
+  { labelKey: 'nav.faqHelp', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
 ];
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -89,7 +91,7 @@ export default function DashboardLayout() {
                 }`}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
-                {sidebarOpen && <span className="truncate">{item.label}</span>}
+                {sidebarOpen && <span className="truncate">{t(item.labelKey)}</span>}
                 {sidebarOpen && item.badge && (
                   <Badge variant="secondary" className="ml-auto text-xs">{item.badge}</Badge>
                 )}
@@ -101,7 +103,7 @@ export default function DashboardLayout() {
         <div className="p-3 border-t border-sidebar-border">
           <Button variant="ghost" size="sm" className="w-full justify-start text-destructive" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
-            {sidebarOpen && 'Logout'}
+            {sidebarOpen && t('common.logout')}
           </Button>
         </div>
       </aside>
@@ -115,7 +117,7 @@ export default function DashboardLayout() {
               {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
             <div className="hidden md:flex items-center text-sm text-muted-foreground">
-              <Link to="/dashboard" className="hover:text-foreground">Home</Link>
+              <Link to="/dashboard" className="hover:text-foreground">{t('common.home')}</Link>
               {breadcrumbs.map((crumb, i) => (
                 <span key={i} className="flex items-center">
                   <ChevronRight className="h-3 w-3 mx-1" />
@@ -129,6 +131,7 @@ export default function DashboardLayout() {
 
           <div className="flex items-center gap-2">
             <GlobalSearch />
+            <LanguageSwitcher />
             <Button variant="ghost" size="icon" onClick={toggleDark}>
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
@@ -154,10 +157,10 @@ export default function DashboardLayout() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <Settings className="h-4 w-4 mr-2" /> Settings
+                  <Settings className="h-4 w-4 mr-2" /> {t('common.settings')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                  <LogOut className="h-4 w-4 mr-2" /> Logout
+                  <LogOut className="h-4 w-4 mr-2" /> {t('common.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

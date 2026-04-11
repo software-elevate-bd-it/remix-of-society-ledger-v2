@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -19,10 +20,12 @@ const dummyActivities: Activity[] = [
 ];
 
 export default function ActivityLog() {
+  const { t } = useTranslation();
+
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="font-heading text-base">Activity Log</CardTitle>
+        <CardTitle className="font-heading text-base">{t('activity.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-64">

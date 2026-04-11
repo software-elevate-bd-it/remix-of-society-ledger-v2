@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { faqs, FAQ } from '@/data/dummyData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function FAQPage() {
+  const { t } = useTranslation();
   const [faqList, setFaqList] = useState(faqs);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
@@ -23,22 +25,22 @@ export default function FAQPage() {
     const fd = new FormData(e.currentTarget);
     setFaqList([...faqList, { id: `f${Date.now()}`, question: fd.get('question') as string, answer: fd.get('answer') as string, category: fd.get('category') as string }]);
     setOpen(false);
-    toast.success('FAQ added');
+    toast.success(t('faq.faqAdded'));
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-heading font-bold">FAQ & Help</h1><p className="text-muted-foreground">Frequently asked questions</p></div>
+        <div><h1 className="text-2xl font-heading font-bold">{t('faq.title')}</h1><p className="text-muted-foreground">{t('faq.subtitle')}</p></div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Add FAQ</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> {t('faq.addFaq')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle className="font-heading">Add FAQ</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="font-heading">{t('faq.addFaq')}</DialogTitle></DialogHeader>
             <form onSubmit={handleAdd} className="space-y-4">
-              <div className="space-y-1"><Label>Question *</Label><Input name="question" required /></div>
-              <div className="space-y-1"><Label>Answer *</Label><Input name="answer" required /></div>
-              <div className="space-y-1"><Label>Category *</Label><Input name="category" required placeholder="e.g. Members, Payments" /></div>
-              <Button type="submit" className="w-full">Add FAQ</Button>
+              <div className="space-y-1"><Label>{t('faq.question')} *</Label><Input name="question" required /></div>
+              <div className="space-y-1"><Label>{t('faq.answer')} *</Label><Input name="answer" required /></div>
+              <div className="space-y-1"><Label>{t('common.category')} *</Label><Input name="category" required /></div>
+              <Button type="submit" className="w-full">{t('common.save')}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -46,7 +48,7 @@ export default function FAQPage() {
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search FAQ..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
+        <Input placeholder={t('faq.searchFaq')} className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {categories.map(cat => {
