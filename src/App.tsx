@@ -10,6 +10,7 @@ import RegisterPage from "@/pages/auth/RegisterPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import MembersPage from "@/pages/members/MembersPage";
+import MemberProfilePage from "@/pages/members/MemberProfilePage";
 import CollectionsPage from "@/pages/collections/CollectionsPage";
 import ExpensesPage from "@/pages/expenses/ExpensesPage";
 import LedgerPage from "@/pages/ledger/LedgerPage";
@@ -20,6 +21,7 @@ import ReportsPage from "@/pages/reports/ReportsPage";
 import SMSPage from "@/pages/sms/SMSPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import SomiteesPage from "@/pages/somitees/SomiteesPage";
+import FAQPage from "@/pages/faq/FAQPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,7 @@ const App = () => (
             <Route path="analytics" element={<DashboardPage />} />
             <Route path="global-settings" element={<SettingsPage />} />
             <Route path="members" element={<MembersPage />} />
+            <Route path="members/:id" element={<MemberProfilePage />} />
             <Route path="collections" element={<CollectionsPage />} />
             <Route path="expenses" element={<ExpensesPage />} />
             <Route path="ledger" element={<LedgerPage />} />
@@ -57,6 +60,7 @@ const App = () => (
             <Route path="sms" element={<SMSPage />} />
             <Route path="my-ledger" element={<LedgerPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="faq" element={<FAQPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

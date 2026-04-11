@@ -3,12 +3,13 @@ import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore, UserRole } from '@/stores/authStore';
 import {
   LayoutDashboard, Users, Wallet, Receipt, Building2, CreditCard,
-  FileText, Settings, LogOut, Menu, X, ChevronRight, Search,
+  FileText, Settings, LogOut, Menu, X, ChevronRight,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
-  ShieldCheck, Globe
+  ShieldCheck, Globe, HelpCircle
 } from 'lucide-react';
+import GlobalSearch from '@/components/shared/GlobalSearch';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -41,6 +42,7 @@ const navItems: NavItem[] = [
   { label: 'SMS', path: '/sms', icon: MessageSquare, roles: ['main_user'] },
   { label: 'My Ledger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
   { label: 'Settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
+  { label: 'FAQ & Help', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
 ];
 
 export default function DashboardLayout() {
@@ -126,10 +128,7 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="relative hidden md:block">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search..." className="pl-9 w-64 h-9" />
-            </div>
+            <GlobalSearch />
             <Button variant="ghost" size="icon" onClick={toggleDark}>
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
