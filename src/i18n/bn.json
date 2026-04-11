@@ -87,7 +87,8 @@
     "sms": "এসএমএস",
     "myLedger": "আমার খতিয়ান",
     "settings": "সেটিংস",
-    "faqHelp": "প্রশ্ন ও সাহায্য"
+    "faqHelp": "প্রশ্ন ও সাহায্য",
+    "apiDocs": "এপিআই ডক্স"
   },
   "dashboard": {
     "totalMembers": "মোট সদস্য",

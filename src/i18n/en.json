@@ -87,7 +87,8 @@
     "sms": "SMS",
     "myLedger": "My Ledger",
     "settings": "Settings",
-    "faqHelp": "FAQ & Help"
+    "faqHelp": "FAQ & Help",
+    "apiDocs": "API Docs"
   },
   "dashboard": {
     "totalMembers": "Total Members",
