@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +26,8 @@ export default function LoginPage() {
     }
   };
 
+  const toggleLang = () => i18n.changeLanguage(i18n.language === 'en' ? 'bn' : 'en');
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md animate-fade-in">
@@ -33,30 +37,33 @@ export default function LoginPage() {
               <ShieldCheck className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="font-heading text-2xl">Welcome to SomiteeHQ</CardTitle>
-          <CardDescription>Sign in to manage your society</CardDescription>
+          <CardTitle className="font-heading text-2xl">{t('auth.loginTitle')}</CardTitle>
+          <CardDescription>{t('auth.loginSubtitle')}</CardDescription>
+          <Button variant="ghost" size="sm" onClick={toggleLang} className="mx-auto">
+            <Globe className="h-4 w-4 mr-1" /> {i18n.language === 'en' ? t('common.bangla') : t('common.english')}
+          </Button>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="admin@system.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Label htmlFor="email">{t('common.email')}</Label>
+              <Input id="email" type="email" placeholder={t('auth.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('common.password')}</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <Button type="submit" className="w-full">Sign In</Button>
+            <Button type="submit" className="w-full">{t('auth.login')}</Button>
             <div className="flex justify-between text-sm">
-              <Link to="/forgot-password" className="text-primary hover:underline">Forgot password?</Link>
-              <Link to="/register" className="text-primary hover:underline">Create account</Link>
+              <Link to="/forgot-password" className="text-primary hover:underline">{t('auth.forgotPassword')}</Link>
+              <Link to="/register" className="text-primary hover:underline">{t('auth.register')}</Link>
             </div>
           </form>
           <div className="mt-6 p-3 rounded-lg bg-muted text-xs space-y-1">
-            <p className="font-medium text-muted-foreground">Demo Accounts:</p>
-            <p><span className="font-medium">Super Admin:</span> admin@system.com / admin123</p>
-            <p><span className="font-medium">Manager:</span> manager@somitee.com / manager123</p>
-            <p><span className="font-medium">Member:</span> member@shop.com / member123</p>
+            <p className="font-medium text-muted-foreground">{t('auth.demoCredentials')}:</p>
+            <p><span className="font-medium">{t('auth.superAdmin')}:</span> admin@system.com / admin123</p>
+            <p><span className="font-medium">{t('auth.mainUser')}:</span> manager@somitee.com / manager123</p>
+            <p><span className="font-medium">{t('auth.member')}:</span> member@shop.com / member123</p>
           </div>
         </CardContent>
       </Card>
