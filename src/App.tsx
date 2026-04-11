@@ -22,6 +22,7 @@ import SMSPage from "@/pages/sms/SMSPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import SomiteesPage from "@/pages/somitees/SomiteesPage";
 import FAQPage from "@/pages/faq/FAQPage";
+import ApiDocsPage from "@/pages/docs/ApiDocsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="my-ledger" element={<LedgerPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="faq" element={<FAQPage />} />
+            <Route path="api-docs" element={<ApiDocsPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

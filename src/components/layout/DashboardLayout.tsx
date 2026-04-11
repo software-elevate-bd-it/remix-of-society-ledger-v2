@@ -44,6 +44,7 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.myLedger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
   { labelKey: 'nav.settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
   { labelKey: 'nav.faqHelp', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
+  { labelKey: 'nav.apiDocs', path: '/api-docs', icon: FileText, roles: ['super_admin', 'main_user'] },
 ];
 
 export default function DashboardLayout() {
