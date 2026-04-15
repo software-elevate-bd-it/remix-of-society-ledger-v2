@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Wallet, Receipt, Building2, CreditCard,
   FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
-  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote
+  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, ClipboardList
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
@@ -35,6 +35,7 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.globalAnalytics', path: '/analytics', icon: BarChart3, roles: ['super_admin'] },
   { labelKey: 'nav.globalSettings', path: '/global-settings', icon: Globe, roles: ['super_admin'] },
   { labelKey: 'nav.members', path: '/members', icon: Users, roles: ['main_user'] },
+  { labelKey: 'nav.memberRequests', path: '/member-requests', icon: UserCheck, roles: ['main_user'], badge: '2' },
   { labelKey: 'nav.collections', path: '/collections', icon: Wallet, roles: ['main_user', 'member'] },
   { labelKey: 'nav.expenses', path: '/expenses', icon: Receipt, roles: ['main_user'] },
   { labelKey: 'nav.ledger', path: '/ledger', icon: BookOpen, roles: ['main_user'] },
@@ -48,6 +49,7 @@ const navItems: NavItem[] = [
       { labelKey: 'reports.cashFlow', path: '/reports/cash-flow', icon: DollarSign },
       { labelKey: 'reports.memberDue', path: '/reports/member-due', icon: Users },
       { labelKey: 'reports.bankVsCash', path: '/reports/bank-cash', icon: Banknote },
+      { labelKey: 'reports.collectionReport', path: '/reports/collection', icon: ClipboardList },
     ]
   },
   { labelKey: 'nav.sms', path: '/sms', icon: MessageSquare, roles: ['main_user'] },
