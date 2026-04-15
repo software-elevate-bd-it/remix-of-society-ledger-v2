@@ -78,9 +78,9 @@ export default function MemberRequestsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatsCard title={t('common.pending')} value={pendingCount} icon={Clock} trend="neutral" />
-        <StatsCard title={t('common.approved')} value={approvedCount} icon={UserCheck} trend="up" />
-        <StatsCard title={t('common.rejected')} value={rejectedCount} icon={UserX} trend="down" />
+        <StatsCard title={t('common.pending')} value={pendingCount} icon={Clock} />
+        <StatsCard title={t('common.approved')} value={approvedCount} icon={UserCheck} />
+        <StatsCard title={t('common.rejected')} value={rejectedCount} icon={UserX} />
       </div>
 
       <div className="flex items-center gap-3">

@@ -8,10 +8,13 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import PublicRegistrationPage from "@/pages/members/PublicRegistrationPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import MembersPage from "@/pages/members/MembersPage";
 import MemberProfilePage from "@/pages/members/MemberProfilePage";
+import MemberRequestsPage from "@/pages/members/MemberRequestsPage";
 import CollectionsPage from "@/pages/collections/CollectionsPage";
+import AdvancedCollectionPage from "@/pages/collections/AdvancedCollectionPage";
 import ExpensesPage from "@/pages/expenses/ExpensesPage";
 import LedgerPage from "@/pages/ledger/LedgerPage";
 import BankAccountsPage from "@/pages/bank/BankAccountsPage";
@@ -22,6 +25,7 @@ import IncomeExpenseReport from "@/pages/reports/IncomeExpenseReport";
 import CashFlowReport from "@/pages/reports/CashFlowReport";
 import MemberDueReport from "@/pages/reports/MemberDueReport";
 import BankCashReport from "@/pages/reports/BankCashReport";
+import CollectionReport from "@/pages/reports/CollectionReport";
 import SMSPage from "@/pages/sms/SMSPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import SomiteesPage from "@/pages/somitees/SomiteesPage";
@@ -47,6 +51,7 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/apply" element={<PublicRegistrationPage />} />
           <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="somitees" element={<SomiteesPage />} />
@@ -55,7 +60,9 @@ const App = () => (
             <Route path="global-settings" element={<SettingsPage />} />
             <Route path="members" element={<MembersPage />} />
             <Route path="members/:id" element={<MemberProfilePage />} />
-            <Route path="collections" element={<CollectionsPage />} />
+            <Route path="member-requests" element={<MemberRequestsPage />} />
+            <Route path="collections" element={<AdvancedCollectionPage />} />
+            <Route path="collections/simple" element={<CollectionsPage />} />
             <Route path="expenses" element={<ExpensesPage />} />
             <Route path="ledger" element={<LedgerPage />} />
             <Route path="bank-accounts" element={<BankAccountsPage />} />
@@ -66,6 +73,7 @@ const App = () => (
             <Route path="reports/cash-flow" element={<CashFlowReport />} />
             <Route path="reports/member-due" element={<MemberDueReport />} />
             <Route path="reports/bank-cash" element={<BankCashReport />} />
+            <Route path="reports/collection" element={<CollectionReport />} />
             <Route path="sms" element={<SMSPage />} />
             <Route path="my-ledger" element={<LedgerPage />} />
             <Route path="settings" element={<SettingsPage />} />

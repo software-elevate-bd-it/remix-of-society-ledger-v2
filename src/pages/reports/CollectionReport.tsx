@@ -76,10 +76,10 @@ export default function CollectionReport() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatsCard title={t('collectionReport.totalCollected')} value={`৳${totalCollected.toLocaleString()}`} icon={DollarSign} trend="up" />
-        <StatsCard title={t('collectionReport.totalDue')} value={`৳${totalDue.toLocaleString()}`} icon={AlertCircle} trend="down" />
-        <StatsCard title={t('collectionReport.fullyPaid')} value={fullPaidCount} icon={CheckCircle} trend="up" />
-        <StatsCard title={t('collectionReport.activeMembers')} value={activeMembers.length} icon={Users} trend="neutral" />
+        <StatsCard title={t('collectionReport.totalCollected')} value={`৳${totalCollected.toLocaleString()}`} icon={DollarSign} />
+        <StatsCard title={t('collectionReport.totalDue')} value={`৳${totalDue.toLocaleString()}`} icon={AlertCircle} />
+        <StatsCard title={t('collectionReport.fullyPaid')} value={fullPaidCount} icon={CheckCircle} />
+        <StatsCard title={t('collectionReport.activeMembers')} value={activeMembers.length} icon={Users} />
       </div>
 
       {viewType === 'member' ? (

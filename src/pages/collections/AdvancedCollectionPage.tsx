@@ -356,9 +356,9 @@ export default function AdvancedCollectionPage() {
 
         <TabsContent value="history" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <StatsCard title={t('advancedCollection.totalCollected')} value={`৳${totalCollected.toLocaleString()}`} icon={DollarSign} trend="up" />
-            <StatsCard title={t('advancedCollection.totalPayments')} value={payments.length} icon={CalendarDays} trend="neutral" />
-            <StatsCard title={t('common.pending')} value={pendingPayments} icon={Users} trend="neutral" />
+            <StatsCard title={t('advancedCollection.totalCollected')} value={`৳${totalCollected.toLocaleString()}`} icon={DollarSign} />
+            <StatsCard title={t('advancedCollection.totalPayments')} value={payments.length} icon={CalendarDays} />
+            <StatsCard title={t('common.pending')} value={pendingPayments} icon={Users} />
           </div>
           <Card>
             <CardContent className="pt-6">
