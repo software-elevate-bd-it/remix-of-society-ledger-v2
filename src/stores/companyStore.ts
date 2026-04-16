@@ -16,9 +16,9 @@ interface CompanyState {
 
 export const useCompanyStore = create<CompanyState>((set) => ({
   company: {
-    name: 'বানানী মার্কেট সমিতি',
+    name: 'বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি',
     logo: '',
-    address: 'বানানী, ঢাকা-১২১৩',
+    address: 'মুরাদপুর, চট্টগ্রাম',
     phone: '01711111111',
     email: 'info@bananimarket.com',
     signature: '',

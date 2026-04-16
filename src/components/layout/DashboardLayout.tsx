@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
+import { useCompanyStore } from '@/stores/companyStore';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +65,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { company } = useCompanyStore();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
@@ -91,8 +93,12 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 border-r border-sidebar-border bg-sidebar flex flex-col`}>
         <div className="flex items-center gap-2 p-4 border-b border-sidebar-border">
-          <ShieldCheck className="h-7 w-7 text-primary shrink-0" />
-          {sidebarOpen && <h1 className="font-heading text-lg font-bold text-sidebar-foreground truncate">Somitee<span className="text-primary">HQ</span></h1>}
+          {company.logo ? (
+            <img src={company.logo} alt={company.name} className="h-7 w-7 object-contain rounded shrink-0" />
+          ) : (
+            <ShieldCheck className="h-7 w-7 text-primary shrink-0" />
+          )}
+          {sidebarOpen && <h1 className="font-heading text-sm font-bold text-sidebar-foreground truncate">{company.name}</h1>}
         </div>
 
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
