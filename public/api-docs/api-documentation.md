@@ -2746,7 +2746,314 @@ Get member dashboard stats. **Role:** `member`
 
 ---
 
-> **Document Version:** 1.0.0
-> **Last Updated:** 2026-04-11
-> **Total Endpoints:** 65+
+## 14. Company Settings
+
+### GET /company/settings
+
+Get company branding settings.
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Company settings retrieved",
+  "data": {
+    "name": "বানানী মার্কেট সমিতি",
+    "logo": "https://cdn.somiteehq.com/logos/s1.png",
+    "address": "বানানী, ঢাকা-১২১৩",
+    "phone": "01711111111",
+    "email": "info@bananimarket.com",
+    "signature": "https://cdn.somiteehq.com/signatures/s1.png"
+  }
+}
+```
+
+### PUT /company/settings
+
+Update company branding settings (used in forms, PDFs, reports).
+
+**Request Body:**
+```json
+{
+  "name": "বানানী মার্কেট সমিতি",
+  "address": "বানানী, ঢাকা-১২১৩",
+  "phone": "01711111111",
+  "email": "info@bananimarket.com"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Company settings updated",
+  "data": {
+    "name": "বানানী মার্কেট সমিতি",
+    "logo": "https://cdn.somiteehq.com/logos/s1.png",
+    "address": "বানানী, ঢাকা-১২১৩",
+    "phone": "01711111111",
+    "email": "info@bananimarket.com",
+    "signature": "https://cdn.somiteehq.com/signatures/s1.png"
+  }
+}
+```
+
+### POST /company/upload-logo
+
+Upload company logo.
+
+**Request:** `multipart/form-data` with `logo` file field.
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Logo uploaded",
+  "data": {
+    "logoUrl": "https://cdn.somiteehq.com/logos/s1-v2.png"
+  }
+}
+```
+
+### POST /company/upload-signature
+
+Upload company signature image.
+
+**Request:** `multipart/form-data` with `signature` file field.
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Signature uploaded",
+  "data": {
+    "signatureUrl": "https://cdn.somiteehq.com/signatures/s1-v2.png"
+  }
+}
+```
+
+---
+
+## 15. Member Registration (Extended)
+
+### POST /members/register
+
+Public member registration with extended fields, NID images, and signature.
+
+**Request Body:**
+```json
+{
+  "nameBn": "করিম মিয়া",
+  "nameEn": "Karim Mia",
+  "shopName": "করিম ইলেকট্রনিক্স",
+  "fatherName": "আব্দুল করিম",
+  "motherName": "ফাতেমা বেগম",
+  "mobile": "01712345678",
+  "village": "বানানী",
+  "wardNo": "5",
+  "union": "বানানী",
+  "upazila": "গুলশান",
+  "district": "ঢাকা",
+  "nid": "1234567890123",
+  "dob": "1990-05-15",
+  "nationality": "বাংলাদেশী",
+  "religion": "ইসলাম",
+  "bloodGroup": "B+",
+  "nomineeName": "রহিমা বেগম",
+  "nomineeRelation": "স্ত্রী",
+  "nomineeNid": "9876543210123"
+}
+```
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Registration submitted. Pending admin approval.",
+  "data": {
+    "id": "mr-uuid",
+    "memberId": "MEM-ABC123",
+    "status": "pending",
+    "appliedAt": "2026-04-16T10:00:00Z"
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Validation failed",
+  "errors": [
+    { "field": "nid", "message": "NID must be 10-17 digits" },
+    { "field": "mobile", "message": "Valid Bangladesh mobile number required" }
+  ]
+}
+```
+
+### POST /members/register/upload-images
+
+Upload profile image, NID front/back, and signature for a registration.
+
+**Request:** `multipart/form-data`
+- `registrationId` (string)
+- `profileImage` (file)
+- `nidFront` (file)
+- `nidBack` (file)
+- `signature` (file)
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Images uploaded",
+  "data": {
+    "profileImageUrl": "https://cdn.somiteehq.com/members/profile-uuid.jpg",
+    "nidFrontUrl": "https://cdn.somiteehq.com/members/nid-front-uuid.jpg",
+    "nidBackUrl": "https://cdn.somiteehq.com/members/nid-back-uuid.jpg",
+    "signatureUrl": "https://cdn.somiteehq.com/members/sig-uuid.png"
+  }
+}
+```
+
+### POST /members/register/draft
+
+Save registration as draft (auto-save).
+
+**Request Body:** Same as `/members/register` (partial data allowed).
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Draft saved",
+  "data": {
+    "draftId": "draft-uuid",
+    "savedAt": "2026-04-16T10:00:00Z"
+  }
+}
+```
+
+### GET /members/register/draft/:draftId
+
+Retrieve a saved draft.
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Draft retrieved",
+  "data": {
+    "draftId": "draft-uuid",
+    "nameBn": "করিম মিয়া",
+    "nameEn": "Karim Mia",
+    "shopName": "করিম ইলেকট্রনিক্স",
+    "savedAt": "2026-04-16T10:00:00Z"
+  }
+}
+```
+
+---
+
+## 16. Collection (Single-Screen API)
+
+### POST /collections/quick-pay
+
+Single-screen collection with member search, month grid, and payment method.
+
+**Request Body:**
+```json
+{
+  "memberId": "m1",
+  "financialYear": "2024-2025",
+  "months": [12, 1, 2, 3],
+  "method": "bkash",
+  "transactionId": "BK55555",
+  "discount": 100
+}
+```
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Payment recorded. SMS confirmation sent.",
+  "data": {
+    "id": "mp-uuid",
+    "memberId": "m1",
+    "memberName": "Karim Mia",
+    "financialYear": "2024-2025",
+    "months": [12, 1, 2, 3],
+    "amount": 2000,
+    "lateFee": 0,
+    "discount": 100,
+    "totalPaid": 1900,
+    "method": "bkash",
+    "transactionId": "BK55555",
+    "date": "2026-04-16",
+    "status": "approved"
+  }
+}
+```
+
+**Duplicate Error:**
+```json
+{
+  "success": false,
+  "statusCode": 409,
+  "message": "Duplicate payment detected",
+  "errors": [
+    { "field": "months", "message": "Month 12 of 2024-2025 is already paid for member m1" }
+  ]
+}
+```
+
+### GET /collections/member-status/:memberId
+
+Get paid/due month grid for a member in a financial year.
+
+**Query:** `?financialYear=2024-2025`
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Member payment status retrieved",
+  "data": {
+    "memberId": "m1",
+    "memberName": "Karim Mia",
+    "financialYear": "2024-2025",
+    "monthlyFee": 500,
+    "months": [
+      { "month": 6, "label": "June", "labelBn": "জুন", "status": "paid", "paidDate": "2024-07-01", "amount": 500 },
+      { "month": 7, "label": "July", "labelBn": "জুলাই", "status": "paid", "paidDate": "2024-07-01", "amount": 500 },
+      { "month": 12, "label": "December", "labelBn": "ডিসেম্বর", "status": "due", "paidDate": null, "amount": 0 },
+      { "month": 1, "label": "January", "labelBn": "জানুয়ারি", "status": "due", "paidDate": null, "amount": 0 }
+    ],
+    "summary": {
+      "totalPaid": 3000,
+      "totalDue": 3000,
+      "paidMonths": 6,
+      "dueMonths": 6
+    }
+  }
+}
+```
+
+---
+
+> **Document Version:** 1.1.0
+> **Last Updated:** 2026-04-16
+> **Total Endpoints:** 75+
 > **Contact:** api@somiteehq.com
