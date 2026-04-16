@@ -1,21 +1,55 @@
-# SomiteeHQ API Documentation
+# SomiteeHQ REST API Documentation
 
 > **Base URL:** `https://api.somiteehq.com/v1`
-> **Version:** 1.0.0
-> **Auth:** Bearer Token (JWT)
+> **Version:** 2.0.0
+> **Authentication:** Bearer Token (JWT)
+> **Last Updated:** 2026-04-16
 
 ---
 
-## Standard Response Format
+## Table of Contents
 
-### ✅ Success Response
+1. [Standards & Conventions](#standards--conventions)
+2. [Authentication](#-authentication)
+3. [Company / Branding](#-company--branding)
+4. [Member Registration](#-member-registration)
+5. [Members](#-members)
+6. [Member Requests](#-member-requests)
+7. [Collections (Income)](#-collections-income)
+8. [Advanced Collection (Quick Pay)](#-advanced-collection-quick-pay)
+9. [Expenses](#-expenses)
+10. [Ledger](#-ledger)
+11. [Cash Book](#-cash-book)
+12. [Bank Accounts](#-bank-accounts)
+13. [Payments (Verification)](#-payments-verification)
+14. [Reports](#-reports)
+15. [SMS](#-sms)
+16. [Settings](#-settings)
+17. [Somitees (Super Admin)](#-somitees-super-admin)
+18. [Platform Analytics (Super Admin)](#-platform-analytics-super-admin)
+19. [Subscriptions (Super Admin)](#-subscriptions-super-admin)
+20. [FAQ](#-faq)
+21. [Notifications](#-notifications)
+22. [Activity Log](#-activity-log)
+23. [Global Search](#-global-search)
+24. [Dashboard](#-dashboard)
+
+---
+
+## Standards & Conventions
+
+### Response Format
+
+All endpoints return a consistent JSON envelope:
+
+#### ✅ Success
 
 ```json
 {
   "success": true,
   "statusCode": 200,
   "message": "Operation successful",
-  "data": { },
+  "data": {},
   "meta": {
     "page": 1,
     "limit": 10,
@@ -25,7 +59,7 @@
 }
 ```
 
-### ❌ Error Response
+#### ❌ Error
 
 ```json
 {
@@ -33,18 +67,14 @@
   "statusCode": 400,
   "message": "Validation failed",
   "errors": [
-    {
-      "field": "email",
-      "message": "Email is required"
-    }
+    { "field": "email", "message": "Email is required" }
   ]
 }
 ```
 
-### TypeScript Types
+### TypeScript Interfaces
 
 ```typescript
-// Standard API Response
 interface ApiResponse<T> {
   success: boolean;
   statusCode: number;
@@ -72,7 +102,6 @@ interface PaginationMeta {
   totalPages: number;
 }
 
-// Query Params for paginated endpoints
 interface PaginationParams {
   page?: number;       // default: 1
   limit?: number;      // default: 10
@@ -82,9 +111,7 @@ interface PaginationParams {
 }
 ```
 
----
-
-## HTTP Status Codes
+### HTTP Status Codes
 
 | Code | Meaning |
 |------|---------|
@@ -98,15 +125,21 @@ interface PaginationParams {
 | 422 | Unprocessable Entity — Business logic error |
 | 500 | Internal Server Error |
 
----
-
-## Headers
+### Request Headers
 
 | Header | Value | Required |
 |--------|-------|----------|
 | `Content-Type` | `application/json` | Yes |
-| `Authorization` | `Bearer <token>` | Yes (except auth endpoints) |
-| `Accept-Language` | `en` or `bn` | Optional |
+| `Authorization` | `Bearer <token>` | Yes (except public endpoints) |
+| `Accept-Language` | `en` \| `bn` | Optional |
+
+### User Roles
+
+| Role | Description |
+|------|-------------|
+| `super_admin` | Platform owner — manages all somitees |
+| `main_user` | Somitee manager — manages one somitee |
+| `member` | Somitee member — limited access |
 
 ---
 
@@ -137,7 +170,7 @@ Login with email and password.
       "email": "manager@somitee.com",
       "role": "main_user",
       "somiteeId": "s1",
-      "someiteeName": "Banani Market Somitee",
+      "somiteeName": "বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি",
       "profilePhoto": null
     },
     "token": "eyJhbGciOi...",
@@ -187,7 +220,7 @@ Register a new somitee manager account.
       "email": "new@somitee.com",
       "role": "main_user",
       "somiteeId": "s-new",
-      "someiteeName": "New Market Somitee"
+      "somiteeName": "New Market Somitee"
     },
     "token": "eyJhbGciOi..."
   }
@@ -338,7 +371,245 @@ Get current authenticated user profile.
     "phone": "01711111111",
     "profilePhoto": "https://cdn.somiteehq.com/photos/uuid-123.jpg",
     "somiteeId": "s1",
-    "someiteeName": "Banani Market Somitee"
+    "somiteeName": "বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি"
+  }
+}
+```
+
+---
+
+# 🏢 Company / Branding
+
+Dynamic company branding used across the platform: login page, sidebar, forms, PDFs, print, and reports.
+
+## GET `/company/settings`
+
+Get company branding settings. **Role:** `main_user`
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Company settings retrieved",
+  "data": {
+    "name": "বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি",
+    "logo": "https://cdn.somiteehq.com/logos/s1.png",
+    "address": "মুরাদপুর, চট্টগ্রাম",
+    "phone": "01711111111",
+    "email": "info@muradpur-somitee.com",
+    "signature": "https://cdn.somiteehq.com/signatures/s1.png"
+  }
+}
+```
+
+---
+
+## PUT `/company/settings`
+
+Update company branding. Changes propagate to login page, sidebar, forms, PDFs, and reports. **Role:** `main_user`
+
+**Request Body:**
+```json
+{
+  "name": "বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি",
+  "address": "মুরাদপুর, চট্টগ্রাম",
+  "phone": "01711111111",
+  "email": "info@muradpur-somitee.com"
+}
+```
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Company settings updated",
+  "data": {
+    "name": "বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি",
+    "logo": "https://cdn.somiteehq.com/logos/s1.png",
+    "address": "মুরাদপুর, চট্টগ্রাম",
+    "phone": "01711111111",
+    "email": "info@muradpur-somitee.com",
+    "signature": "https://cdn.somiteehq.com/signatures/s1.png"
+  }
+}
+```
+
+---
+
+## POST `/company/upload-logo`
+
+Upload company logo. **Role:** `main_user`
+
+**Request:** `multipart/form-data` — field: `logo` (jpg/png, max 2MB)
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Logo uploaded",
+  "data": {
+    "logoUrl": "https://cdn.somiteehq.com/logos/s1-v2.png"
+  }
+}
+```
+
+---
+
+## POST `/company/upload-signature`
+
+Upload company signature image. **Role:** `main_user`
+
+**Request:** `multipart/form-data` — field: `signature` (png, max 1MB)
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Signature uploaded",
+  "data": {
+    "signatureUrl": "https://cdn.somiteehq.com/signatures/s1-v2.png"
+  }
+}
+```
+
+---
+
+# 📋 Member Registration
+
+Two-step registration form with Bangla/English names, NID, address, nominee, image uploads, and digital signature.
+
+## POST `/members/register`
+
+Submit a new member registration. **Role:** `main_user` or public (via `/apply`)
+
+**Request Body:**
+```json
+{
+  "nameBn": "করিম মিয়া",
+  "nameEn": "Karim Mia",
+  "shopName": "করিম ইলেকট্রনিক্স",
+  "fatherName": "আব্দুল করিম",
+  "motherName": "ফাতেমা বেগম",
+  "mobile": "01712345678",
+  "village": "বানানী",
+  "wardNo": "5",
+  "union": "বানানী",
+  "upazila": "গুলশান",
+  "district": "ঢাকা",
+  "nid": "1234567890123",
+  "dob": "1990-05-15",
+  "nationality": "বাংলাদেশী",
+  "religion": "ইসলাম",
+  "bloodGroup": "B+",
+  "nomineeName": "রহিমা বেগম",
+  "nomineeRelation": "স্ত্রী",
+  "nomineeNid": "9876543210123",
+  "monthlyFee": 500
+}
+```
+
+**✅ 201 Created:**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Registration submitted. Pending admin approval.",
+  "data": {
+    "id": "mr-uuid",
+    "memberId": "MEM-ABC123",
+    "status": "pending",
+    "appliedAt": "2026-04-16T10:00:00Z"
+  }
+}
+```
+
+**❌ 400 Validation Error:**
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Validation failed",
+  "errors": [
+    { "field": "nid", "message": "NID must be 10-17 digits" },
+    { "field": "mobile", "message": "Valid Bangladesh mobile number required" }
+  ]
+}
+```
+
+---
+
+## POST `/members/register/upload-images`
+
+Upload profile image, NID front/back, and signature for a registration. **Role:** `main_user` or public
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Required |
+|-------|------|----------|
+| `registrationId` | string | Yes |
+| `profileImage` | File (jpg/png, max 2MB) | Yes |
+| `nidFront` | File (jpg/png, max 2MB) | Yes |
+| `nidBack` | File (jpg/png, max 2MB) | Yes |
+| `signature` | File (png, max 1MB) | Yes |
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Images uploaded",
+  "data": {
+    "profileImageUrl": "https://cdn.somiteehq.com/members/profile-uuid.jpg",
+    "nidFrontUrl": "https://cdn.somiteehq.com/members/nid-front-uuid.jpg",
+    "nidBackUrl": "https://cdn.somiteehq.com/members/nid-back-uuid.jpg",
+    "signatureUrl": "https://cdn.somiteehq.com/members/sig-uuid.png"
+  }
+}
+```
+
+---
+
+## POST `/members/register/draft`
+
+Auto-save registration as draft (partial data allowed). **Role:** `main_user` or public
+
+**Request Body:** Same schema as `/members/register` — all fields optional.
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Draft saved",
+  "data": {
+    "draftId": "draft-uuid",
+    "savedAt": "2026-04-16T10:00:00Z"
+  }
+}
+```
+
+---
+
+## GET `/members/register/draft/:draftId`
+
+Retrieve a saved draft. **Role:** `main_user` or public
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Draft retrieved",
+  "data": {
+    "draftId": "draft-uuid",
+    "nameBn": "করিম মিয়া",
+    "nameEn": "Karim Mia",
+    "shopName": "করিম ইলেকট্রনিক্স",
+    "savedAt": "2026-04-16T10:00:00Z"
   }
 }
 ```
@@ -352,14 +623,15 @@ Get current authenticated user profile.
 List all members with pagination. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
-| page | number | 1 | Page number |
-| limit | number | 10 | Items per page |
-| search | string | — | Search by name, phone, shop |
-| status | string | — | `active` or `inactive` |
-| sortBy | string | `name` | Sort field |
-| sortOrder | string | `asc` | `asc` or `desc` |
+| `page` | number | 1 | Page number |
+| `limit` | number | 10 | Items per page |
+| `search` | string | — | Search by name, phone, shop |
+| `status` | string | — | `active` \| `inactive` |
+| `sortBy` | string | `name` | Sort field |
+| `sortOrder` | string | `asc` | `asc` \| `desc` |
 
 **✅ 200 Success:**
 ```json
@@ -382,15 +654,11 @@ List all members with pagination. **Role:** `main_user`
       "monthlyFee": 500,
       "totalDue": 1000,
       "totalPaid": 5000,
+      "billingCycle": "monthly",
       "paymentLink": "https://pay.somiteehq.com/pay-karim-m1"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 45,
-    "totalPages": 5
-  }
+  "meta": { "page": 1, "limit": 10, "total": 45, "totalPages": 5 }
 }
 ```
 
@@ -420,6 +688,7 @@ Get single member details. **Role:** `main_user`
     "monthlyFee": 500,
     "totalDue": 1000,
     "totalPaid": 5000,
+    "billingCycle": "monthly",
     "paymentLink": "https://pay.somiteehq.com/pay-karim-m1",
     "ledger": [],
     "paymentHistory": [],
@@ -453,8 +722,7 @@ Create a new member. **Role:** `main_user`
   "address": "Shop 25, Banani Market",
   "nid": "1122334455",
   "monthlyFee": 500,
-  "password": "",
-  "photo": null
+  "billingCycle": "monthly"
 }
 ```
 
@@ -469,11 +737,9 @@ Create a new member. **Role:** `main_user`
     "name": "New Member",
     "shopName": "New Shop",
     "phone": "01700000000",
-    "address": "Shop 25, Banani Market",
-    "nid": "1122334455",
     "status": "active",
     "somiteeId": "s1",
-    "joinDate": "2026-04-11",
+    "joinDate": "2026-04-16",
     "monthlyFee": 500,
     "totalDue": 0,
     "totalPaid": 0,
@@ -508,7 +774,6 @@ Update member details. **Role:** `main_user`
   "name": "Karim Mia Updated",
   "shopName": "Karim Electronics Pro",
   "phone": "01712345678",
-  "address": "Shop 12A, Banani Market",
   "monthlyFee": 600,
   "status": "active"
 }
@@ -524,8 +789,6 @@ Update member details. **Role:** `main_user`
     "id": "m1",
     "name": "Karim Mia Updated",
     "shopName": "Karim Electronics Pro",
-    "phone": "01712345678",
-    "address": "Shop 12A, Banani Market",
     "monthlyFee": 600,
     "status": "active"
   }
@@ -567,13 +830,14 @@ Delete a member. **Role:** `main_user`
 Get member's ledger entries. **Role:** `main_user`, `member`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 20 |
-| dateFrom | string | — |
-| dateTo | string | — |
-| type | string | — |
+| `page` | number | 1 |
+| `limit` | number | 20 |
+| `dateFrom` | string (YYYY-MM-DD) | — |
+| `dateTo` | string (YYYY-MM-DD) | — |
+| `type` | string | — |
 
 **✅ 200 Success:**
 ```json
@@ -592,12 +856,7 @@ Get member's ledger entries. **Role:** `main_user`, `member`
       "reference": "t1"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 12,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 20, "total": 12, "totalPages": 1 }
 }
 ```
 
@@ -625,12 +884,7 @@ Get member's payment history. **Role:** `main_user`, `member`
       "receiptUrl": null
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 5,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 10, "total": 5, "totalPages": 1 }
 }
 ```
 
@@ -638,7 +892,7 @@ Get member's payment history. **Role:** `main_user`, `member`
 
 ## GET `/members/:id/due-history`
 
-Get member's due breakdown. **Role:** `main_user`, `member`
+Get member's due breakdown by month. **Role:** `main_user`, `member`
 
 **✅ 200 Success:**
 ```json
@@ -647,27 +901,10 @@ Get member's due breakdown. **Role:** `main_user`, `member`
   "statusCode": 200,
   "message": "Due history retrieved",
   "data": [
-    {
-      "month": "2024-12",
-      "fee": 500,
-      "paid": 500,
-      "due": 0,
-      "status": "paid"
-    },
-    {
-      "month": "2025-01",
-      "fee": 500,
-      "paid": 0,
-      "due": 500,
-      "status": "unpaid"
-    }
+    { "month": "2024-12", "fee": 500, "paid": 500, "due": 0, "status": "paid" },
+    { "month": "2025-01", "fee": 500, "paid": 0, "due": 500, "status": "unpaid" }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 12,
-    "total": 12,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 12, "total": 12, "totalPages": 1 }
 }
 ```
 
@@ -675,14 +912,16 @@ Get member's due breakdown. **Role:** `main_user`, `member`
 
 ## GET `/members/:id/report`
 
-Download member report. **Role:** `main_user`
+Download member report as PDF or CSV. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type | Options |
 |-------|------|---------|
-| format | string | `pdf`, `csv` |
+| `format` | string | `pdf`, `csv` |
 
-**✅ 200 Success (binary file download):**
+**✅ 200 Success:** Binary file download
+
 ```
 Content-Type: application/pdf
 Content-Disposition: attachment; filename="member-karim-mia-report.pdf"
@@ -694,10 +933,7 @@ Content-Disposition: attachment; filename="member-karim-mia-report.pdf"
 
 Upload member profile photo. **Role:** `main_user`
 
-**Request:** `multipart/form-data`
-| Field | Type |
-|-------|------|
-| photo | File (jpg/png, max 2MB) |
+**Request:** `multipart/form-data` — field: `photo` (jpg/png, max 2MB)
 
 **✅ 200 Success:**
 ```json
@@ -713,6 +949,120 @@ Upload member profile photo. **Role:** `main_user`
 
 ---
 
+# 📝 Member Requests
+
+## GET `/member-requests`
+
+List membership applications. **Role:** `main_user`
+
+**Query Params:**
+
+| Param | Type | Default |
+|-------|------|---------|
+| `page` | number | 1 |
+| `limit` | number | 10 |
+| `status` | string | — |
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Member requests retrieved",
+  "data": [
+    {
+      "id": "mr1",
+      "name": "Habib Rahman",
+      "shopName": "Habib Mobile",
+      "phone": "01611111111",
+      "address": "Shop 30, Banani Market",
+      "nid": "5555555555",
+      "photo": null,
+      "status": "pending",
+      "appliedAt": "2025-04-10",
+      "somiteeId": "s1"
+    }
+  ],
+  "meta": { "page": 1, "limit": 10, "total": 4, "totalPages": 1 }
+}
+```
+
+---
+
+## PATCH `/member-requests/:id/approve`
+
+Approve a membership request. Creates a member record. **Role:** `main_user`
+
+**Request Body:**
+```json
+{
+  "monthlyFee": 500,
+  "billingCycle": "monthly"
+}
+```
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Member request approved",
+  "data": {
+    "requestId": "mr1",
+    "memberId": "m-new",
+    "name": "Habib Rahman",
+    "status": "approved",
+    "approvedAt": "2026-04-16T10:00:00Z"
+  }
+}
+```
+
+---
+
+## PATCH `/member-requests/:id/reject`
+
+Reject a membership request. **Role:** `main_user`
+
+**Request Body:**
+```json
+{
+  "rejectionNote": "Incomplete documents"
+}
+```
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Member request rejected",
+  "data": {
+    "requestId": "mr4",
+    "status": "rejected",
+    "rejectionNote": "Incomplete documents",
+    "rejectedAt": "2026-04-16T10:00:00Z"
+  }
+}
+```
+
+---
+
+## DELETE `/member-requests/:id`
+
+Delete a membership request. **Role:** `main_user`
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Member request deleted",
+  "data": null
+}
+```
+
+---
+
 # 💰 Collections (Income)
 
 ## GET `/collections`
@@ -720,17 +1070,18 @@ Upload member profile photo. **Role:** `main_user`
 List all collections. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 10 |
-| search | string | — |
-| status | string | — |
-| method | string | — |
-| category | string | — |
-| dateFrom | string | — |
-| dateTo | string | — |
-| memberId | string | — |
+| `page` | number | 1 |
+| `limit` | number | 10 |
+| `search` | string | — |
+| `status` | string | — |
+| `method` | string | — |
+| `category` | string | — |
+| `dateFrom` | string (YYYY-MM-DD) | — |
+| `dateTo` | string (YYYY-MM-DD) | — |
+| `memberId` | string | — |
 
 **✅ 200 Success:**
 ```json
@@ -757,12 +1108,7 @@ List all collections. **Role:** `main_user`
       "approvedAt": "2024-12-01T10:05:00Z"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 50,
-    "totalPages": 5
-  }
+  "meta": { "page": 1, "limit": 10, "total": 50, "totalPages": 5 }
 }
 ```
 
@@ -816,7 +1162,7 @@ Record a new collection. **Role:** `main_user`
   "errors": [
     { "field": "memberId", "message": "Member is required" },
     { "field": "amount", "message": "Amount must be greater than 0" },
-    { "field": "transactionId", "message": "Transaction ID is required for bKash/Nagad/Bank payments" }
+    { "field": "transactionId", "message": "Transaction ID required for bKash/Nagad/Bank" }
   ]
 }
 ```
@@ -841,11 +1187,7 @@ Update a collection. **Role:** `main_user`
   "success": true,
   "statusCode": 200,
   "message": "Collection updated successfully",
-  "data": {
-    "id": "t1",
-    "amount": 600,
-    "note": "Updated amount"
-  }
+  "data": { "id": "t1", "amount": 600, "note": "Updated amount" }
 }
 ```
 
@@ -889,7 +1231,7 @@ Approve or reject a collection. **Role:** `main_user`
     "id": "t3",
     "status": "approved",
     "approvedBy": "uuid-123",
-    "approvedAt": "2026-04-11T14:30:00Z"
+    "approvedAt": "2026-04-16T14:30:00Z"
   }
 }
 ```
@@ -944,6 +1286,103 @@ SSLCommerz IPN callback (server-to-server).
 
 ---
 
+# ⚡ Advanced Collection (Quick Pay)
+
+Single-screen collection with member search, financial year month grid, and smart calculation.
+
+## POST `/collections/quick-pay`
+
+Record payment for multiple months at once. **Role:** `main_user`
+
+**Request Body:**
+```json
+{
+  "memberId": "m1",
+  "financialYear": "2024-2025",
+  "months": [12, 1, 2, 3],
+  "method": "bkash",
+  "transactionId": "BK55555",
+  "discount": 100
+}
+```
+
+**✅ 201 Created:**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Payment recorded. SMS confirmation sent.",
+  "data": {
+    "id": "mp-uuid",
+    "memberId": "m1",
+    "memberName": "Karim Mia",
+    "financialYear": "2024-2025",
+    "months": [12, 1, 2, 3],
+    "amount": 2000,
+    "lateFee": 0,
+    "discount": 100,
+    "totalPaid": 1900,
+    "method": "bkash",
+    "transactionId": "BK55555",
+    "date": "2026-04-16",
+    "status": "approved"
+  }
+}
+```
+
+**❌ 409 Duplicate:**
+```json
+{
+  "success": false,
+  "statusCode": 409,
+  "message": "Duplicate payment detected",
+  "errors": [
+    { "field": "months", "message": "Month 12 of 2024-2025 is already paid for member m1" }
+  ]
+}
+```
+
+---
+
+## GET `/collections/member-status/:memberId`
+
+Get paid/due month grid for a member in a financial year. **Role:** `main_user`
+
+**Query Params:**
+
+| Param | Type | Required |
+|-------|------|----------|
+| `financialYear` | string | Yes |
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Member payment status retrieved",
+  "data": {
+    "memberId": "m1",
+    "memberName": "Karim Mia",
+    "financialYear": "2024-2025",
+    "monthlyFee": 500,
+    "months": [
+      { "month": 6, "label": "June", "labelBn": "জুন", "status": "paid", "paidDate": "2024-07-01", "amount": 500 },
+      { "month": 7, "label": "July", "labelBn": "জুলাই", "status": "paid", "paidDate": "2024-07-01", "amount": 500 },
+      { "month": 12, "label": "December", "labelBn": "ডিসেম্বর", "status": "due", "paidDate": null, "amount": 0 },
+      { "month": 1, "label": "January", "labelBn": "জানুয়ারি", "status": "due", "paidDate": null, "amount": 0 }
+    ],
+    "summary": {
+      "totalPaid": 3000,
+      "totalDue": 3000,
+      "paidMonths": 6,
+      "dueMonths": 6
+    }
+  }
+}
+```
+
+---
+
 # 💸 Expenses
 
 ## GET `/expenses`
@@ -951,15 +1390,16 @@ SSLCommerz IPN callback (server-to-server).
 List all expenses. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 10 |
-| category | string | — |
-| dateFrom | string | — |
-| dateTo | string | — |
-| amountMin | number | — |
-| amountMax | number | — |
+| `page` | number | 1 |
+| `limit` | number | 10 |
+| `category` | string | — |
+| `dateFrom` | string (YYYY-MM-DD) | — |
+| `dateTo` | string (YYYY-MM-DD) | — |
+| `amountMin` | number | — |
+| `amountMax` | number | — |
 
 **✅ 200 Success:**
 ```json
@@ -970,8 +1410,6 @@ List all expenses. **Role:** `main_user`
   "data": [
     {
       "id": "t5",
-      "memberId": null,
-      "memberName": null,
       "type": "expense",
       "amount": 2000,
       "date": "2024-12-05",
@@ -983,12 +1421,7 @@ List all expenses. **Role:** `main_user`
       "createdAt": "2024-12-05T09:00:00Z"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 20,
-    "totalPages": 2
-  }
+  "meta": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
 }
 ```
 
@@ -1035,18 +1468,21 @@ Record a new expense. **Role:** `main_user`
 
 Update an expense. **Role:** `main_user`
 
+**Request Body:**
+```json
+{
+  "amount": 2500,
+  "note": "Market cleaning - updated"
+}
+```
+
 **✅ 200 Success:**
 ```json
 {
   "success": true,
   "statusCode": 200,
   "message": "Expense updated successfully",
-  "data": {
-    "id": "t5",
-    "amount": 2500,
-    "category": "Maintenance",
-    "note": "Market cleaning - updated"
-  }
+  "data": { "id": "t5", "amount": 2500, "category": "Maintenance", "note": "Market cleaning - updated" }
 }
 ```
 
@@ -1078,17 +1514,7 @@ Get all expense categories. **Role:** `main_user`
   "success": true,
   "statusCode": 200,
   "message": "Categories retrieved",
-  "data": [
-    "Maintenance",
-    "Electricity",
-    "Water",
-    "Security",
-    "Cleaning",
-    "Repair",
-    "Office Supplies",
-    "Transport",
-    "Other"
-  ]
+  "data": ["Maintenance", "Electricity", "Water", "Security", "Cleaning", "Repair", "Office Supplies", "Transport", "Other"]
 }
 ```
 
@@ -1101,14 +1527,15 @@ Get all expense categories. **Role:** `main_user`
 Get somitee-wide ledger. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 20 |
-| dateFrom | string | — |
-| dateTo | string | — |
-| type | string | — |
-| memberId | string | — |
+| `page` | number | 1 |
+| `limit` | number | 20 |
+| `dateFrom` | string (YYYY-MM-DD) | — |
+| `dateTo` | string (YYYY-MM-DD) | — |
+| `type` | string | — |
+| `memberId` | string | — |
 
 **✅ 200 Success:**
 ```json
@@ -1129,27 +1556,9 @@ Get somitee-wide ledger. **Role:** `main_user`
       "referenceId": "t1",
       "memberId": "m1",
       "memberName": "Karim Mia"
-    },
-    {
-      "id": "led-2",
-      "date": "2024-12-05",
-      "description": "Market cleaning",
-      "type": "expense",
-      "debit": 2000,
-      "credit": 0,
-      "balance": -1500,
-      "referenceType": "expense",
-      "referenceId": "t5",
-      "memberId": null,
-      "memberName": null
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 50,
-    "totalPages": 3
-  }
+  "meta": { "page": 1, "limit": 20, "total": 50, "totalPages": 3 }
 }
 ```
 
@@ -1157,13 +1566,14 @@ Get somitee-wide ledger. **Role:** `main_user`
 
 ## GET `/ledger/summary`
 
-Get ledger summary. **Role:** `main_user`
+Get ledger summary for a date range. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type |
 |-------|------|
-| dateFrom | string |
-| dateTo | string |
+| `dateFrom` | string (YYYY-MM-DD) |
+| `dateTo` | string (YYYY-MM-DD) |
 
 **✅ 200 Success:**
 ```json
@@ -1177,10 +1587,7 @@ Get ledger summary. **Role:** `main_user`
     "netBalance": 18000,
     "openingBalance": 0,
     "closingBalance": 18000,
-    "period": {
-      "from": "2024-12-01",
-      "to": "2024-12-31"
-    }
+    "period": { "from": "2024-12-01", "to": "2024-12-31" }
   }
 }
 ```
@@ -1194,12 +1601,13 @@ Get ledger summary. **Role:** `main_user`
 Get cash book entries. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 20 |
-| dateFrom | string | — |
-| dateTo | string | — |
+| `page` | number | 1 |
+| `limit` | number | 20 |
+| `dateFrom` | string (YYYY-MM-DD) | — |
+| `dateTo` | string (YYYY-MM-DD) | — |
 
 **✅ 200 Success:**
 ```json
@@ -1219,12 +1627,7 @@ Get cash book entries. **Role:** `main_user`
       "referenceId": "t1"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 30,
-    "totalPages": 2
-  }
+  "meta": { "page": 1, "limit": 20, "total": 30, "totalPages": 2 }
 }
 ```
 
@@ -1244,10 +1647,7 @@ Get cash book summary. **Role:** `main_user`
     "totalCashIn": 15000,
     "totalCashOut": 5000,
     "cashInHand": 10000,
-    "period": {
-      "from": "2024-12-01",
-      "to": "2024-12-31"
-    }
+    "period": { "from": "2024-12-01", "to": "2024-12-31" }
   }
 }
 ```
@@ -1278,12 +1678,7 @@ List all bank accounts. **Role:** `main_user`
       "createdAt": "2024-01-01T00:00:00Z"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 2,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 10, "total": 2, "totalPages": 1 }
 }
 ```
 
@@ -1333,11 +1728,7 @@ Update bank account details. **Role:** `main_user`
   "success": true,
   "statusCode": 200,
   "message": "Bank account updated successfully",
-  "data": {
-    "id": "b1",
-    "bankName": "Sonali Bank",
-    "accountName": "Banani Market Somitee Updated"
-  }
+  "data": { "id": "b1", "bankName": "Sonali Bank", "accountName": "Updated Name" }
 }
 ```
 
@@ -1494,16 +1885,17 @@ Transfer between bank accounts. **Role:** `main_user`
 
 ## GET `/bank-accounts/:id/transactions`
 
-Get bank account transactions (Bank Ledger). **Role:** `main_user`
+Get bank account transactions (bank ledger). **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 20 |
-| type | string | — |
-| dateFrom | string | — |
-| dateTo | string | — |
+| `page` | number | 1 |
+| `limit` | number | 20 |
+| `type` | string | — |
+| `dateFrom` | string (YYYY-MM-DD) | — |
+| `dateTo` | string (YYYY-MM-DD) | — |
 
 **✅ 200 Success:**
 ```json
@@ -1523,12 +1915,7 @@ Get bank account transactions (Bank Ledger). **Role:** `main_user`
       "balanceAfter": 75000
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 15,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 20, "total": 15, "totalPages": 1 }
 }
 ```
 
@@ -1536,16 +1923,18 @@ Get bank account transactions (Bank Ledger). **Role:** `main_user`
 
 ## GET `/bank-accounts/:id/statement`
 
-Download bank statement. **Role:** `main_user`
+Download bank statement as PDF. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type |
 |-------|------|
-| dateFrom | string |
-| dateTo | string |
-| format | string |
+| `dateFrom` | string (YYYY-MM-DD) |
+| `dateTo` | string (YYYY-MM-DD) |
+| `format` | string (`pdf` \| `csv`) |
 
-**✅ 200 Success (binary file):**
+**✅ 200 Success:** Binary file download
+
 ```
 Content-Type: application/pdf
 Content-Disposition: attachment; filename="bank-statement-sonali-bank-dec-2024.pdf"
@@ -1560,12 +1949,13 @@ Content-Disposition: attachment; filename="bank-statement-sonali-bank-dec-2024.p
 List payments pending verification. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 10 |
-| status | string | `pending` |
-| method | string | — |
+| `page` | number | 1 |
+| `limit` | number | 10 |
+| `status` | string | `pending` |
+| `method` | string | — |
 
 **✅ 200 Success:**
 ```json
@@ -1586,12 +1976,7 @@ List payments pending verification. **Role:** `main_user`
       "category": "Monthly Fee"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 5,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 10, "total": 5, "totalPages": 1 }
 }
 ```
 
@@ -1599,7 +1984,7 @@ List payments pending verification. **Role:** `main_user`
 
 ## PATCH `/payments/:id/verify`
 
-Verify (approve/reject) a payment. **Role:** `main_user`
+Approve or reject a payment. **Role:** `main_user`
 
 **Request Body:**
 ```json
@@ -1619,7 +2004,7 @@ Verify (approve/reject) a payment. **Role:** `main_user`
     "id": "t3",
     "status": "approved",
     "verifiedBy": "uuid-123",
-    "verifiedAt": "2026-04-11T15:00:00Z",
+    "verifiedAt": "2026-04-16T15:00:00Z",
     "note": "Verified with Nagad statement"
   }
 }
@@ -1634,11 +2019,12 @@ Verify (approve/reject) a payment. **Role:** `main_user`
 Income vs Expense report. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type |
 |-------|------|
-| dateFrom | string |
-| dateTo | string |
-| groupBy | string |
+| `dateFrom` | string (YYYY-MM-DD) |
+| `dateTo` | string (YYYY-MM-DD) |
+| `groupBy` | string (`daily` \| `monthly` \| `yearly`) |
 
 **✅ 200 Success:**
 ```json
@@ -1647,11 +2033,7 @@ Income vs Expense report. **Role:** `main_user`
   "statusCode": 200,
   "message": "Income vs Expense report generated",
   "data": {
-    "summary": {
-      "totalIncome": 25000,
-      "totalExpense": 7000,
-      "netProfit": 18000
-    },
+    "summary": { "totalIncome": 25000, "totalExpense": 7000, "netProfit": 18000 },
     "breakdown": [
       { "month": "2024-12", "income": 25000, "expense": 7000, "net": 18000 }
     ],
@@ -1672,6 +2054,13 @@ Income vs Expense report. **Role:** `main_user`
 ## GET `/reports/cash-flow`
 
 Cash flow report. **Role:** `main_user`
+
+**Query Params:**
+
+| Param | Type |
+|-------|------|
+| `dateFrom` | string (YYYY-MM-DD) |
+| `dateTo` | string (YYYY-MM-DD) |
 
 **✅ 200 Success:**
 ```json
@@ -1699,10 +2088,11 @@ Cash flow report. **Role:** `main_user`
 Member due report. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type |
 |-------|------|
-| status | string |
-| sortBy | string |
+| `status` | string (`all` \| `overdue`) |
+| `sortBy` | string (`totalDue` \| `monthsOverdue` \| `name`) |
 
 **✅ 200 Success:**
 ```json
@@ -1722,15 +2112,6 @@ Member due report. **Role:** `main_user`
         "totalDue": 1500,
         "lastPaymentDate": "2024-10-15",
         "monthsOverdue": 3
-      },
-      {
-        "memberId": "m1",
-        "name": "Karim Mia",
-        "shopName": "Karim Electronics",
-        "phone": "01712345678",
-        "totalDue": 1000,
-        "lastPaymentDate": "2024-12-01",
-        "monthsOverdue": 1
       }
     ]
   }
@@ -1763,21 +2144,61 @@ Bank vs Cash comparison report. **Role:** `main_user`
 
 ---
 
-## GET `/reports/export`
+## GET `/reports/collection`
 
-Export any report. **Role:** `main_user`
+Collection report with filters. **Role:** `main_user`
 
 **Query Params:**
+
+| Param | Type |
+|-------|------|
+| `dateFrom` | string (YYYY-MM-DD) |
+| `dateTo` | string (YYYY-MM-DD) |
+| `method` | string |
+| `status` | string |
+
+**✅ 200 Success:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Collection report generated",
+  "data": {
+    "totalCollected": 25000,
+    "totalPending": 1500,
+    "byMethod": [
+      { "method": "cash", "amount": 10000, "count": 15 },
+      { "method": "bkash", "amount": 8000, "count": 10 },
+      { "method": "nagad", "amount": 4000, "count": 5 },
+      { "method": "bank", "amount": 3000, "count": 3 }
+    ],
+    "byCategory": [
+      { "category": "Monthly Fee", "amount": 22500 },
+      { "category": "Late Fee", "amount": 2500 }
+    ]
+  }
+}
+```
+
+---
+
+## GET `/reports/export`
+
+Export any report as PDF, CSV, or Excel. **Role:** `main_user`
+
+**Query Params:**
+
 | Param | Type | Options |
 |-------|------|---------|
-| type | string | `income-expense`, `cash-flow`, `member-dues`, `bank-cash` |
-| format | string | `pdf`, `csv`, `excel` |
-| dateFrom | string | — |
-| dateTo | string | — |
-| includeLogo | boolean | `true` |
-| includeSignature | boolean | `true` |
+| `type` | string | `income-expense`, `cash-flow`, `member-dues`, `bank-cash`, `collection` |
+| `format` | string | `pdf`, `csv`, `excel` |
+| `dateFrom` | string (YYYY-MM-DD) | — |
+| `dateTo` | string (YYYY-MM-DD) | — |
+| `includeLogo` | boolean | `true` |
+| `includeSignature` | boolean | `true` |
 
-**✅ 200 Success (binary file):**
+**✅ 200 Success:** Binary file download
+
 ```
 Content-Type: application/pdf
 Content-Disposition: attachment; filename="income-expense-report-dec-2024.pdf"
@@ -1820,15 +2241,14 @@ List SMS templates. **Role:** `main_user`
 
 ## POST `/sms/send`
 
-Send SMS to members. **Role:** `main_user`
+Send SMS using a template to selected members. **Role:** `main_user`
 
 **Request Body:**
 ```json
 {
   "templateId": "sms-t2",
   "recipientType": "selected",
-  "memberIds": ["m1", "m4"],
-  "customMessage": null
+  "memberIds": ["m1", "m4"]
 }
 ```
 
@@ -1853,7 +2273,7 @@ Send SMS to members. **Role:** `main_user`
 
 ## POST `/sms/send-custom`
 
-Send custom SMS. **Role:** `main_user`
+Send custom SMS message. **Role:** `main_user`
 
 **Request Body:**
 ```json
@@ -1869,11 +2289,7 @@ Send custom SMS. **Role:** `main_user`
   "success": true,
   "statusCode": 200,
   "message": "SMS sent to 45 members",
-  "data": {
-    "sent": 43,
-    "failed": 2,
-    "results": []
-  }
+  "data": { "sent": 43, "failed": 2, "results": [] }
 }
 ```
 
@@ -1900,12 +2316,7 @@ Get SMS send history. **Role:** `main_user`
       "cost": 2.5
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 20,
-    "totalPages": 2
-  }
+  "meta": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
 }
 ```
 
@@ -1987,11 +2398,7 @@ Update user profile. **Role:** `all`
   "success": true,
   "statusCode": 200,
   "message": "Profile updated successfully",
-  "data": {
-    "id": "uuid-123",
-    "name": "Rahim Uddin Updated",
-    "phone": "01711111112"
-  }
+  "data": { "id": "uuid-123", "name": "Rahim Uddin Updated", "phone": "01711111112" }
 }
 ```
 
@@ -2033,96 +2440,6 @@ Change password. **Role:** `all`
 
 ---
 
-## GET `/settings/company`
-
-Get company settings. **Role:** `main_user`
-
-**✅ 200 Success:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Company settings retrieved",
-  "data": {
-    "companyName": "Banani Market Somitee",
-    "logo": "https://cdn.somiteehq.com/logos/s1.png",
-    "address": "Banani, Dhaka-1213",
-    "phone": "01711111111",
-    "email": "info@bananisomitee.com",
-    "signatureImage": "https://cdn.somiteehq.com/signatures/s1.png"
-  }
-}
-```
-
----
-
-## PUT `/settings/company`
-
-Update company settings. **Role:** `main_user`
-
-**Request Body:**
-```json
-{
-  "companyName": "Banani Market Somitee",
-  "address": "Banani Road 11, Dhaka-1213",
-  "phone": "01711111111"
-}
-```
-
-**✅ 200 Success:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Company settings updated successfully",
-  "data": {
-    "companyName": "Banani Market Somitee",
-    "address": "Banani Road 11, Dhaka-1213",
-    "phone": "01711111111"
-  }
-}
-```
-
----
-
-## POST `/settings/company/upload-logo`
-
-Upload company logo. **Role:** `main_user`
-
-**Request:** `multipart/form-data`
-
-**✅ 200 Success:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Logo uploaded successfully",
-  "data": {
-    "logoUrl": "https://cdn.somiteehq.com/logos/s1-updated.png"
-  }
-}
-```
-
----
-
-## POST `/settings/company/upload-signature`
-
-Upload signature image. **Role:** `main_user`
-
-**✅ 200 Success:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Signature uploaded successfully",
-  "data": {
-    "signatureUrl": "https://cdn.somiteehq.com/signatures/s1-updated.png"
-  }
-}
-```
-
----
-
 ## GET `/settings/print-template`
 
 Get print layout template. **Role:** `main_user`
@@ -2155,18 +2472,22 @@ Get print layout template. **Role:** `main_user`
 
 Update print layout template. **Role:** `main_user`
 
+**Request Body:**
+```json
+{
+  "showLogo": true,
+  "showSignature": false,
+  "marginTop": 25
+}
+```
+
 **✅ 200 Success:**
 ```json
 {
   "success": true,
   "statusCode": 200,
   "message": "Print template updated successfully",
-  "data": {
-    "showLogo": true,
-    "showCompanyName": true,
-    "showSignature": false,
-    "marginTop": 25
-  }
+  "data": { "showLogo": true, "showSignature": false, "marginTop": 25 }
 }
 ```
 
@@ -2179,13 +2500,14 @@ Update print layout template. **Role:** `main_user`
 List all somitees. **Role:** `super_admin`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 10 |
-| search | string | — |
-| status | string | — |
-| plan | string | — |
+| `page` | number | 1 |
+| `limit` | number | 10 |
+| `search` | string | — |
+| `status` | string | — |
+| `plan` | string | — |
 
 **✅ 200 Success:**
 ```json
@@ -2196,24 +2518,19 @@ List all somitees. **Role:** `super_admin`
   "data": [
     {
       "id": "s1",
-      "name": "Banani Market Somitee",
+      "name": "বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি",
       "managerName": "Rahim Uddin",
-      "email": "rahim@banani.com",
+      "email": "rahim@muradpur.com",
       "phone": "01711111111",
       "totalMembers": 45,
       "status": "active",
       "plan": "premium",
       "createdAt": "2024-01-01",
       "monthlyRevenue": 22500,
-      "lastActivity": "2026-04-10T18:00:00Z"
+      "lastActivity": "2026-04-16T18:00:00Z"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 4,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 10, "total": 4, "totalPages": 1 }
 }
 ```
 
@@ -2231,9 +2548,9 @@ Get somitee details. **Role:** `super_admin`
   "message": "Somitee details retrieved",
   "data": {
     "id": "s1",
-    "name": "Banani Market Somitee",
+    "name": "বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি",
     "managerName": "Rahim Uddin",
-    "email": "rahim@banani.com",
+    "email": "rahim@muradpur.com",
     "phone": "01711111111",
     "totalMembers": 45,
     "status": "active",
@@ -2272,12 +2589,7 @@ Create a new somitee. **Role:** `super_admin`
   "success": true,
   "statusCode": 201,
   "message": "Somitee created successfully",
-  "data": {
-    "id": "s-new",
-    "name": "New Market Somitee",
-    "status": "active",
-    "plan": "basic"
-  }
+  "data": { "id": "s-new", "name": "New Market Somitee", "status": "active", "plan": "basic" }
 }
 ```
 
@@ -2293,10 +2605,7 @@ Update somitee. **Role:** `super_admin`
   "success": true,
   "statusCode": 200,
   "message": "Somitee updated successfully",
-  "data": {
-    "id": "s1",
-    "name": "Banani Market Somitee Updated"
-  }
+  "data": { "id": "s1", "name": "Updated Somitee Name" }
 }
 ```
 
@@ -2323,7 +2632,7 @@ Block/unblock a somitee. **Role:** `super_admin`
   "data": {
     "id": "s3",
     "status": "blocked",
-    "blockedAt": "2026-04-11T16:00:00Z",
+    "blockedAt": "2026-04-16T16:00:00Z",
     "reason": "Subscription expired"
   }
 }
@@ -2347,7 +2656,7 @@ Delete a somitee. **Role:** `super_admin`
 
 ---
 
-# 📊 Platform Analytics (Super Admin)
+# 📈 Platform Analytics (Super Admin)
 
 ## GET `/admin/analytics/overview`
 
@@ -2390,8 +2699,7 @@ Platform revenue analytics. **Role:** `super_admin`
     "totalRevenue": 150000,
     "monthly": [
       { "month": "2024-07", "revenue": 15000 },
-      { "month": "2024-08", "revenue": 18000 },
-      { "month": "2024-09", "revenue": 20000 }
+      { "month": "2024-08", "revenue": 18000 }
     ],
     "byPlan": [
       { "plan": "premium", "somitees": 2, "revenue": 20000 },
@@ -2404,7 +2712,7 @@ Platform revenue analytics. **Role:** `super_admin`
 
 ---
 
-# 💬 Subscriptions (Super Admin)
+# 💳 Subscriptions (Super Admin)
 
 ## GET `/admin/subscriptions/plans`
 
@@ -2454,10 +2762,11 @@ List subscription plans. **Role:** `super_admin`
 List FAQs. **Role:** `all`
 
 **Query Params:**
+
 | Param | Type |
 |-------|------|
-| category | string |
-| search | string |
+| `category` | string |
+| `search` | string |
 
 **✅ 200 Success:**
 ```json
@@ -2469,16 +2778,11 @@ List FAQs. **Role:** `all`
     {
       "id": "f1",
       "question": "How do I add a new member?",
-      "answer": "Go to Members page and click 'Add Member' button. Fill in the required fields and submit.",
+      "answer": "Go to Member Registration and fill in the two-step form.",
       "category": "Members"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 5,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 20, "total": 5, "totalPages": 1 }
 }
 ```
 
@@ -2524,11 +2828,7 @@ Update FAQ. **Role:** `super_admin`, `main_user`
   "success": true,
   "statusCode": 200,
   "message": "FAQ updated successfully",
-  "data": {
-    "id": "f1",
-    "question": "How do I add a new member?",
-    "answer": "Updated answer here."
-  }
+  "data": { "id": "f1", "question": "How do I add a new member?", "answer": "Updated answer." }
 }
 ```
 
@@ -2569,16 +2869,11 @@ Get user notifications. **Role:** `all`
       "title": "Payment Received",
       "message": "Karim Mia paid ৳500 via bKash",
       "read": false,
-      "createdAt": "2026-04-11T10:00:00Z",
+      "createdAt": "2026-04-16T10:00:00Z",
       "actionUrl": "/collections"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 3,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 20, "total": 3, "totalPages": 1 }
 }
 ```
 
@@ -2602,7 +2897,7 @@ Mark notification as read. **Role:** `all`
 
 ## PATCH `/notifications/read-all`
 
-Mark all as read. **Role:** `all`
+Mark all notifications as read. **Role:** `all`
 
 **✅ 200 Success:**
 ```json
@@ -2623,14 +2918,15 @@ Mark all as read. **Role:** `all`
 Get activity log. **Role:** `main_user`, `super_admin`
 
 **Query Params:**
+
 | Param | Type | Default |
 |-------|------|---------|
-| page | number | 1 |
-| limit | number | 20 |
-| action | string | — |
-| userId | string | — |
-| dateFrom | string | — |
-| dateTo | string | — |
+| `page` | number | 1 |
+| `limit` | number | 20 |
+| `action` | string | — |
+| `userId` | string | — |
+| `dateFrom` | string (YYYY-MM-DD) | — |
+| `dateTo` | string (YYYY-MM-DD) | — |
 
 **✅ 200 Success:**
 ```json
@@ -2647,15 +2943,10 @@ Get activity log. **Role:** `main_user`, `super_admin`
       "description": "Created member Karim Mia",
       "metadata": { "memberId": "m1" },
       "ipAddress": "103.12.45.67",
-      "createdAt": "2026-04-11T10:30:00Z"
+      "createdAt": "2026-04-16T10:30:00Z"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 100,
-    "totalPages": 5
-  }
+  "meta": { "page": 1, "limit": 20, "total": 100, "totalPages": 5 }
 }
 ```
 
@@ -2665,13 +2956,14 @@ Get activity log. **Role:** `main_user`, `super_admin`
 
 ## GET `/search`
 
-Global search across entities. **Role:** `main_user`
+Global search across all entities. **Role:** `main_user`
 
 **Query Params:**
+
 | Param | Type |
 |-------|------|
-| q | string |
-| limit | number |
+| `q` | string (required) |
+| `limit` | number |
 
 **✅ 200 Success:**
 ```json
@@ -2693,7 +2985,7 @@ Global search across entities. **Role:** `main_user`
 
 ---
 
-# 🌐 Dashboard Stats
+# 🌐 Dashboard
 
 ## GET `/dashboard/stats`
 
@@ -2746,314 +3038,8 @@ Get member dashboard stats. **Role:** `member`
 
 ---
 
-## 14. Company Settings
-
-### GET /company/settings
-
-Get company branding settings.
-
-**Response:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Company settings retrieved",
-  "data": {
-    "name": "বানানী মার্কেট সমিতি",
-    "logo": "https://cdn.somiteehq.com/logos/s1.png",
-    "address": "বানানী, ঢাকা-১২১৩",
-    "phone": "01711111111",
-    "email": "info@bananimarket.com",
-    "signature": "https://cdn.somiteehq.com/signatures/s1.png"
-  }
-}
-```
-
-### PUT /company/settings
-
-Update company branding settings (used in forms, PDFs, reports).
-
-**Request Body:**
-```json
-{
-  "name": "বানানী মার্কেট সমিতি",
-  "address": "বানানী, ঢাকা-১২১৩",
-  "phone": "01711111111",
-  "email": "info@bananimarket.com"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Company settings updated",
-  "data": {
-    "name": "বানানী মার্কেট সমিতি",
-    "logo": "https://cdn.somiteehq.com/logos/s1.png",
-    "address": "বানানী, ঢাকা-১২১৩",
-    "phone": "01711111111",
-    "email": "info@bananimarket.com",
-    "signature": "https://cdn.somiteehq.com/signatures/s1.png"
-  }
-}
-```
-
-### POST /company/upload-logo
-
-Upload company logo.
-
-**Request:** `multipart/form-data` with `logo` file field.
-
-**Response:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Logo uploaded",
-  "data": {
-    "logoUrl": "https://cdn.somiteehq.com/logos/s1-v2.png"
-  }
-}
-```
-
-### POST /company/upload-signature
-
-Upload company signature image.
-
-**Request:** `multipart/form-data` with `signature` file field.
-
-**Response:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Signature uploaded",
-  "data": {
-    "signatureUrl": "https://cdn.somiteehq.com/signatures/s1-v2.png"
-  }
-}
-```
-
----
-
-## 15. Member Registration (Extended)
-
-### POST /members/register
-
-Public member registration with extended fields, NID images, and signature.
-
-**Request Body:**
-```json
-{
-  "nameBn": "করিম মিয়া",
-  "nameEn": "Karim Mia",
-  "shopName": "করিম ইলেকট্রনিক্স",
-  "fatherName": "আব্দুল করিম",
-  "motherName": "ফাতেমা বেগম",
-  "mobile": "01712345678",
-  "village": "বানানী",
-  "wardNo": "5",
-  "union": "বানানী",
-  "upazila": "গুলশান",
-  "district": "ঢাকা",
-  "nid": "1234567890123",
-  "dob": "1990-05-15",
-  "nationality": "বাংলাদেশী",
-  "religion": "ইসলাম",
-  "bloodGroup": "B+",
-  "nomineeName": "রহিমা বেগম",
-  "nomineeRelation": "স্ত্রী",
-  "nomineeNid": "9876543210123"
-}
-```
-
-**Success Response:**
-```json
-{
-  "success": true,
-  "statusCode": 201,
-  "message": "Registration submitted. Pending admin approval.",
-  "data": {
-    "id": "mr-uuid",
-    "memberId": "MEM-ABC123",
-    "status": "pending",
-    "appliedAt": "2026-04-16T10:00:00Z"
-  }
-}
-```
-
-**Error Response:**
-```json
-{
-  "success": false,
-  "statusCode": 400,
-  "message": "Validation failed",
-  "errors": [
-    { "field": "nid", "message": "NID must be 10-17 digits" },
-    { "field": "mobile", "message": "Valid Bangladesh mobile number required" }
-  ]
-}
-```
-
-### POST /members/register/upload-images
-
-Upload profile image, NID front/back, and signature for a registration.
-
-**Request:** `multipart/form-data`
-- `registrationId` (string)
-- `profileImage` (file)
-- `nidFront` (file)
-- `nidBack` (file)
-- `signature` (file)
-
-**Response:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Images uploaded",
-  "data": {
-    "profileImageUrl": "https://cdn.somiteehq.com/members/profile-uuid.jpg",
-    "nidFrontUrl": "https://cdn.somiteehq.com/members/nid-front-uuid.jpg",
-    "nidBackUrl": "https://cdn.somiteehq.com/members/nid-back-uuid.jpg",
-    "signatureUrl": "https://cdn.somiteehq.com/members/sig-uuid.png"
-  }
-}
-```
-
-### POST /members/register/draft
-
-Save registration as draft (auto-save).
-
-**Request Body:** Same as `/members/register` (partial data allowed).
-
-**Response:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Draft saved",
-  "data": {
-    "draftId": "draft-uuid",
-    "savedAt": "2026-04-16T10:00:00Z"
-  }
-}
-```
-
-### GET /members/register/draft/:draftId
-
-Retrieve a saved draft.
-
-**Response:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Draft retrieved",
-  "data": {
-    "draftId": "draft-uuid",
-    "nameBn": "করিম মিয়া",
-    "nameEn": "Karim Mia",
-    "shopName": "করিম ইলেকট্রনিক্স",
-    "savedAt": "2026-04-16T10:00:00Z"
-  }
-}
-```
-
----
-
-## 16. Collection (Single-Screen API)
-
-### POST /collections/quick-pay
-
-Single-screen collection with member search, month grid, and payment method.
-
-**Request Body:**
-```json
-{
-  "memberId": "m1",
-  "financialYear": "2024-2025",
-  "months": [12, 1, 2, 3],
-  "method": "bkash",
-  "transactionId": "BK55555",
-  "discount": 100
-}
-```
-
-**Success Response:**
-```json
-{
-  "success": true,
-  "statusCode": 201,
-  "message": "Payment recorded. SMS confirmation sent.",
-  "data": {
-    "id": "mp-uuid",
-    "memberId": "m1",
-    "memberName": "Karim Mia",
-    "financialYear": "2024-2025",
-    "months": [12, 1, 2, 3],
-    "amount": 2000,
-    "lateFee": 0,
-    "discount": 100,
-    "totalPaid": 1900,
-    "method": "bkash",
-    "transactionId": "BK55555",
-    "date": "2026-04-16",
-    "status": "approved"
-  }
-}
-```
-
-**Duplicate Error:**
-```json
-{
-  "success": false,
-  "statusCode": 409,
-  "message": "Duplicate payment detected",
-  "errors": [
-    { "field": "months", "message": "Month 12 of 2024-2025 is already paid for member m1" }
-  ]
-}
-```
-
-### GET /collections/member-status/:memberId
-
-Get paid/due month grid for a member in a financial year.
-
-**Query:** `?financialYear=2024-2025`
-
-**Response:**
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "Member payment status retrieved",
-  "data": {
-    "memberId": "m1",
-    "memberName": "Karim Mia",
-    "financialYear": "2024-2025",
-    "monthlyFee": 500,
-    "months": [
-      { "month": 6, "label": "June", "labelBn": "জুন", "status": "paid", "paidDate": "2024-07-01", "amount": 500 },
-      { "month": 7, "label": "July", "labelBn": "জুলাই", "status": "paid", "paidDate": "2024-07-01", "amount": 500 },
-      { "month": 12, "label": "December", "labelBn": "ডিসেম্বর", "status": "due", "paidDate": null, "amount": 0 },
-      { "month": 1, "label": "January", "labelBn": "জানুয়ারি", "status": "due", "paidDate": null, "amount": 0 }
-    ],
-    "summary": {
-      "totalPaid": 3000,
-      "totalDue": 3000,
-      "paidMonths": 6,
-      "dueMonths": 6
-    }
-  }
-}
-```
-
----
-
-> **Document Version:** 1.1.0
+> **Document Version:** 2.0.0
 > **Last Updated:** 2026-04-16
-> **Total Endpoints:** 75+
+> **Total Endpoints:** 80+
+> **Total Modules:** 24
 > **Contact:** api@somiteehq.com
