@@ -35,7 +35,6 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.globalAnalytics', path: '/analytics', icon: BarChart3, roles: ['super_admin'] },
   { labelKey: 'nav.globalSettings', path: '/global-settings', icon: Globe, roles: ['super_admin'] },
   { labelKey: 'nav.memberRegistration', path: '/member-registration', icon: UserPlus, roles: ['main_user'] },
-  { labelKey: 'nav.members', path: '/members', icon: Users, roles: ['main_user'] },
   { labelKey: 'nav.memberRequests', path: '/member-requests', icon: UserCheck, roles: ['main_user'], badge: '2' },
   { labelKey: 'nav.collections', path: '/collections', icon: Wallet, roles: ['main_user', 'member'] },
   { labelKey: 'nav.expenses', path: '/expenses', icon: Receipt, roles: ['main_user'] },
