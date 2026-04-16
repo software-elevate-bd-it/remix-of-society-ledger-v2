@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
+import { useCompanyStore } from '@/stores/companyStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const login = useAuthStore((s) => s.login);
+  const { company } = useCompanyStore();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
@@ -34,10 +36,14 @@ export default function LoginPage() {
         <CardHeader className="text-center space-y-2">
           <div className="flex justify-center">
             <div className="p-3 rounded-xl bg-primary/10">
-              <ShieldCheck className="h-8 w-8 text-primary" />
+              {company.logo ? (
+                <img src={company.logo} alt={company.name} className="h-8 w-8 object-contain rounded" />
+              ) : (
+                <ShieldCheck className="h-8 w-8 text-primary" />
+              )}
             </div>
           </div>
-          <CardTitle className="font-heading text-2xl">{t('auth.loginTitle')}</CardTitle>
+          <CardTitle className="font-heading text-2xl">{company.name}</CardTitle>
           <CardDescription>{t('auth.loginSubtitle')}</CardDescription>
           <Button variant="ghost" size="sm" onClick={toggleLang} className="mx-auto">
             <Globe className="h-4 w-4 mr-1" /> {i18n.language === 'en' ? t('common.bangla') : t('common.english')}
