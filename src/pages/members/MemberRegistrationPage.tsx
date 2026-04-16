@@ -101,9 +101,27 @@ export default function MemberRegistrationPage() {
     toast.success(t('registration.draftSaved'));
   };
 
-  const handleSubmit = (_data: RegistrationData) => {
+  const handleSubmit = (data: RegistrationData) => {
+    // Save member to localStorage registry
+    const existingMembers = JSON.parse(localStorage.getItem('registeredMembers') || '[]');
+    const newMember = {
+      ...data,
+      memberId,
+      profileImg,
+      nidFront,
+      nidBack,
+      signature,
+      status: 'pending',
+      registeredAt: new Date().toISOString(),
+      registrationDate: today,
+    };
+    existingMembers.push(newMember);
+    localStorage.setItem('registeredMembers', JSON.stringify(existingMembers));
     localStorage.removeItem('memberRegistrationDraft');
-    toast.success(t('memberRequests.applicationSubmitted'));
+    toast.success(`${t('memberRequests.applicationSubmitted')} — ID: ${memberId}`, {
+      description: `${data.nameEn} (${data.nameBn}) — ${data.shopName}`,
+      duration: 5000,
+    });
     form.reset();
     setStep(1);
     setProfileImg('');
