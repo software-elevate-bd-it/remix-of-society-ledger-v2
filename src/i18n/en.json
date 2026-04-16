@@ -76,6 +76,7 @@
     "subscriptions": "Subscriptions",
     "globalAnalytics": "Global Analytics",
     "globalSettings": "Global Settings",
+    "memberRegistration": "Member Registration",
     "members": "Members",
     "memberRequests": "Member Requests",
     "collections": "Collections",
@@ -170,6 +171,7 @@
   "registration": {
     "step1Title": "Personal & Contact Info",
     "step2Title": "Identification & Upload",
+    "subtitle": "Register a new member with complete information",
     "basicInfo": "Basic Information",
     "contactInfo": "Contact Information",
     "identification": "Identification",

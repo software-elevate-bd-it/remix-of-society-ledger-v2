@@ -76,6 +76,7 @@
     "subscriptions": "সাবস্ক্রিপশন",
     "globalAnalytics": "গ্লোবাল এনালিটিক্স",
     "globalSettings": "গ্লোবাল সেটিংস",
+    "memberRegistration": "সদস্য নিবন্ধন",
     "members": "সদস্যগণ",
     "memberRequests": "সদস্য আবেদন",
     "collections": "আদায়",
@@ -170,6 +171,7 @@
   "registration": {
     "step1Title": "ব্যক্তিগত ও যোগাযোগ তথ্য",
     "step2Title": "পরিচয় ও আপলোড",
+    "subtitle": "সম্পূর্ণ তথ্য সহ নতুন সদস্য নিবন্ধন করুন",
     "basicInfo": "মৌলিক তথ্য",
     "contactInfo": "যোগাযোগ তথ্য",
     "identification": "পরিচয়",

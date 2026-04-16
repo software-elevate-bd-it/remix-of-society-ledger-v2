@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Wallet, Receipt, Building2, CreditCard,
   FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
-  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, ClipboardList
+  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, UserPlus, ClipboardList
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
@@ -34,6 +34,7 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.subscriptions', path: '/subscriptions', icon: CreditCard, roles: ['super_admin'] },
   { labelKey: 'nav.globalAnalytics', path: '/analytics', icon: BarChart3, roles: ['super_admin'] },
   { labelKey: 'nav.globalSettings', path: '/global-settings', icon: Globe, roles: ['super_admin'] },
+  { labelKey: 'nav.memberRegistration', path: '/member-registration', icon: UserPlus, roles: ['main_user'] },
   { labelKey: 'nav.members', path: '/members', icon: Users, roles: ['main_user'] },
   { labelKey: 'nav.memberRequests', path: '/member-requests', icon: UserCheck, roles: ['main_user'], badge: '2' },
   { labelKey: 'nav.collections', path: '/collections', icon: Wallet, roles: ['main_user', 'member'] },

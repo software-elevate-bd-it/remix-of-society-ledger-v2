@@ -12,6 +12,7 @@ import PublicRegistrationPage from "@/pages/members/PublicRegistrationPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import MembersPage from "@/pages/members/MembersPage";
 import MemberProfilePage from "@/pages/members/MemberProfilePage";
+import MemberRegistrationPage from "@/pages/members/MemberRegistrationPage";
 import MemberRequestsPage from "@/pages/members/MemberRequestsPage";
 import CollectionsPage from "@/pages/collections/CollectionsPage";
 import AdvancedCollectionPage from "@/pages/collections/AdvancedCollectionPage";
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="subscriptions" element={<DashboardPage />} />
             <Route path="analytics" element={<DashboardPage />} />
             <Route path="global-settings" element={<SettingsPage />} />
+            <Route path="member-registration" element={<MemberRegistrationPage />} />
             <Route path="members" element={<MembersPage />} />
             <Route path="members/:id" element={<MemberProfilePage />} />
             <Route path="member-requests" element={<MemberRequestsPage />} />
