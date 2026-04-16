@@ -11,16 +11,40 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import HelpModal from '@/components/shared/HelpModal';
+import CompanyHeader from '@/components/shared/CompanyHeader';
+import { useCompanyStore } from '@/stores/companyStore';
 import { toast } from 'sonner';
 
 const profileSchema = z.object({ name: z.string().min(2), email: z.string().email(), password: z.string().optional() });
-const companySchema = z.object({ companyName: z.string().min(2), address: z.string().optional(), phone: z.string().optional() });
+const companySchema = z.object({ companyName: z.string().min(2), address: z.string().optional(), phone: z.string().optional(), email: z.string().email().optional().or(z.literal('')) });
 
 export default function SettingsPage() {
   const { t } = useTranslation();
+  const { company, updateCompany } = useCompanyStore();
   const profileForm = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema), defaultValues: { name: 'Rahim Uddin', email: 'rahim@banani.com', password: '' } });
-  const companyForm = useForm<z.infer<typeof companySchema>>({ resolver: zodResolver(companySchema), defaultValues: { companyName: 'Banani Market Somitee', address: 'Banani, Dhaka', phone: '01711111111' } });
+  const companyForm = useForm<z.infer<typeof companySchema>>({ resolver: zodResolver(companySchema), defaultValues: { companyName: company.name, address: company.address, phone: company.phone, email: company.email } });
   const [printConfig, setPrintConfig] = useState({ showLogo: true, showCompanyName: true, showSignature: true, showNotes: true, marginTop: 20, marginBottom: 20 });
+
+  const handleCompanySave = (data: z.infer<typeof companySchema>) => {
+    updateCompany({ name: data.companyName, address: data.address || '', phone: data.phone || '', email: data.email || '' });
+    toast.success(t('settings.companySaved'));
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => updateCompany({ logo: reader.result as string });
+    reader.readAsDataURL(file);
+  };
+
+  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => updateCompany({ signature: reader.result as string });
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div className="space-y-6">
@@ -59,17 +83,32 @@ export default function SettingsPage() {
 
         <TabsContent value="company">
           <Card><CardHeader><CardTitle className="font-heading">{t('settings.companySettings')}</CardTitle></CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {/* Preview */}
+              <div className="p-4 border rounded-lg bg-muted/30">
+                <p className="text-xs text-muted-foreground mb-2">Preview:</p>
+                <CompanyHeader size="sm" />
+              </div>
+
               <Form {...companyForm}>
-                <form onSubmit={companyForm.handleSubmit(() => toast.success(t('settings.companySaved')))} className="space-y-4">
+                <form onSubmit={companyForm.handleSubmit(handleCompanySave)} className="space-y-4">
                   <FormField control={companyForm.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>{t('settings.companyName')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <div className="grid grid-cols-2 gap-4">
                     <FormField control={companyForm.control} name="address" render={({ field }) => (<FormItem><FormLabel>{t('common.address')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={companyForm.control} name="phone" render={({ field }) => (<FormItem><FormLabel>{t('common.phone')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
+                  <FormField control={companyForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>{t('common.email')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><Label>{t('settings.companyLogo')}</Label><Input type="file" accept="image/*" /></div>
-                    <div className="space-y-1"><Label>{t('settings.signatureUpload')}</Label><Input type="file" accept="image/*" /></div>
+                    <div className="space-y-1">
+                      <Label>{t('settings.companyLogo')}</Label>
+                      <Input type="file" accept="image/*" onChange={handleLogoUpload} />
+                      {company.logo && <img src={company.logo} alt="Logo" className="h-12 mt-1 rounded border" />}
+                    </div>
+                    <div className="space-y-1">
+                      <Label>{t('settings.signatureUpload')}</Label>
+                      <Input type="file" accept="image/*" onChange={handleSignatureUpload} />
+                      {company.signature && <img src={company.signature} alt="Signature" className="h-12 mt-1 rounded border" />}
+                    </div>
                   </div>
                   <Button type="submit">{t('common.save')}</Button>
                 </form>
