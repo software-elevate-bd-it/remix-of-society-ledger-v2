@@ -56,6 +56,7 @@ const navItems: NavItem[] = [
   },
   { labelKey: 'nav.sms', path: '/sms', icon: MessageSquare, roles: ['main_user'] },
   { labelKey: 'nav.approvals', path: '/approvals', icon: Inbox, roles: ['main_user'] },
+  { labelKey: 'nav.users', path: '/users', icon: UserPlus, roles: ['main_user'] },
   { labelKey: 'nav.roles', path: '/roles', icon: ShieldCheck, roles: ['main_user'] },
   { labelKey: 'nav.myLedger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
   { labelKey: 'nav.settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
