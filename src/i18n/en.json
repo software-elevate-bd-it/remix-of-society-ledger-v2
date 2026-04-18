@@ -87,6 +87,8 @@
     "payments": "Payments",
     "reports": "Reports",
     "sms": "SMS",
+    "approvals": "Approvals",
+    "roles": "Roles & Permissions",
     "myLedger": "My Ledger",
     "settings": "Settings",
     "faqHelp": "FAQ & Help",
