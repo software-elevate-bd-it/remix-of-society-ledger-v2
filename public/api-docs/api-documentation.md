@@ -33,6 +33,8 @@
 22. [Activity Log](#-activity-log)
 23. [Global Search](#-global-search)
 24. [Dashboard](#-dashboard)
+25. [Roles & Permissions](#-roles--permissions)
+26. [Approvals (Maker-Checker)](#-approvals-maker-checker)
 
 ---
 
