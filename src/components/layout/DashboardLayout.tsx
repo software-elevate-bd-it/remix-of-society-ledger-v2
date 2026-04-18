@@ -73,7 +73,11 @@ export default function DashboardLayout() {
   const [darkMode, setDarkMode] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
 
-  const filteredNav = navItems.filter((item) => user && item.roles.includes(user.role));
+  const pendingApprovals = useApprovalsStore((s) => s.items.filter(i => i.status === 'pending').length);
+
+  const filteredNav = navItems
+    .filter((item) => user && item.roles.includes(user.role))
+    .map((item) => item.path === '/approvals' && pendingApprovals > 0 ? { ...item, badge: String(pendingApprovals) } : item);
 
   const toggleDark = () => {
     setDarkMode(!darkMode);
