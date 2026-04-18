@@ -3040,8 +3040,379 @@ Get member dashboard stats. **Role:** `member`
 
 ---
 
-> **Document Version:** 2.0.0
-> **Last Updated:** 2026-04-16
-> **Total Endpoints:** 80+
-> **Total Modules:** 24
+## 🛡️ Roles & Permissions
+
+Dynamic role system. Main user creates custom roles, assigns granular permissions, and links roles to users. All permissions are namespaced as `<module>.<action>`.
+
+### Available Permission Keys
+| Key | Description |
+|-----|-------------|
+| `collection.create` | Submit new collection (goes to approval queue) |
+| `collection.approve` | Approve/reject pending collections |
+| `expense.create` | Submit new expense |
+| `expense.approve` | Approve/reject pending expenses |
+| `bank.create` | Submit bank deposit/withdraw/transfer |
+| `bank.approve` | Approve/reject bank transactions |
+| `member.create` | Register new members |
+| `member.approve` | Approve member applications |
+| `reports.view` | View financial reports |
+| `settings.manage` | Modify company settings |
+| `roles.manage` | Manage roles & assignments |
+
+### Preset Roles (seeded)
+- `Collector` — `[collection.create]`
+- `Accountant` — `[collection.create, expense.create, bank.create, reports.view]`
+- `Approver` — `[collection.approve, expense.approve, bank.approve, member.approve, reports.view]`
+- `Viewer` — `[reports.view]`
+
+---
+
+## GET `/roles`
+List all roles (preset + custom).
+
+**Headers:** `Authorization: Bearer {token}`
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Roles retrieved",
+  "data": [
+    {
+      "id": "role-collector",
+      "name": "Collector",
+      "description": "Can record collections, requires approval",
+      "permissions": ["collection.create"],
+      "isPreset": true,
+      "createdAt": "2026-04-18T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## POST `/roles`
+Create a custom role. Requires `roles.manage`.
+
+**Body**
+```json
+{
+  "name": "Cashier",
+  "description": "Handles daily cash collection",
+  "permissions": ["collection.create", "expense.create"]
+}
+```
+
+**Response 201**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Role created",
+  "data": {
+    "id": "role-1745000000000",
+    "name": "Cashier",
+    "permissions": ["collection.create", "expense.create"],
+    "isPreset": false,
+    "createdAt": "2026-04-18T10:00:00Z"
+  }
+}
+```
+
+**Errors**
+- `400` — name missing OR permissions empty
+- `409` — role name already exists
+
+---
+
+## PUT `/roles/:id`
+Update a custom role. Preset roles cannot be renamed but their permissions can be modified.
+
+**Response 200**
+```json
+{ "success": true, "statusCode": 200, "message": "Role updated", "data": { "id": "role-1745000000000" } }
+```
+
+---
+
+## DELETE `/roles/:id`
+Delete a custom role. Preset roles return `403`. Cascades — all assignments to this role are removed.
+
+**Response 200**
+```json
+{ "success": true, "statusCode": 200, "message": "Role deleted" }
+```
+
+---
+
+## POST `/roles/assign`
+Assign a role to a user.
+
+**Body**
+```json
+{ "userId": "user-123", "userName": "Karim Mia", "roleId": "role-collector" }
+```
+
+**Response 201**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Role assigned",
+  "data": { "userId": "user-123", "roleId": "role-collector", "assignedAt": "2026-04-18T10:00:00Z" }
+}
+```
+
+---
+
+## DELETE `/roles/assign`
+Remove a role from a user.
+
+**Body**
+```json
+{ "userId": "user-123", "roleId": "role-collector" }
+```
+
+---
+
+## GET `/roles/assignments`
+List all role assignments. Query: `?userId=user-123` (optional).
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Assignments retrieved",
+  "data": [
+    {
+      "userId": "user-123",
+      "userName": "Karim Mia",
+      "roleId": "role-collector",
+      "roleName": "Collector",
+      "assignedAt": "2026-04-18T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## GET `/roles/me/permissions`
+Get effective permissions for the authenticated user (union of all assigned roles).
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Permissions retrieved",
+  "data": {
+    "userId": "user-123",
+    "permissions": ["collection.create", "expense.create"],
+    "roles": ["Collector", "Accountant"]
+  }
+}
+```
+
+---
+
+## ✅ Approvals (Maker-Checker)
+
+Every financial transaction (collection, expense, bank, member) flows through this queue. **Maker** (creator) submits → **Checker** (approver) approves or rejects with a mandatory note.
+
+### Approval Lifecycle
+```
+[draft] → POST /approvals → [pending] → PATCH /approvals/:id/approve → [approved]
+                                     ↘  PATCH /approvals/:id/reject  → [rejected + note]
+```
+
+### Approval Types
+| Type | Submit Permission | Approve Permission |
+|------|-------------------|--------------------|
+| `collection` | `collection.create` | `collection.approve` |
+| `expense` | `expense.create` | `expense.approve` |
+| `bank` | `bank.create` | `bank.approve` |
+| `member` | `member.create` | `member.approve` |
+
+---
+
+## POST `/approvals`
+Submit a new item for approval.
+
+**Body**
+```json
+{
+  "type": "expense",
+  "title": "Office Rent",
+  "amount": 5000,
+  "description": "April 2026 rent payment",
+  "payload": {
+    "category": "Office Rent",
+    "method": "bank",
+    "date": "2026-04-18",
+    "note": "Paid via DBBL"
+  }
+}
+```
+
+**Response 201**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Submitted for approval",
+  "data": {
+    "id": "apr-1745000000-x7k2p",
+    "type": "expense",
+    "title": "Office Rent",
+    "amount": 5000,
+    "status": "pending",
+    "createdBy": "user-123",
+    "createdByName": "Karim Mia",
+    "createdAt": "2026-04-18T10:00:00Z"
+  }
+}
+```
+
+**Errors**
+- `400` — invalid type or missing title
+- `403` — user lacks `<type>.create` permission
+
+---
+
+## GET `/approvals`
+List approval items with filtering.
+
+**Query Parameters**
+| Param | Values | Default |
+|-------|--------|---------|
+| `status` | `pending` \| `approved` \| `rejected` \| `all` | `pending` |
+| `type` | `collection` \| `expense` \| `bank` \| `member` \| `all` | `all` |
+| `createdBy` | userId | — |
+| `page` | number | 1 |
+| `limit` | number | 20 |
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Approvals retrieved",
+  "data": [
+    {
+      "id": "apr-1745000000-x7k2p",
+      "type": "expense",
+      "title": "Office Rent",
+      "amount": 5000,
+      "status": "pending",
+      "createdBy": "user-123",
+      "createdByName": "Karim Mia",
+      "createdAt": "2026-04-18T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "counts": { "pending": 5, "approved": 42, "rejected": 3 }
+  }
+}
+```
+
+---
+
+## GET `/approvals/:id`
+Get full details of an approval item including original payload.
+
+---
+
+## PATCH `/approvals/:id/approve`
+Approve a pending item. Requires `<type>.approve` permission. On approval, the underlying record (expense/collection/etc.) is created in its module table.
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Approved",
+  "data": {
+    "id": "apr-1745000000-x7k2p",
+    "status": "approved",
+    "reviewedBy": "user-456",
+    "reviewedByName": "Rahim Uddin",
+    "reviewedAt": "2026-04-18T11:00:00Z",
+    "createdRecordId": "exp-9912"
+  }
+}
+```
+
+**Errors**
+- `403` — lacks `<type>.approve` permission
+- `409` — item is not in `pending` status
+
+---
+
+## PATCH `/approvals/:id/reject`
+Reject a pending item. **Note is required.**
+
+**Body**
+```json
+{ "note": "Receipt not attached. Please re-submit with proof." }
+```
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Rejected",
+  "data": {
+    "id": "apr-1745000000-x7k2p",
+    "status": "rejected",
+    "reviewedBy": "user-456",
+    "reviewedByName": "Rahim Uddin",
+    "reviewedAt": "2026-04-18T11:00:00Z",
+    "rejectionNote": "Receipt not attached. Please re-submit with proof."
+  }
+}
+```
+
+**Errors**
+- `400` — `note` field empty
+- `403` — lacks `<type>.approve` permission
+- `409` — item is not in `pending` status
+
+---
+
+## GET `/approvals/stats`
+Get pending counts for dashboard badges.
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Stats retrieved",
+  "data": {
+    "totalPending": 5,
+    "byType": {
+      "collection": 2,
+      "expense": 2,
+      "bank": 1,
+      "member": 0
+    }
+  }
+}
+```
+
+---
+
+> **Document Version:** 2.1.0
+> **Last Updated:** 2026-04-18
+> **Total Endpoints:** 95+
+> **Total Modules:** 26
+> **New in v2.1:** Dynamic Roles & Permissions, Maker-Checker Approval Workflow
 > **Contact:** api@somiteehq.com
