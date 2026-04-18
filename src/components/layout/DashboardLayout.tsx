@@ -6,11 +6,12 @@ import {
   LayoutDashboard, Users, Wallet, Receipt, Building2, CreditCard,
   FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
-  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, UserPlus, ClipboardList
+  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, UserPlus, ClipboardList, Inbox
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { useCompanyStore } from '@/stores/companyStore';
+import { useApprovalsStore } from '@/stores/approvalsStore';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +55,8 @@ const navItems: NavItem[] = [
     ]
   },
   { labelKey: 'nav.sms', path: '/sms', icon: MessageSquare, roles: ['main_user'] },
+  { labelKey: 'nav.approvals', path: '/approvals', icon: Inbox, roles: ['main_user'] },
+  { labelKey: 'nav.roles', path: '/roles', icon: ShieldCheck, roles: ['main_user'] },
   { labelKey: 'nav.myLedger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
   { labelKey: 'nav.settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
   { labelKey: 'nav.faqHelp', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
@@ -70,7 +73,11 @@ export default function DashboardLayout() {
   const [darkMode, setDarkMode] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
 
-  const filteredNav = navItems.filter((item) => user && item.roles.includes(user.role));
+  const pendingApprovals = useApprovalsStore((s) => s.items.filter(i => i.status === 'pending').length);
+
+  const filteredNav = navItems
+    .filter((item) => user && item.roles.includes(user.role))
+    .map((item) => item.path === '/approvals' && pendingApprovals > 0 ? { ...item, badge: String(pendingApprovals) } : item);
 
   const toggleDark = () => {
     setDarkMode(!darkMode);
