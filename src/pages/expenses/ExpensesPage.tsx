@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { useApprovalsStore } from '@/stores/approvalsStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PermissionGuard } from '@/components/shared/PermissionGuard';
 
 const columns: Column<Transaction>[] = [
   { key: 'category', label: 'Category', sortable: true },
@@ -54,7 +55,11 @@ export default function ExpensesPage() {
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-heading font-bold">Expenses</h1><p className="text-muted-foreground">All expenses require approval before being recorded</p></div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Add Expense</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <PermissionGuard permission="expense.create" message="You don't have permission to create expenses">
+              <Button><Plus className="h-4 w-4 mr-2" /> Add Expense</Button>
+            </PermissionGuard>
+          </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle className="font-heading">Record Expense</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
