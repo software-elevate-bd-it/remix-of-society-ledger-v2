@@ -3411,9 +3411,205 @@ Get pending counts for dashboard badges.
 
 ---
 
-> **Document Version:** 2.1.0
+## 👥 Users (Managed by Main User)
+
+Main user (somitee manager) creates and manages user accounts. Each user is assigned one or more roles which determine their permissions. Users login with the credentials set by the main user.
+
+### Login Resolution Order
+1. Built-in demo accounts (`admin@system.com`, `manager@somitee.com`, `member@shop.com`)
+2. Managed users created via `/users` endpoint
+3. Reject if neither matches or user `status === 'inactive'`
+
+### Created User Object
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | string | `usr-<timestamp>` |
+| `name` | string | Display name |
+| `email` | string | Login email (unique) |
+| `password` | string | Hashed in production |
+| `role` | enum | `member` \| `main_user` (base account type) |
+| `somiteeId` | string | Scope of data access |
+| `someiteeName` | string | Resolved name |
+| `roleIds` | string[] | Links to `/roles` |
+| `status` | enum | `active` \| `inactive` |
+| `createdBy` | string | userId of main_user |
+| `createdAt` | ISO datetime | |
+
+---
+
+## POST `/users`
+Create a new user. Requires `users.manage` (or main_user role).
+
+**Body**
+```json
+{
+  "name": "Karim Mia",
+  "email": "karim@market.com",
+  "password": "secure123",
+  "role": "member",
+  "somiteeId": "s1",
+  "roleIds": ["role-collector", "role-accountant"]
+}
+```
+
+**Response 201**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "User created",
+  "data": {
+    "id": "usr-1745000000000",
+    "name": "Karim Mia",
+    "email": "karim@market.com",
+    "role": "member",
+    "somiteeId": "s1",
+    "someiteeName": "Banani Market Somitee",
+    "roleIds": ["role-collector", "role-accountant"],
+    "status": "active",
+    "createdAt": "2026-04-18T10:00:00Z"
+  }
+}
+```
+
+**Errors**
+- `400` — name/email/password missing or password < 6 chars
+- `409` — email already exists
+- `422` — at least one roleId required
+
+---
+
+## GET `/users`
+List managed users. Filterable.
+
+**Query Parameters**
+| Param | Type | Description |
+|-------|------|-------------|
+| `somiteeId` | string | Filter by somitee |
+| `status` | `active` \| `inactive` | |
+| `roleId` | string | Users with a specific role |
+| `q` | string | Search name / email |
+| `page` | number | Default 1 |
+| `limit` | number | Default 20 |
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Users retrieved",
+  "data": [
+    {
+      "id": "usr-1745000000000",
+      "name": "Karim Mia",
+      "email": "karim@market.com",
+      "role": "member",
+      "someiteeName": "Banani Market Somitee",
+      "roleIds": ["role-collector"],
+      "status": "active",
+      "createdAt": "2026-04-18T10:00:00Z"
+    }
+  ],
+  "meta": { "page": 1, "limit": 20, "total": 1 }
+}
+```
+
+---
+
+## GET `/users/:id`
+Get full user details (without password).
+
+---
+
+## PUT `/users/:id`
+Update user fields. Email cannot be changed.
+
+**Body** (any subset)
+```json
+{
+  "name": "Karim Mia Updated",
+  "password": "newPass123",
+  "role": "member",
+  "somiteeId": "s1",
+  "roleIds": ["role-collector", "role-approver"],
+  "status": "active"
+}
+```
+
+**Response 200**
+```json
+{ "success": true, "statusCode": 200, "message": "User updated", "data": { "id": "usr-1745000000000" } }
+```
+
+---
+
+## PATCH `/users/:id/status`
+Toggle active/inactive. Inactive users cannot login.
+
+**Body**
+```json
+{ "status": "inactive" }
+```
+
+---
+
+## DELETE `/users/:id`
+Permanently delete a user. Their role assignments are also removed.
+
+**Response 200**
+```json
+{ "success": true, "statusCode": 200, "message": "User deleted" }
+```
+
+---
+
+## POST `/users/:id/reset-password`
+Generate a new password for the user. Returns the plaintext to the main_user (who shares it with the user).
+
+**Response 200**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Password reset",
+  "data": { "userId": "usr-1745000000000", "newPassword": "K7hf9p2qX3" }
+}
+```
+
+---
+
+## POST `/auth/login` (extended)
+The existing `/auth/login` endpoint now also resolves managed users. Response includes `roleIds` and `permissions` so the frontend can enforce UI access.
+
+**Response 200 (managed user)**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Login successful",
+  "data": {
+    "token": "eyJhbGc...",
+    "user": {
+      "id": "usr-1745000000000",
+      "name": "Karim Mia",
+      "email": "karim@market.com",
+      "role": "member",
+      "somiteeId": "s1",
+      "someiteeName": "Banani Market Somitee",
+      "roleIds": ["role-collector"],
+      "permissions": ["collection.create"],
+      "isManagedUser": true
+    }
+  }
+}
+```
+
+---
+
+> **Document Version:** 2.2.0
 > **Last Updated:** 2026-04-18
-> **Total Endpoints:** 95+
-> **Total Modules:** 26
+> **Total Endpoints:** 102+
+> **Total Modules:** 27
+> **New in v2.2:** User Management (managed users login with role-based permissions)
 > **New in v2.1:** Dynamic Roles & Permissions, Maker-Checker Approval Workflow
 > **Contact:** api@somiteehq.com
