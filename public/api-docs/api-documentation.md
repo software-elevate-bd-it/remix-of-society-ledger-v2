@@ -35,6 +35,7 @@
 24. [Dashboard](#-dashboard)
 25. [Roles & Permissions](#-roles--permissions)
 26. [Approvals (Maker-Checker)](#-approvals-maker-checker)
+27. [Users (Managed by Main User)](#-users-managed-by-main-user)
 
 ---
 
