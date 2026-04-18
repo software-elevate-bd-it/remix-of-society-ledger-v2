@@ -12,6 +12,7 @@ import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { useCompanyStore } from '@/stores/companyStore';
 import { useApprovalsStore } from '@/stores/approvalsStore';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -75,9 +76,17 @@ export default function DashboardLayout() {
   const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
 
   const pendingApprovals = useApprovalsStore((s) => s.items.filter(i => i.status === 'pending').length);
+  const { has } = usePermissions();
 
   const filteredNav = navItems
-    .filter((item) => user && item.roles.includes(user.role))
+    .filter((item) => {
+      if (!user) return false;
+      // Role-based access (built-in roles)
+      if (item.roles.includes(user.role)) return true;
+      // Permission-based access (managed users w/ assigned roles)
+      if (item.permissions && item.permissions.some((p) => has(p as any))) return true;
+      return false;
+    })
     .map((item) => item.path === '/approvals' && pendingApprovals > 0 ? { ...item, badge: String(pendingApprovals) } : item);
 
   const toggleDark = () => {
