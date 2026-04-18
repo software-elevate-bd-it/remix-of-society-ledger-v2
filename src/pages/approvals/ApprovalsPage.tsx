@@ -139,12 +139,16 @@ export default function ApprovalsPage() {
                         </div>
                         {item.status === 'pending' && (
                           <div className="flex flex-col gap-1">
-                            <Button size="sm" onClick={() => handleApprove(item)} className="bg-success hover:bg-success/90 text-success-foreground">
-                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => setRejectTarget(item)}>
-                              <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
-                            </Button>
+                            <PermissionGuard permission={`${item.type}.approve` as Permission} message={`Need ${item.type}.approve permission`}>
+                              <Button size="sm" onClick={() => handleApprove(item)} className="bg-success hover:bg-success/90 text-success-foreground">
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
+                              </Button>
+                            </PermissionGuard>
+                            <PermissionGuard permission={`${item.type}.approve` as Permission} message={`Need ${item.type}.approve permission`}>
+                              <Button size="sm" variant="destructive" onClick={() => setRejectTarget(item)}>
+                                <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                              </Button>
+                            </PermissionGuard>
                           </div>
                         )}
                       </div>
