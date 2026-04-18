@@ -27,6 +27,8 @@ interface NavItem {
   path: string;
   icon: React.ElementType;
   roles: UserRole[];
+  /** Any of these permissions also unlocks this nav item for managed users. */
+  permissions?: string[];
   badge?: string;
   children?: { labelKey: string; path: string; icon: React.ElementType }[];
 }
@@ -37,16 +39,16 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.subscriptions', path: '/subscriptions', icon: CreditCard, roles: ['super_admin'] },
   { labelKey: 'nav.globalAnalytics', path: '/analytics', icon: BarChart3, roles: ['super_admin'] },
   { labelKey: 'nav.globalSettings', path: '/global-settings', icon: Globe, roles: ['super_admin'] },
-  { labelKey: 'nav.memberRegistration', path: '/member-registration', icon: UserPlus, roles: ['main_user'] },
-  { labelKey: 'nav.memberRequests', path: '/member-requests', icon: UserCheck, roles: ['main_user'], badge: '2' },
-  { labelKey: 'nav.collections', path: '/collections', icon: Wallet, roles: ['main_user', 'member'] },
-  { labelKey: 'nav.expenses', path: '/expenses', icon: Receipt, roles: ['main_user'] },
-  { labelKey: 'nav.ledger', path: '/ledger', icon: BookOpen, roles: ['main_user'] },
-  { labelKey: 'nav.bankAccounts', path: '/bank-accounts', icon: Landmark, roles: ['main_user'] },
-  { labelKey: 'nav.cashBook', path: '/cashbook', icon: FileText, roles: ['main_user'] },
+  { labelKey: 'nav.memberRegistration', path: '/member-registration', icon: UserPlus, roles: ['main_user'], permissions: ['member.create'] },
+  { labelKey: 'nav.memberRequests', path: '/member-requests', icon: UserCheck, roles: ['main_user'], permissions: ['member.approve'], badge: '2' },
+  { labelKey: 'nav.collections', path: '/collections', icon: Wallet, roles: ['main_user', 'member'], permissions: ['collection.create', 'collection.approve'] },
+  { labelKey: 'nav.expenses', path: '/expenses', icon: Receipt, roles: ['main_user'], permissions: ['expense.create', 'expense.approve'] },
+  { labelKey: 'nav.ledger', path: '/ledger', icon: BookOpen, roles: ['main_user'], permissions: ['reports.view'] },
+  { labelKey: 'nav.bankAccounts', path: '/bank-accounts', icon: Landmark, roles: ['main_user'], permissions: ['bank.create', 'bank.approve'] },
+  { labelKey: 'nav.cashBook', path: '/cashbook', icon: FileText, roles: ['main_user'], permissions: ['reports.view'] },
   { labelKey: 'nav.payments', path: '/payments', icon: CreditCard, roles: ['main_user', 'member'] },
   {
-    labelKey: 'nav.reports', path: '/reports', icon: BarChart3, roles: ['main_user'],
+    labelKey: 'nav.reports', path: '/reports', icon: BarChart3, roles: ['main_user'], permissions: ['reports.view'],
     children: [
       { labelKey: 'reports.incomeVsExpense', path: '/reports/income-expense', icon: TrendingUp },
       { labelKey: 'reports.cashFlow', path: '/reports/cash-flow', icon: DollarSign },
@@ -56,9 +58,9 @@ const navItems: NavItem[] = [
     ]
   },
   { labelKey: 'nav.sms', path: '/sms', icon: MessageSquare, roles: ['main_user'] },
-  { labelKey: 'nav.approvals', path: '/approvals', icon: Inbox, roles: ['main_user'] },
+  { labelKey: 'nav.approvals', path: '/approvals', icon: Inbox, roles: ['main_user'], permissions: ['collection.approve', 'expense.approve', 'bank.approve', 'member.approve'] },
   { labelKey: 'nav.users', path: '/users', icon: UserPlus, roles: ['main_user'] },
-  { labelKey: 'nav.roles', path: '/roles', icon: ShieldCheck, roles: ['main_user'] },
+  { labelKey: 'nav.roles', path: '/roles', icon: ShieldCheck, roles: ['main_user'], permissions: ['roles.manage'] },
   { labelKey: 'nav.myLedger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
   { labelKey: 'nav.settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
   { labelKey: 'nav.faqHelp', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
