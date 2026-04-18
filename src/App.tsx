@@ -34,6 +34,7 @@ import FAQPage from "@/pages/faq/FAQPage";
 import ApiDocsPage from "@/pages/docs/ApiDocsPage";
 import RolesPage from "@/pages/roles/RolesPage";
 import ApprovalsPage from "@/pages/approvals/ApprovalsPage";
+import UsersPage from "@/pages/users/UsersPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="my-ledger" element={<LedgerPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="roles" element={<RolesPage />} />
+            <Route path="users" element={<UsersPage />} />
             <Route path="approvals" element={<ApprovalsPage />} />
             <Route path="faq" element={<FAQPage />} />
             <Route path="api-docs" element={<ApiDocsPage />} />
