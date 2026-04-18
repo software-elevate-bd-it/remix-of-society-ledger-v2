@@ -32,6 +32,8 @@ import SettingsPage from "@/pages/settings/SettingsPage";
 import SomiteesPage from "@/pages/somitees/SomiteesPage";
 import FAQPage from "@/pages/faq/FAQPage";
 import ApiDocsPage from "@/pages/docs/ApiDocsPage";
+import RolesPage from "@/pages/roles/RolesPage";
+import ApprovalsPage from "@/pages/approvals/ApprovalsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +81,8 @@ const App = () => (
             <Route path="sms" element={<SMSPage />} />
             <Route path="my-ledger" element={<LedgerPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="roles" element={<RolesPage />} />
+            <Route path="approvals" element={<ApprovalsPage />} />
             <Route path="faq" element={<FAQPage />} />
             <Route path="api-docs" element={<ApiDocsPage />} />
           </Route>
