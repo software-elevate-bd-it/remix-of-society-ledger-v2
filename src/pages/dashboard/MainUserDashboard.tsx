@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import StatsCard from '@/components/shared/StatsCard';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import ActivityLog from '@/components/shared/ActivityLog';
-import { members, transactions, bankAccounts, Transaction } from '@/data/dummyData';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import { Users, Wallet, Receipt, Landmark, Plus, FileText, CreditCard, UserPlus, TrendingUp, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,13 +14,28 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuthStore } from '@/stores/authStore';
 
+interface Transaction {
+  id: string;
+  memberName: string;
+  type: string;
+  amount: number;
+  method: string;
+  status: string;
+  date: string;
+}
+
 export default function MainUserDashboard() {
   const user = useAuthStore((s) => s.user);
   const { t } = useTranslation();
+  const { stats, isLoading, loadStats } = useDashboardStore();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   const recentTxColumns: Column<Transaction>[] = [
     { key: 'memberName', label: t('nav.members') },
@@ -33,17 +48,19 @@ export default function MainUserDashboard() {
     { key: 'date', label: t('common.date') },
   ];
 
-  const totalCollection = transactions.filter(t => t.type === 'collection' && t.status === 'approved').reduce((s, t) => s + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'expense' && t.status === 'approved').reduce((s, t) => s + t.amount, 0);
-  const totalBank = bankAccounts.reduce((s, b) => s + b.balance, 0);
-  const todayCollection = transactions.filter(t => t.type === 'collection' && t.status === 'approved' && t.date === '2024-12-15').reduce((s, t) => s + t.amount, 0);
-  const pendingDue = members.reduce((s, m) => s + m.totalDue, 0);
+  // Use real stats from API
+  const totalCollection = stats.monthlyIncome;
+  const totalExpense = stats.monthlyExpense;
+  const totalBank = stats.totalBankBalance;
+  const todayCollection = stats.todayCollection;
+  const pendingDue = stats.pendingDue;
 
-  let filteredTx = [...transactions];
-  if (filterStatus !== 'all') filteredTx = filteredTx.filter(t => t.status === filterStatus);
-  if (filterType !== 'all') filteredTx = filteredTx.filter(t => t.type === filterType);
-  if (dateFrom) filteredTx = filteredTx.filter(t => t.date >= dateFrom);
-  if (dateTo) filteredTx = filteredTx.filter(t => t.date <= dateTo);
+  // For now, use empty array for recent transactions until we implement the API
+  const filteredTx: Transaction[] = stats.recentTransactions || [];
+  if (filterStatus !== 'all') filteredTx.filter(t => t.status === filterStatus);
+  if (filterType !== 'all') filteredTx.filter(t => t.type === filterType);
+  if (dateFrom) filteredTx.filter(t => t.date >= dateFrom);
+  if (dateTo) filteredTx.filter(t => t.date <= dateTo);
 
   const quickLinks = [
     { label: t('dashboard.addMember'), icon: UserPlus, path: '/members', color: 'bg-blue-500/10 text-blue-600' },

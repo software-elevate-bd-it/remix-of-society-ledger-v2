@@ -13,18 +13,27 @@ import { toast } from 'sonner';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const login = useAuthStore((s) => s.login);
   const { company } = useCompanyStore();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
-      toast.success('Logged in successfully');
-      navigate('/dashboard');
-    } else {
-      toast.error('Invalid credentials');
+    setIsLoading(true);
+    try {
+      const success = await login(email, password);
+      if (success) {
+        toast.success(t('auth.loginSuccess', 'Logged in successfully'));
+        navigate('/dashboard');
+      } else {
+        toast.error(t('auth.invalidCredentials', 'Invalid credentials'));
+      }
+    } catch (error) {
+      toast.error(t('auth.loginError', 'Login failed. Please try again.'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,18 +68,14 @@ export default function LoginPage() {
               <Label htmlFor="password">{t('common.password')}</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <Button type="submit" className="w-full">{t('auth.login')}</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? t('common.loading', 'Loading...') : t('auth.login')}
+            </Button>
             <div className="flex justify-between text-sm">
               <Link to="/forgot-password" className="text-primary hover:underline">{t('auth.forgotPassword')}</Link>
               <Link to="/register" className="text-primary hover:underline">{t('auth.register')}</Link>
             </div>
           </form>
-          <div className="mt-6 p-3 rounded-lg bg-muted text-xs space-y-1">
-            <p className="font-medium text-muted-foreground">{t('auth.demoCredentials')}:</p>
-            <p><span className="font-medium">{t('auth.superAdmin')}:</span> admin@system.com / admin123</p>
-            <p><span className="font-medium">{t('auth.mainUser')}:</span> manager@somitee.com / manager123</p>
-            <p><span className="font-medium">{t('auth.member')}:</span> member@shop.com / member123</p>
-          </div>
         </CardContent>
       </Card>
     </div>

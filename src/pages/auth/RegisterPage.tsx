@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore, UserRole } from '@/stores/authStore';
+import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -13,15 +12,27 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('main_user');
+  const [phone, setPhone] = useState('');
+  const [somiteeName, setSomiteeName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (register(name, email, password, role)) {
-      toast.success('Account created');
-      navigate('/dashboard');
+    setIsLoading(true);
+    try {
+      const success = await register(name, email, password, phone, somiteeName);
+      if (success) {
+        toast.success('Account created successfully');
+        navigate('/dashboard');
+      } else {
+        toast.error('Registration failed');
+      }
+    } catch (error) {
+      toast.error('Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -39,18 +50,12 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Full Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
             <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01700000000" /></div>
+            <div className="space-y-2"><Label>Somitee Name</Label><Input value={somiteeName} onChange={(e) => setSomiteeName(e.target.value)} placeholder="Your Society Name" required /></div>
             <div className="space-y-2"><Label>Password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-            <div className="space-y-2">
-              <Label>Account Type</Label>
-              <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="main_user">Somitee Manager</SelectItem>
-                  <SelectItem value="member">Shop Owner (Member)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="w-full">Create Account</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Creating Account...' : 'Create Account'}
+            </Button>
             <p className="text-center text-sm text-muted-foreground">Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link></p>
           </form>
         </CardContent>

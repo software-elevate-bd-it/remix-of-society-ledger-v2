@@ -1,9 +1,11 @@
+import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/stores/authStore";
+import { apiClient } from "@/lib/api";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
@@ -37,7 +39,46 @@ import ApprovalsPage from "@/pages/approvals/ApprovalsPage";
 import UsersPage from "@/pages/users/UsersPage";
 import NotFound from "@/pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Initialize API token on app start
+function AppInitializer() {
+  const token = useAuthStore((s) => s.token);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  // Set token in API client when it changes
+  React.useEffect(() => {
+    apiClient.setToken(token);
+  }, [token]);
+
+  // Load initial data when authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && token) {
+      // Import stores dynamically to avoid circular dependencies
+      import('@/stores/companyStore').then(({ useCompanyStore }) => {
+        useCompanyStore.getState().loadCompany();
+      });
+
+      import('@/stores/rolesStore').then(({ useRolesStore }) => {
+        useRolesStore.getState().loadRoles();
+        useRolesStore.getState().loadAssignments();
+      });
+
+      import('@/stores/dashboardStore').then(({ useDashboardStore }) => {
+        useDashboardStore.getState().loadStats();
+      });
+    }
+  }, [isAuthenticated, token]);
+
+  return null;
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -46,6 +87,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <AppInitializer />
     <TooltipProvider>
       <Toaster />
       <Sonner />

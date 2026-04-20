@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { apiClient, type Role } from '@/lib/api';
 
 export type Permission =
   | 'collection.create' | 'collection.approve'
@@ -21,15 +22,6 @@ export const ALL_PERMISSIONS: { key: Permission; label: string; group: string }[
   { key: 'settings.manage', label: 'Manage Settings', group: 'Admin' },
   { key: 'roles.manage', label: 'Manage Roles', group: 'Admin' },
 ];
-
-export interface Role {
-  id: string;
-  name: string;
-  description?: string;
-  permissions: Permission[];
-  isPreset: boolean;
-  createdAt: string;
-}
 
 export interface RoleAssignment {
   userId: string;
@@ -76,13 +68,18 @@ const PRESET_ROLES: Role[] = [
 interface RolesState {
   roles: Role[];
   assignments: RoleAssignment[];
-  addRole: (role: Omit<Role, 'id' | 'isPreset' | 'createdAt'>) => Role;
-  updateRole: (id: string, patch: Partial<Omit<Role, 'id' | 'isPreset'>>) => void;
-  deleteRole: (id: string) => void;
-  assignRole: (userId: string, userName: string, roleId: string) => void;
-  unassignRole: (userId: string, roleId: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  loadRoles: () => Promise<void>;
+  addRole: (role: Omit<Role, 'id' | 'isPreset' | 'createdAt'>) => Promise<Role>;
+  updateRole: (id: string, patch: Partial<Omit<Role, 'id' | 'isPreset'>>) => Promise<void>;
+  deleteRole: (id: string) => Promise<void>;
+  assignRole: (userId: string, userName: string, roleId: string) => Promise<void>;
+  unassignRole: (userId: string, roleId: string) => Promise<void>;
+  loadAssignments: (userId?: string) => Promise<void>;
   getUserPermissions: (userId: string) => Permission[];
   hasPermission: (userId: string, permission: Permission) => boolean;
+  loadMyPermissions: () => Promise<Permission[]>;
 }
 
 export const useRolesStore = create<RolesState>()(
@@ -90,36 +87,111 @@ export const useRolesStore = create<RolesState>()(
     (set, get) => ({
       roles: PRESET_ROLES,
       assignments: [],
-      addRole: (role) => {
-        const newRole: Role = {
-          ...role,
-          id: `role-${Date.now()}`,
-          isPreset: false,
-          createdAt: new Date().toISOString(),
-        };
-        set((s) => ({ roles: [...s.roles, newRole] }));
-        return newRole;
+      isLoading: false,
+      error: null,
+
+      loadRoles: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.getRoles();
+          set({ roles: response.data, isLoading: false });
+        } catch (error) {
+          console.error('Failed to load roles:', error);
+          set({ error: 'Failed to load roles', isLoading: false });
+          // Keep preset roles on error
+        }
       },
-      updateRole: (id, patch) =>
-        set((s) => ({
-          roles: s.roles.map((r) => (r.id === id ? { ...r, ...patch } : r)),
-        })),
-      deleteRole: (id) =>
-        set((s) => ({
-          roles: s.roles.filter((r) => r.id !== id || r.isPreset),
-          assignments: s.assignments.filter((a) => a.roleId !== id),
-        })),
-      assignRole: (userId, userName, roleId) =>
-        set((s) => ({
-          assignments: [
-            ...s.assignments.filter((a) => !(a.userId === userId && a.roleId === roleId)),
-            { userId, userName, roleId, assignedAt: new Date().toISOString() },
-          ],
-        })),
-      unassignRole: (userId, roleId) =>
-        set((s) => ({
-          assignments: s.assignments.filter((a) => !(a.userId === userId && a.roleId === roleId)),
-        })),
+
+      addRole: async (role) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.createRole(role);
+          const newRole = response.data;
+          set((s) => ({ roles: [...s.roles, newRole], isLoading: false }));
+          return newRole;
+        } catch (error) {
+          console.error('Failed to create role:', error);
+          set({ error: 'Failed to create role', isLoading: false });
+          throw error;
+        }
+      },
+
+      updateRole: async (id, patch) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.updateRole(id, patch);
+          const updatedRole = response.data;
+          set((s) => ({
+            roles: s.roles.map((r) => (r.id === id ? updatedRole : r)),
+            isLoading: false,
+          }));
+        } catch (error) {
+          console.error('Failed to update role:', error);
+          set({ error: 'Failed to update role', isLoading: false });
+          throw error;
+        }
+      },
+
+      deleteRole: async (id) => {
+        set({ isLoading: true, error: null });
+        try {
+          await apiClient.deleteRole(id);
+          set((s) => ({
+            roles: s.roles.filter((r) => r.id !== id || r.isPreset),
+            assignments: s.assignments.filter((a) => a.roleId !== id),
+            isLoading: false,
+          }));
+        } catch (error) {
+          console.error('Failed to delete role:', error);
+          set({ error: 'Failed to delete role', isLoading: false });
+          throw error;
+        }
+      },
+
+      assignRole: async (userId, userName, roleId) => {
+        set({ isLoading: true, error: null });
+        try {
+          await apiClient.assignRole({ userId, userName, roleId });
+          set((s) => ({
+            assignments: [
+              ...s.assignments.filter((a) => !(a.userId === userId && a.roleId === roleId)),
+              { userId, userName, roleId, assignedAt: new Date().toISOString() },
+            ],
+            isLoading: false,
+          }));
+        } catch (error) {
+          console.error('Failed to assign role:', error);
+          set({ error: 'Failed to assign role', isLoading: false });
+          throw error;
+        }
+      },
+
+      unassignRole: async (userId, roleId) => {
+        set({ isLoading: true, error: null });
+        try {
+          await apiClient.removeRoleAssignment({ userId, roleId });
+          set((s) => ({
+            assignments: s.assignments.filter((a) => !(a.userId === userId && a.roleId === roleId)),
+            isLoading: false,
+          }));
+        } catch (error) {
+          console.error('Failed to unassign role:', error);
+          set({ error: 'Failed to unassign role', isLoading: false });
+          throw error;
+        }
+      },
+
+      loadAssignments: async (userId) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.getRoleAssignments(userId ? { userId } : undefined);
+          set({ assignments: response.data, isLoading: false });
+        } catch (error) {
+          console.error('Failed to load role assignments:', error);
+          set({ error: 'Failed to load role assignments', isLoading: false });
+        }
+      },
+
       getUserPermissions: (userId) => {
         const { assignments, roles } = get();
         const userRoleIds = assignments.filter((a) => a.userId === userId).map((a) => a.roleId);
@@ -129,7 +201,18 @@ export const useRolesStore = create<RolesState>()(
         });
         return Array.from(perms);
       },
+
       hasPermission: (userId, permission) => get().getUserPermissions(userId).includes(permission),
+
+      loadMyPermissions: async () => {
+        try {
+          const response = await apiClient.getMyPermissions();
+          return response.data;
+        } catch (error) {
+          console.error('Failed to load my permissions:', error);
+          return [];
+        }
+      },
     }),
     { name: 'somitee-roles-storage' }
   )

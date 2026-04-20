@@ -2,76 +2,103 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useUsersStore } from './usersStore';
 import { useRolesStore } from './rolesStore';
+import { apiClient, type User } from '@/lib/api';
 
 export type UserRole = 'super_admin' | 'main_user' | 'member';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  somiteeId?: string;
-  someiteeName?: string;
-  roleIds?: string[];
-  isManagedUser?: boolean;
-}
-
 interface AuthState {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => boolean;
-  register: (name: string, email: string, password: string, role: UserRole) => boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, phone?: string, somiteeName?: string) => Promise<boolean>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
+  setToken: (token: string | null) => void;
 }
-
-const demoUsers: Record<string, User & { password: string }> = {
-  'admin@system.com': { id: '1', name: 'System Admin', email: 'admin@system.com', password: 'admin123', role: 'super_admin' },
-  'manager@somitee.com': { id: '2', name: 'Rahim Uddin', email: 'manager@somitee.com', password: 'manager123', role: 'main_user', somiteeId: 's1', someiteeName: 'Banani Market Somitee' },
-  'member@shop.com': { id: '3', name: 'Karim Mia', email: 'member@shop.com', password: 'member123', role: 'member', somiteeId: 's1', someiteeName: 'Banani Market Somitee' },
-};
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
-      login: (email, password) => {
-        // 1. Try demo users first
-        const demo = demoUsers[email.toLowerCase()];
-        if (demo && demo.password === password) {
-          const { password: _, ...userData } = demo;
-          set({ user: userData, isAuthenticated: true });
-          return true;
-        }
-        // 2. Try managed users (created by main_user)
-        const managed = useUsersStore.getState().findByEmail(email);
-        if (managed && managed.password === password && managed.status === 'active') {
+      isLoading: false,
+      login: async (email, password) => {
+        set({ isLoading: true });
+        try {
+          const response = await apiClient.login({ email, password });
+          const { user, token } = response.data;
+
+          // Set token for future API calls
+          apiClient.setToken(token);
+
           set({
             user: {
-              id: managed.id,
-              name: managed.name,
-              email: managed.email,
-              role: managed.role,
-              somiteeId: managed.somiteeId,
-              someiteeName: managed.someiteeName,
-              roleIds: managed.roleIds,
-              isManagedUser: true,
+              ...user,
+              someiteeName: user.somiteeName, // API uses somiteeName, keep consistent
             },
+            token,
             isAuthenticated: true,
+            isLoading: false,
           });
           return true;
+        } catch (error) {
+          console.error('Login failed:', error);
+          set({ isLoading: false });
+          return false;
         }
-        return false;
       },
-      register: (name, email, _password, role) => {
-        set({ user: { id: Date.now().toString(), name, email, role, somiteeId: 's-new', someiteeName: 'New Somitee' }, isAuthenticated: true });
-        return true;
+      register: async (name, email, password, phone, somiteeName) => {
+        set({ isLoading: true });
+        try {
+          const response = await apiClient.register({
+            name,
+            email,
+            password,
+            phone,
+            somiteeName: somiteeName || 'New Somitee',
+          });
+          const { user, token } = response.data;
+
+          // Set token for future API calls
+          apiClient.setToken(token);
+
+          set({
+            user: {
+              ...user,
+              someiteeName: user.somiteeName,
+            },
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          return true;
+        } catch (error) {
+          console.error('Registration failed:', error);
+          set({ isLoading: false });
+          return false;
+        }
       },
-      logout: () => set({ user: null, isAuthenticated: false }),
+      logout: () => {
+        apiClient.setToken(null);
+        set({ user: null, token: null, isAuthenticated: false });
+      },
       switchRole: (role) => set((state) => state.user ? { user: { ...state.user, role } } : {}),
+      setToken: (token) => {
+        apiClient.setToken(token);
+        set({ token });
+      },
     }),
-    { name: 'somitee-auth-storage' }
+    {
+      name: 'somitee-auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
   )
 );
 
