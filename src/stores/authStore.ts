@@ -108,10 +108,7 @@ export const useAuthStore = create<AuthState>()(
           apiClient.setToken(token);
 
           set({
-            user: {
-              ...user,
-              someiteeName: user.somiteeName,
-            },
+            user,
             token,
             isAuthenticated: true,
             isLoading: false,
