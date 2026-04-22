@@ -450,7 +450,7 @@ class ApiClient {
     monthlyFee: number;
     billingCycle: string;
   }) {
-    return this.request<ApiResponseSchema<{
+    return this.request<ApiResponse<{
       requestId: string;
       memberId: string;
       name: string;
@@ -465,7 +465,7 @@ class ApiClient {
   async rejectMemberRequest(id: string, rejectionData: {
     rejectionNote: string;
   }) {
-    return this.request<ApiResponseSchema<{
+    return this.request<ApiResponse<{
       requestId: string;
       status: string;
       rejectionNote: string;
