@@ -293,7 +293,7 @@ class ApiClient {
   }
 
   async logout() {
-    return this.request('/auth/logout', {
+    return this.request<ApiResponse<any>>('/auth/logout', {
       method: 'POST',
     });
   }
@@ -303,21 +303,21 @@ class ApiClient {
   }
 
   async forgotPassword(email: string) {
-    return this.request('/auth/forgot-password', {
+    return this.request<ApiResponse<any>>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
   }
 
   async resetPassword(token: string, newPassword: string) {
-    return this.request('/auth/reset-password', {
+    return this.request<ApiResponse<any>>('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify({ token, newPassword }),
     });
   }
 
   async refreshToken(refreshToken: string) {
-    return this.request('/auth/refresh-token', {
+    return this.request<ApiResponse<any>>('/auth/refresh-token', {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
     });
@@ -336,7 +336,7 @@ class ApiClient {
   }
 
   async uploadCompanyLogo(formData: FormData) {
-    return this.request('/company/upload-logo', {
+    return this.request<ApiResponse<any>>('/company/upload-logo', {
       method: 'POST',
       body: formData,
       headers: {}, // Let browser set content-type for FormData
@@ -344,7 +344,7 @@ class ApiClient {
   }
 
   async uploadCompanySignature(formData: FormData) {
-    return this.request('/company/upload-signature', {
+    return this.request<ApiResponse<any>>('/company/upload-signature', {
       method: 'POST',
       body: formData,
       headers: {},
@@ -402,7 +402,7 @@ class ApiClient {
   }
 
   async uploadMemberPhoto(id: string, formData: FormData) {
-    return this.request(`/members/${id}/upload-photo`, {
+    return this.request<ApiResponse<any>>(`/members/${id}/upload-photo`, {
       method: 'POST',
       body: formData,
       headers: {},
@@ -422,7 +422,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/members/${id}/ledger?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/members/${id}/ledger?${searchParams}`);
   }
 
   async getMemberPaymentHistory(id: string, params?: {
@@ -435,11 +435,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/members/${id}/payment-history?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/members/${id}/payment-history?${searchParams}`);
   }
 
   async getMemberDueHistory(id: string) {
-    return this.request(`/members/${id}/due-history`);
+    return this.request<ApiResponse<any>>(`/members/${id}/due-history`);
   }
 
   // Member Requests endpoints
@@ -641,7 +641,7 @@ class ApiClient {
     note?: string;
     reference?: string;
   }) {
-    return this.request(`/bank-accounts/${id}/deposit`, {
+    return this.request<ApiResponse<any>>(`/bank-accounts/${id}/deposit`, {
       method: 'POST',
       body: JSON.stringify(depositData),
     });
@@ -652,7 +652,7 @@ class ApiClient {
     date: string;
     note?: string;
   }) {
-    return this.request(`/bank-accounts/${id}/withdraw`, {
+    return this.request<ApiResponse<any>>(`/bank-accounts/${id}/withdraw`, {
       method: 'POST',
       body: JSON.stringify(withdrawData),
     });
@@ -664,7 +664,7 @@ class ApiClient {
     date: string;
     note?: string;
   }) {
-    return this.request(`/bank-accounts/${fromId}/transfer`, {
+    return this.request<ApiResponse<any>>(`/bank-accounts/${fromId}/transfer`, {
       method: 'POST',
       body: JSON.stringify(transferData),
     });
@@ -683,7 +683,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/bank-accounts/${id}/transactions?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/bank-accounts/${id}/transactions?${searchParams}`);
   }
 
   // Ledger endpoints
@@ -701,7 +701,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/ledger?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/ledger?${searchParams}`);
   }
 
   async getLedgerSummary(params?: {
@@ -714,7 +714,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/ledger/summary?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/ledger/summary?${searchParams}`);
   }
 
   // Cash Book endpoints
@@ -730,7 +730,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/cashbook?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/cashbook?${searchParams}`);
   }
 
   async getCashBookSummary(params?: {
@@ -743,7 +743,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/cashbook/summary?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/cashbook/summary?${searchParams}`);
   }
 
   // Dashboard endpoints
@@ -789,7 +789,7 @@ class ApiClient {
     userName: string;
     roleId: string;
   }) {
-    return this.request('/roles/assign', {
+    return this.request<ApiResponse<any>>('/roles/assign', {
       method: 'POST',
       body: JSON.stringify(assignmentData),
     });
@@ -799,7 +799,7 @@ class ApiClient {
     userId: string;
     roleId: string;
   }) {
-    return this.request('/roles/assign', {
+    return this.request<ApiResponse<any>>('/roles/assign', {
       method: 'DELETE',
       body: JSON.stringify(assignmentData),
     });
@@ -810,11 +810,11 @@ class ApiClient {
   }) {
     const searchParams = new URLSearchParams();
     if (params?.userId) searchParams.set('userId', params.userId);
-    return this.request(`/roles/assignments?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/roles/assignments?${searchParams}`);
   }
 
   async getMyPermissions() {
-    return this.request('/roles/me/permissions');
+    return this.request<ApiResponse<any>>('/roles/me/permissions');
   }
 
   // Approvals endpoints
@@ -880,7 +880,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/reports/income-vs-expense?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/reports/income-vs-expense?${searchParams}`);
   }
 
   async getCashFlowReport(params?: {
@@ -893,7 +893,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/reports/cash-flow?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/reports/cash-flow?${searchParams}`);
   }
 
   async getMemberDuesReport(params?: {
@@ -906,11 +906,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/reports/member-dues?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/reports/member-dues?${searchParams}`);
   }
 
   async getBankCashReport() {
-    return this.request('/reports/bank-vs-cash');
+    return this.request<ApiResponse<any>>('/reports/bank-vs-cash');
   }
 
   async getCollectionReport(params?: {
@@ -925,7 +925,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/reports/collection?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/reports/collection?${searchParams}`);
   }
 
   // Global search
@@ -933,7 +933,7 @@ class ApiClient {
     const searchParams = new URLSearchParams();
     searchParams.set('q', query);
     if (limit) searchParams.set('limit', limit.toString());
-    return this.request(`/search?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/search?${searchParams}`);
   }
 
   // FAQ endpoints
