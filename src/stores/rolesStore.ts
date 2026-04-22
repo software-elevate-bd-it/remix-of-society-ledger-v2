@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { apiClient, type Role } from '@/lib/api';
 
+export type { Role };
+
 export type Permission =
   | 'collection.create' | 'collection.approve'
   | 'expense.create' | 'expense.approve'

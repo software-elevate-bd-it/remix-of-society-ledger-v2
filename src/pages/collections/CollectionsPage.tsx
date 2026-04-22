@@ -7,7 +7,7 @@ import DataTable, { Column } from '@/components/shared/DataTable';
 import HelpModal from '@/components/shared/HelpModal';
 import { useCollectionsStore } from '@/stores/collectionsStore';
 import { useMembersStore } from '@/stores/membersStore';
-import type { CollectionSchema } from '@/lib/api';
+import type { Collection } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -40,7 +40,7 @@ export default function CollectionsPage() {
     loadMembers();
   }, [loadCollections, loadMembers]);
 
-  const columns: Column<CollectionSchema>[] = [
+  const columns: Column<Collection>[] = [
     { key: 'memberName', label: t('nav.members'), sortable: true },
     { key: 'category', label: t('common.category') },
     { key: 'amount', label: t('common.amount'), render: (tx) => `৳${tx.amount.toLocaleString()}`, sortable: true },

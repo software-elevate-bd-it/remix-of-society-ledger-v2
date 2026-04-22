@@ -74,7 +74,7 @@ export default function MainUserDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-heading font-bold">{user?.someiteeName || t('common.dashboard')}</h1>
+        <h1 className="text-2xl font-heading font-bold">{user?.somiteeName || t('common.dashboard')}</h1>
         <p className="text-muted-foreground">{t('common.welcome')}, {user?.name}</p>
       </div>
 

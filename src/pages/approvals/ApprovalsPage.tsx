@@ -43,14 +43,14 @@ export default function ApprovalsPage() {
 
   const handleApprove = (item: ApprovalItem) => {
     if (!user) return;
-    approve(item.id, user.id, user.name);
+    approve(item.id);
     toast.success(`${TYPE_META[item.type].label} approved`);
   };
 
   const handleReject = () => {
     if (!rejectTarget || !user) return;
     if (!rejectNote.trim()) return toast.error('Rejection reason is required');
-    reject(rejectTarget.id, user.id, user.name, rejectNote.trim());
+    reject(rejectTarget.id, rejectNote.trim());
     toast.success('Rejected with note');
     setRejectTarget(null);
     setRejectNote('');

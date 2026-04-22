@@ -20,6 +20,7 @@ interface DataTableProps<T> {
   onRowClick?: (item: T) => void;
   emptyMessage?: string;
   emptyAction?: { label: string; onClick: () => void };
+  isLoading?: boolean;
 }
 
 export default function DataTable<T extends Record<string, any>>({
