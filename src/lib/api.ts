@@ -286,7 +286,7 @@ class ApiClient {
   }
 
   async getProfile() {
-    return this.request<ApiResponseSchema<UserSchema>>('/auth/me');
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof UserSchema>>> &; { data: z.infer<typeof UserSchema> }>('/auth/me');
   }
 
   async forgotPassword(email: string) {
@@ -312,11 +312,11 @@ class ApiClient {
 
   // Company endpoints
   async getCompanySettings() {
-    return this.request<ApiResponseSchema<CompanySettingsSchema>>('/company/settings');
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof CompanySettingsSchema>>> &; { data: z.infer<typeof CompanySettingsSchema> }>('/company/settings');
   }
 
   async updateCompanySettings(settings: Partial<z.infer<typeof CompanySettingsSchema>>) {
-    return this.request<ApiResponseSchema<CompanySettingsSchema>>('/company/settings', {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof CompanySettingsSchema>>> &; { data: z.infer<typeof CompanySettingsSchema> }>('/company/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
     });
@@ -353,11 +353,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<MemberSchema[]>>(`/members?${searchParams}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof MemberSchema>>> &; { data: z.infer<typeof MemberSchema>[] }>(`/members?${searchParams}`);
   }
 
   async getMember(id: string) {
-    return this.request<ApiResponseSchema<MemberSchema>>(`/members/${id}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof MemberSchema>>> &; { data: z.infer<typeof MemberSchema> }>(`/members/${id}`);
   }
 
   async createMember(memberData: {
@@ -369,14 +369,14 @@ class ApiClient {
     monthlyFee: number;
     billingCycle?: string;
   }) {
-    return this.request<ApiResponseSchema<MemberSchema>>('/members', {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof MemberSchema>>> &; { data: z.infer<typeof MemberSchema> }>('/members', {
       method: 'POST',
       body: JSON.stringify(memberData),
     });
   }
 
   async updateMember(id: string, memberData: Partial<MemberSchema>) {
-    return this.request<ApiResponseSchema<MemberSchema>>(`/members/${id}`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof MemberSchema>>> &; { data: z.infer<typeof MemberSchema> }>(`/members/${id}`, {
       method: 'PUT',
       body: JSON.stringify(memberData),
     });
@@ -441,7 +441,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<MemberRequestSchema[]>>(`/member-requests?${searchParams}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof MemberRequestSchema>>> &; { data: z.infer<typeof MemberRequestSchema>[] }>(`/member-requests?${searchParams}`);
   }
 
   async approveMemberRequest(id: string, approvalData: {
@@ -498,7 +498,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<CollectionSchema[]>>(`/collections?${searchParams}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof CollectionSchema>>> &; { data: z.infer<typeof CollectionSchema>[] }>(`/collections?${searchParams}`);
   }
 
   async createCollection(collectionData: {
@@ -510,14 +510,14 @@ class ApiClient {
     transactionId?: string;
     note?: string;
   }) {
-    return this.request<ApiResponseSchema<CollectionSchema>>('/collections', {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof CollectionSchema>>> &; { data: z.infer<typeof CollectionSchema> }>('/collections', {
       method: 'POST',
       body: JSON.stringify(collectionData),
     });
   }
 
   async updateCollection(id: string, collectionData: Partial<CollectionSchema>) {
-    return this.request<ApiResponseSchema<CollectionSchema>>(`/collections/${id}`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof CollectionSchema>>> &; { data: z.infer<typeof CollectionSchema> }>(`/collections/${id}`, {
       method: 'PUT',
       body: JSON.stringify(collectionData),
     });
@@ -530,14 +530,14 @@ class ApiClient {
   }
 
   async approveCollection(id: string, note?: string) {
-    return this.request<ApiResponseSchema<CollectionSchema>>(`/collections/${id}/status`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof CollectionSchema>>> &; { data: z.infer<typeof CollectionSchema> }>(`/collections/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status: 'approved', note }),
     });
   }
 
   async rejectCollection(id: string, note: string) {
-    return this.request<ApiResponseSchema<CollectionSchema>>(`/collections/${id}/status`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof CollectionSchema>>> &; { data: z.infer<typeof CollectionSchema> }>(`/collections/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status: 'rejected', note }),
     });
@@ -559,7 +559,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<ExpenseSchema[]>>(`/expenses?${searchParams}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof ExpenseSchema>>> &; { data: z.infer<typeof ExpenseSchema>[] }>(`/expenses?${searchParams}`);
   }
 
   async createExpense(expenseData: {
@@ -569,14 +569,14 @@ class ApiClient {
     method: string;
     note?: string;
   }) {
-    return this.request<ApiResponseSchema<ExpenseSchema>>('/expenses', {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof ExpenseSchema>>> &; { data: z.infer<typeof ExpenseSchema> }>('/expenses', {
       method: 'POST',
       body: JSON.stringify(expenseData),
     });
   }
 
   async updateExpense(id: string, expenseData: Partial<ExpenseSchema>) {
-    return this.request<ApiResponseSchema<ExpenseSchema>>(`/expenses/${id}`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof ExpenseSchema>>> &; { data: z.infer<typeof ExpenseSchema> }>(`/expenses/${id}`, {
       method: 'PUT',
       body: JSON.stringify(expenseData),
     });
@@ -594,7 +594,7 @@ class ApiClient {
 
   // Bank Accounts endpoints
   async getBankAccounts() {
-    return this.request<ApiResponseSchema<BankAccountSchema[]>>('/bank-accounts');
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof BankAccountSchema>>> &; { data: z.infer<typeof BankAccountSchema>[] }>('/bank-accounts');
   }
 
   async createBankAccount(accountData: {
@@ -603,14 +603,14 @@ class ApiClient {
     accountNumber: string;
     openingBalance: number;
   }) {
-    return this.request<ApiResponseSchema<BankAccountSchema>>('/bank-accounts', {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof BankAccountSchema>>> &; { data: z.infer<typeof BankAccountSchema> }>('/bank-accounts', {
       method: 'POST',
       body: JSON.stringify(accountData),
     });
   }
 
   async updateBankAccount(id: string, accountData: Partial<BankAccountSchema>) {
-    return this.request<ApiResponseSchema<BankAccountSchema>>(`/bank-accounts/${id}`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof BankAccountSchema>>> &; { data: z.infer<typeof BankAccountSchema> }>(`/bank-accounts/${id}`, {
       method: 'PUT',
       body: JSON.stringify(accountData),
     });
@@ -735,7 +735,7 @@ class ApiClient {
 
   // Dashboard endpoints
   async getDashboardStats() {
-    return this.request<ApiResponseSchema<DashboardStatsSchema>>('/dashboard/stats');
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof DashboardStatsSchema>>> &; { data: z.infer<typeof DashboardStatsSchema> }>('/dashboard/stats');
   }
 
   async getMemberDashboardStats() {
@@ -744,7 +744,7 @@ class ApiClient {
 
   // Roles & Permissions endpoints
   async getRoles() {
-    return this.request<ApiResponseSchema<RoleSchema[]>>('/roles');
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof RoleSchema>>> &; { data: z.infer<typeof RoleSchema>[] }>('/roles');
   }
 
   async createRole(roleData: {
@@ -752,14 +752,14 @@ class ApiClient {
     description?: string;
     permissions: string[];
   }) {
-    return this.request<ApiResponseSchema<RoleSchema>>('/roles', {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof RoleSchema>>> &; { data: z.infer<typeof RoleSchema> }>('/roles', {
       method: 'POST',
       body: JSON.stringify(roleData),
     });
   }
 
   async updateRole(id: string, roleData: Partial<RoleSchema>) {
-    return this.request<ApiResponseSchema<RoleSchema>>(`/roles/${id}`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof RoleSchema>>> &; { data: z.infer<typeof RoleSchema> }>(`/roles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roleData),
     });
@@ -818,11 +818,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<ApprovalSchema[]>>(`/approvals?${searchParams}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof ApprovalSchema>>> &; { data: z.infer<typeof ApprovalSchema>[] }>(`/approvals?${searchParams}`);
   }
 
   async getApproval(id: string) {
-    return this.request<ApiResponseSchema<ApprovalSchema>>(`/approvals/${id}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof ApprovalSchema>>> &; { data: z.infer<typeof ApprovalSchema> }>(`/approvals/${id}`);
   }
 
   async createApproval(approvalData: {
@@ -832,20 +832,20 @@ class ApiClient {
     description?: string;
     payload: any;
   }) {
-    return this.request<ApiResponseSchema<ApprovalSchema>>('/approvals', {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof ApprovalSchema>>> &; { data: z.infer<typeof ApprovalSchema> }>('/approvals', {
       method: 'POST',
       body: JSON.stringify(approvalData),
     });
   }
 
   async approveApproval(id: string) {
-    return this.request<ApiResponseSchema<ApprovalSchema>>(`/approvals/${id}/approve`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof ApprovalSchema>>> &; { data: z.infer<typeof ApprovalSchema> }>(`/approvals/${id}/approve`, {
       method: 'PATCH',
     });
   }
 
   async rejectApproval(id: string, note: string) {
-    return this.request<ApiResponseSchema<ApprovalSchema>>(`/approvals/${id}/reject`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof ApprovalSchema>>> &; { data: z.infer<typeof ApprovalSchema> }>(`/approvals/${id}/reject`, {
       method: 'PATCH',
       body: JSON.stringify({ note }),
     });
@@ -931,18 +931,18 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<FAQSchema[]>>(`/faq?${searchParams}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof FAQSchema>>> &; { data: z.infer<typeof FAQSchema>[] }>(`/faq?${searchParams}`);
   }
 
   async createFAQ(faqData: { question: string; answer: string; category?: string }) {
-    return this.request<ApiResponseSchema<FAQSchema>>('/faq', {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof FAQSchema>>> &; { data: z.infer<typeof FAQSchema> }>('/faq', {
       method: 'POST',
       body: JSON.stringify(faqData),
     });
   }
 
   async updateFAQ(id: string, faqData: Partial<{ question: string; answer: string }>) {
-    return this.request<ApiResponseSchema<FAQSchema>>(`/faq/${id}`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof FAQSchema>>> &; { data: z.infer<typeof FAQSchema> }>(`/faq/${id}`, {
       method: 'PUT',
       body: JSON.stringify(faqData),
     });
@@ -967,11 +967,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<PaymentSchema[]>>(`/payments?${searchParams}`);
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof PaymentSchema>>> &; { data: z.infer<typeof PaymentSchema>[] }>(`/payments?${searchParams}`);
   }
 
   async verifyPayment(id: string, verificationData: { status: string; note?: string }) {
-    return this.request<ApiResponseSchema<PaymentSchema>>(`/payments/${id}/verify`, {
+    return this.request<z.infer<ReturnType<typeof ApiResponseSchema<typeof PaymentSchema>>> &; { data: z.infer<typeof PaymentSchema> }>(`/payments/${id}/verify`, {
       method: 'PATCH',
       body: JSON.stringify(verificationData),
     });
