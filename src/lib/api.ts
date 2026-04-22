@@ -18,14 +18,7 @@ export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
     }).optional(),
   });
 
-// Generic shape used as a TypeScript type for `apiClient` request returns.
-export interface ApiResponse<T> {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: T;
-  meta?: { page: number; limit: number; total: number; totalPages: number };
-}
+
 
 export const ApiErrorResponseSchema = z.object({
   success: z.literal(false),
