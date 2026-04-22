@@ -60,8 +60,10 @@ export const UserSchema = z.object({
   role: z.enum(['super_admin', 'main_user', 'member']),
   somiteeId: z.string().optional(),
   somiteeName: z.string().optional(),
+  someiteeName: z.string().optional(),
   profilePhoto: z.string().nullable().optional(),
   phone: z.string().optional(),
+  roleIds: z.array(z.string()).optional(),
 });
 
 export const LoginResponseSchema = ApiResponseSchema(z.object({
