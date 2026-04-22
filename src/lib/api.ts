@@ -196,7 +196,9 @@ export const ApprovalSchema = z.object({
   id: z.string(),
   type: z.enum(['collection', 'expense', 'bank', 'member']),
   title: z.string(),
-  amount: z.number(),
+  amount: z.number().optional(),
+  description: z.string().optional(),
+  payload: z.record(z.any()).default({}),
   status: z.enum(['pending', 'approved', 'rejected']),
   createdBy: z.string(),
   createdByName: z.string(),
@@ -863,7 +865,7 @@ class ApiClient {
   }
 
   async getApprovalStats() {
-    return this.request('/approvals/stats');
+    return this.request<ApiResponse<Record<string, number>>>('/approvals/stats');
   }
 
   // Reports endpoints
