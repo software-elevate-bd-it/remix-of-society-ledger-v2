@@ -59,7 +59,7 @@ export default function MembersPage() {
 
   const handleAdd = async (data: MemberFormData) => {
     try {
-      await createMember(data);
+      await createMember(data as { name: string; monthlyFee: number } & MemberFormData);
       setOpen(false);
       form.reset();
       toast.success(t('members.memberAdded'));

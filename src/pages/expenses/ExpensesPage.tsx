@@ -3,7 +3,7 @@ import DataTable, { Column } from '@/components/shared/DataTable';
 import { useExpensesStore } from '@/stores/expensesStore';
 import { useApprovalsStore } from '@/stores/approvalsStore';
 import { useAuthStore } from '@/stores/authStore';
-import type { ExpenseSchema } from '@/lib/api';
+import type { Expense } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PermissionGuard } from '@/components/shared/PermissionGuard';
 
-const columns: Column<ExpenseSchema>[] = [
+const columns: Column<Expense>[] = [
   { key: 'category', label: 'Category', sortable: true },
   { key: 'amount', label: 'Amount', render: (t) => `৳${t.amount.toLocaleString()}`, sortable: true },
   { key: 'method', label: 'Method', render: (t) => <span className="capitalize">{t.method}</span> },
@@ -27,14 +27,14 @@ const columns: Column<ExpenseSchema>[] = [
 ];
 
 export default function ExpensesPage() {
-  const { expenses, isLoading, loadExpenses, createExpense, getExpenseCategories } = useExpensesStore();
+  const { expenses, isLoading, loadExpenses, createExpense, loadCategories, categories } = useExpensesStore();
   const [expenseCategories, setExpenseCategories] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     loadExpenses();
-    getExpenseCategories().then(setExpenseCategories);
-  }, [loadExpenses, getExpenseCategories]);
+    loadCategories();
+  }, [loadExpenses, loadCategories]);
   const [form, setForm] = useState({ category: '', amount: '', date: new Date().toISOString().split('T')[0], note: '', method: 'cash' });
   const submit = useApprovalsStore((s) => s.submit);
   const pendingExpenses = useApprovalsStore((s) => s.items.filter(i => i.type === 'expense'));

@@ -47,7 +47,7 @@ export const useApprovalsStore = create<ApprovalsState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.getApprovals(params);
-          set({ items: response.data, isLoading: false });
+          set({ items: response.data as ApprovalItem[], isLoading: false });
         } catch (error) {
           console.error('Failed to load approvals:', error);
           set({ error: 'Failed to load approvals', isLoading: false });
@@ -64,7 +64,7 @@ export const useApprovalsStore = create<ApprovalsState>()(
             description: item.description,
             payload: item.payload,
           });
-          const newItem = response.data;
+          const newItem = response.data as ApprovalItem;
           set((s) => ({ items: [newItem, ...s.items], isLoading: false }));
           return newItem;
         } catch (error) {
@@ -78,7 +78,7 @@ export const useApprovalsStore = create<ApprovalsState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.approveApproval(id);
-          const updatedItem = response.data;
+          const updatedItem = response.data as ApprovalItem;
           set((s) => ({
             items: s.items.map((i) => (i.id === id ? updatedItem : i)),
             isLoading: false,
@@ -94,7 +94,7 @@ export const useApprovalsStore = create<ApprovalsState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.rejectApproval(id, note);
-          const updatedItem = response.data;
+          const updatedItem = response.data as ApprovalItem;
           set((s) => ({
             items: s.items.map((i) => (i.id === id ? updatedItem : i)),
             isLoading: false,
@@ -109,7 +109,7 @@ export const useApprovalsStore = create<ApprovalsState>()(
       getApproval: async (id) => {
         try {
           const response = await apiClient.getApproval(id);
-          return response.data;
+          return response.data as ApprovalItem;
         } catch (error) {
           console.error('Failed to get approval:', error);
           throw error;

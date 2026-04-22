@@ -18,6 +18,15 @@ export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
     }).optional(),
   });
 
+// TypeScript shape used as the return-type generic for `apiClient` request methods.
+// (The runtime zod equivalent is ApiResponseSchema above.)
+export interface ApiResponse<T> {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: T;
+  meta?: { page: number; limit: number; total: number; totalPages: number };
+}
 
 
 export const ApiErrorResponseSchema = z.object({
@@ -51,8 +60,10 @@ export const UserSchema = z.object({
   role: z.enum(['super_admin', 'main_user', 'member']),
   somiteeId: z.string().optional(),
   somiteeName: z.string().optional(),
+  someiteeName: z.string().optional(),
   profilePhoto: z.string().nullable().optional(),
   phone: z.string().optional(),
+  roleIds: z.array(z.string()).optional(),
 });
 
 export const LoginResponseSchema = ApiResponseSchema(z.object({
@@ -187,7 +198,9 @@ export const ApprovalSchema = z.object({
   id: z.string(),
   type: z.enum(['collection', 'expense', 'bank', 'member']),
   title: z.string(),
-  amount: z.number(),
+  amount: z.number().optional(),
+  description: z.string().optional(),
+  payload: z.record(z.any()).default({}),
   status: z.enum(['pending', 'approved', 'rejected']),
   createdBy: z.string(),
   createdByName: z.string(),
@@ -282,31 +295,31 @@ class ApiClient {
   }
 
   async logout() {
-    return this.request('/auth/logout', {
+    return this.request<ApiResponse<any>>('/auth/logout', {
       method: 'POST',
     });
   }
 
   async getProfile() {
-    return this.request<ApiResponseSchema<UserSchema>>('/auth/me');
+    return this.request<ApiResponse<z.infer<typeof UserSchema>>>('/auth/me');
   }
 
   async forgotPassword(email: string) {
-    return this.request('/auth/forgot-password', {
+    return this.request<ApiResponse<any>>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
   }
 
   async resetPassword(token: string, newPassword: string) {
-    return this.request('/auth/reset-password', {
+    return this.request<ApiResponse<any>>('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify({ token, newPassword }),
     });
   }
 
   async refreshToken(refreshToken: string) {
-    return this.request('/auth/refresh-token', {
+    return this.request<ApiResponse<any>>('/auth/refresh-token', {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
     });
@@ -314,18 +327,18 @@ class ApiClient {
 
   // Company endpoints
   async getCompanySettings() {
-    return this.request<ApiResponseSchema<CompanySettingsSchema>>('/company/settings');
+    return this.request<ApiResponse<z.infer<typeof CompanySettingsSchema>>>('/company/settings');
   }
 
   async updateCompanySettings(settings: Partial<z.infer<typeof CompanySettingsSchema>>) {
-    return this.request<ApiResponseSchema<CompanySettingsSchema>>('/company/settings', {
+    return this.request<ApiResponse<z.infer<typeof CompanySettingsSchema>>>('/company/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
     });
   }
 
   async uploadCompanyLogo(formData: FormData) {
-    return this.request('/company/upload-logo', {
+    return this.request<ApiResponse<any>>('/company/upload-logo', {
       method: 'POST',
       body: formData,
       headers: {}, // Let browser set content-type for FormData
@@ -333,7 +346,7 @@ class ApiClient {
   }
 
   async uploadCompanySignature(formData: FormData) {
-    return this.request('/company/upload-signature', {
+    return this.request<ApiResponse<any>>('/company/upload-signature', {
       method: 'POST',
       body: formData,
       headers: {},
@@ -355,11 +368,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<MemberSchema[]>>(`/members?${searchParams}`);
+    return this.request<ApiResponse<z.infer<typeof MemberSchema>[]>>(`/members?${searchParams}`);
   }
 
   async getMember(id: string) {
-    return this.request<ApiResponseSchema<MemberSchema>>(`/members/${id}`);
+    return this.request<ApiResponse<z.infer<typeof MemberSchema>>>(`/members/${id}`);
   }
 
   async createMember(memberData: {
@@ -371,27 +384,27 @@ class ApiClient {
     monthlyFee: number;
     billingCycle?: string;
   }) {
-    return this.request<ApiResponseSchema<MemberSchema>>('/members', {
+    return this.request<ApiResponse<z.infer<typeof MemberSchema>>>('/members', {
       method: 'POST',
       body: JSON.stringify(memberData),
     });
   }
 
-  async updateMember(id: string, memberData: Partial<MemberSchema>) {
-    return this.request<ApiResponseSchema<MemberSchema>>(`/members/${id}`, {
+  async updateMember(id: string, memberData: Partial<z.infer<typeof MemberSchema>>) {
+    return this.request<ApiResponse<z.infer<typeof MemberSchema>>>(`/members/${id}`, {
       method: 'PUT',
       body: JSON.stringify(memberData),
     });
   }
 
   async deleteMember(id: string) {
-    return this.request<ApiResponseSchema<null>>(`/members/${id}`, {
+    return this.request<ApiResponse<null>>(`/members/${id}`, {
       method: 'DELETE',
     });
   }
 
   async uploadMemberPhoto(id: string, formData: FormData) {
-    return this.request(`/members/${id}/upload-photo`, {
+    return this.request<ApiResponse<any>>(`/members/${id}/upload-photo`, {
       method: 'POST',
       body: formData,
       headers: {},
@@ -411,7 +424,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/members/${id}/ledger?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/members/${id}/ledger?${searchParams}`);
   }
 
   async getMemberPaymentHistory(id: string, params?: {
@@ -424,11 +437,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/members/${id}/payment-history?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/members/${id}/payment-history?${searchParams}`);
   }
 
   async getMemberDueHistory(id: string) {
-    return this.request(`/members/${id}/due-history`);
+    return this.request<ApiResponse<any>>(`/members/${id}/due-history`);
   }
 
   // Member Requests endpoints
@@ -443,14 +456,14 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<MemberRequestSchema[]>>(`/member-requests?${searchParams}`);
+    return this.request<ApiResponse<z.infer<typeof MemberRequestSchema>[]>>(`/member-requests?${searchParams}`);
   }
 
   async approveMemberRequest(id: string, approvalData: {
     monthlyFee: number;
     billingCycle: string;
   }) {
-    return this.request<ApiResponseSchema<{
+    return this.request<ApiResponse<{
       requestId: string;
       memberId: string;
       name: string;
@@ -465,7 +478,7 @@ class ApiClient {
   async rejectMemberRequest(id: string, rejectionData: {
     rejectionNote: string;
   }) {
-    return this.request<ApiResponseSchema<{
+    return this.request<ApiResponse<{
       requestId: string;
       status: string;
       rejectionNote: string;
@@ -477,7 +490,7 @@ class ApiClient {
   }
 
   async deleteMemberRequest(id: string) {
-    return this.request<ApiResponseSchema<null>>(`/member-requests/${id}`, {
+    return this.request<ApiResponse<null>>(`/member-requests/${id}`, {
       method: 'DELETE',
     });
   }
@@ -500,7 +513,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<CollectionSchema[]>>(`/collections?${searchParams}`);
+    return this.request<ApiResponse<z.infer<typeof CollectionSchema>[]>>(`/collections?${searchParams}`);
   }
 
   async createCollection(collectionData: {
@@ -512,34 +525,34 @@ class ApiClient {
     transactionId?: string;
     note?: string;
   }) {
-    return this.request<ApiResponseSchema<CollectionSchema>>('/collections', {
+    return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>('/collections', {
       method: 'POST',
       body: JSON.stringify(collectionData),
     });
   }
 
-  async updateCollection(id: string, collectionData: Partial<CollectionSchema>) {
-    return this.request<ApiResponseSchema<CollectionSchema>>(`/collections/${id}`, {
+  async updateCollection(id: string, collectionData: Partial<z.infer<typeof CollectionSchema>>) {
+    return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>(`/collections/${id}`, {
       method: 'PUT',
       body: JSON.stringify(collectionData),
     });
   }
 
   async deleteCollection(id: string) {
-    return this.request<ApiResponseSchema<null>>(`/collections/${id}`, {
+    return this.request<ApiResponse<null>>(`/collections/${id}`, {
       method: 'DELETE',
     });
   }
 
   async approveCollection(id: string, note?: string) {
-    return this.request<ApiResponseSchema<CollectionSchema>>(`/collections/${id}/status`, {
+    return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>(`/collections/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status: 'approved', note }),
     });
   }
 
   async rejectCollection(id: string, note: string) {
-    return this.request<ApiResponseSchema<CollectionSchema>>(`/collections/${id}/status`, {
+    return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>(`/collections/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status: 'rejected', note }),
     });
@@ -561,7 +574,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<ExpenseSchema[]>>(`/expenses?${searchParams}`);
+    return this.request<ApiResponse<z.infer<typeof ExpenseSchema>[]>>(`/expenses?${searchParams}`);
   }
 
   async createExpense(expenseData: {
@@ -571,32 +584,32 @@ class ApiClient {
     method: string;
     note?: string;
   }) {
-    return this.request<ApiResponseSchema<ExpenseSchema>>('/expenses', {
+    return this.request<ApiResponse<z.infer<typeof ExpenseSchema>>>('/expenses', {
       method: 'POST',
       body: JSON.stringify(expenseData),
     });
   }
 
-  async updateExpense(id: string, expenseData: Partial<ExpenseSchema>) {
-    return this.request<ApiResponseSchema<ExpenseSchema>>(`/expenses/${id}`, {
+  async updateExpense(id: string, expenseData: Partial<z.infer<typeof ExpenseSchema>>) {
+    return this.request<ApiResponse<z.infer<typeof ExpenseSchema>>>(`/expenses/${id}`, {
       method: 'PUT',
       body: JSON.stringify(expenseData),
     });
   }
 
   async deleteExpense(id: string) {
-    return this.request<ApiResponseSchema<null>>(`/expenses/${id}`, {
+    return this.request<ApiResponse<null>>(`/expenses/${id}`, {
       method: 'DELETE',
     });
   }
 
   async getExpenseCategories() {
-    return this.request<ApiResponseSchema<string[]>>('/expenses/categories');
+    return this.request<ApiResponse<string[]>>('/expenses/categories');
   }
 
   // Bank Accounts endpoints
   async getBankAccounts() {
-    return this.request<ApiResponseSchema<BankAccountSchema[]>>('/bank-accounts');
+    return this.request<ApiResponse<z.infer<typeof BankAccountSchema>[]>>('/bank-accounts');
   }
 
   async createBankAccount(accountData: {
@@ -605,21 +618,21 @@ class ApiClient {
     accountNumber: string;
     openingBalance: number;
   }) {
-    return this.request<ApiResponseSchema<BankAccountSchema>>('/bank-accounts', {
+    return this.request<ApiResponse<z.infer<typeof BankAccountSchema>>>('/bank-accounts', {
       method: 'POST',
       body: JSON.stringify(accountData),
     });
   }
 
-  async updateBankAccount(id: string, accountData: Partial<BankAccountSchema>) {
-    return this.request<ApiResponseSchema<BankAccountSchema>>(`/bank-accounts/${id}`, {
+  async updateBankAccount(id: string, accountData: Partial<z.infer<typeof BankAccountSchema>>) {
+    return this.request<ApiResponse<z.infer<typeof BankAccountSchema>>>(`/bank-accounts/${id}`, {
       method: 'PUT',
       body: JSON.stringify(accountData),
     });
   }
 
   async deleteBankAccount(id: string) {
-    return this.request<ApiResponseSchema<null>>(`/bank-accounts/${id}`, {
+    return this.request<ApiResponse<null>>(`/bank-accounts/${id}`, {
       method: 'DELETE',
     });
   }
@@ -630,7 +643,7 @@ class ApiClient {
     note?: string;
     reference?: string;
   }) {
-    return this.request(`/bank-accounts/${id}/deposit`, {
+    return this.request<ApiResponse<any>>(`/bank-accounts/${id}/deposit`, {
       method: 'POST',
       body: JSON.stringify(depositData),
     });
@@ -641,7 +654,7 @@ class ApiClient {
     date: string;
     note?: string;
   }) {
-    return this.request(`/bank-accounts/${id}/withdraw`, {
+    return this.request<ApiResponse<any>>(`/bank-accounts/${id}/withdraw`, {
       method: 'POST',
       body: JSON.stringify(withdrawData),
     });
@@ -653,7 +666,7 @@ class ApiClient {
     date: string;
     note?: string;
   }) {
-    return this.request(`/bank-accounts/${fromId}/transfer`, {
+    return this.request<ApiResponse<any>>(`/bank-accounts/${fromId}/transfer`, {
       method: 'POST',
       body: JSON.stringify(transferData),
     });
@@ -672,7 +685,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/bank-accounts/${id}/transactions?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/bank-accounts/${id}/transactions?${searchParams}`);
   }
 
   // Ledger endpoints
@@ -690,7 +703,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/ledger?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/ledger?${searchParams}`);
   }
 
   async getLedgerSummary(params?: {
@@ -703,7 +716,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/ledger/summary?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/ledger/summary?${searchParams}`);
   }
 
   // Cash Book endpoints
@@ -719,7 +732,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/cashbook?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/cashbook?${searchParams}`);
   }
 
   async getCashBookSummary(params?: {
@@ -732,21 +745,21 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/cashbook/summary?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/cashbook/summary?${searchParams}`);
   }
 
   // Dashboard endpoints
   async getDashboardStats() {
-    return this.request<ApiResponseSchema<DashboardStatsSchema>>('/dashboard/stats');
+    return this.request<ApiResponse<z.infer<typeof DashboardStatsSchema>>>('/dashboard/stats');
   }
 
   async getMemberDashboardStats() {
-    return this.request<ApiResponseSchema<any>>('/dashboard/member-stats');
+    return this.request<ApiResponse<any>>('/dashboard/member-stats');
   }
 
   // Roles & Permissions endpoints
   async getRoles() {
-    return this.request<ApiResponseSchema<RoleSchema[]>>('/roles');
+    return this.request<ApiResponse<z.infer<typeof RoleSchema>[]>>('/roles');
   }
 
   async createRole(roleData: {
@@ -754,21 +767,21 @@ class ApiClient {
     description?: string;
     permissions: string[];
   }) {
-    return this.request<ApiResponseSchema<RoleSchema>>('/roles', {
+    return this.request<ApiResponse<z.infer<typeof RoleSchema>>>('/roles', {
       method: 'POST',
       body: JSON.stringify(roleData),
     });
   }
 
-  async updateRole(id: string, roleData: Partial<RoleSchema>) {
-    return this.request<ApiResponseSchema<RoleSchema>>(`/roles/${id}`, {
+  async updateRole(id: string, roleData: Partial<z.infer<typeof RoleSchema>>) {
+    return this.request<ApiResponse<z.infer<typeof RoleSchema>>>(`/roles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roleData),
     });
   }
 
   async deleteRole(id: string) {
-    return this.request<ApiResponseSchema<null>>(`/roles/${id}`, {
+    return this.request<ApiResponse<null>>(`/roles/${id}`, {
       method: 'DELETE',
     });
   }
@@ -778,7 +791,7 @@ class ApiClient {
     userName: string;
     roleId: string;
   }) {
-    return this.request('/roles/assign', {
+    return this.request<ApiResponse<any>>('/roles/assign', {
       method: 'POST',
       body: JSON.stringify(assignmentData),
     });
@@ -788,7 +801,7 @@ class ApiClient {
     userId: string;
     roleId: string;
   }) {
-    return this.request('/roles/assign', {
+    return this.request<ApiResponse<any>>('/roles/assign', {
       method: 'DELETE',
       body: JSON.stringify(assignmentData),
     });
@@ -799,11 +812,11 @@ class ApiClient {
   }) {
     const searchParams = new URLSearchParams();
     if (params?.userId) searchParams.set('userId', params.userId);
-    return this.request(`/roles/assignments?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/roles/assignments?${searchParams}`);
   }
 
   async getMyPermissions() {
-    return this.request('/roles/me/permissions');
+    return this.request<ApiResponse<any>>('/roles/me/permissions');
   }
 
   // Approvals endpoints
@@ -820,11 +833,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<ApprovalSchema[]>>(`/approvals?${searchParams}`);
+    return this.request<ApiResponse<z.infer<typeof ApprovalSchema>[]>>(`/approvals?${searchParams}`);
   }
 
   async getApproval(id: string) {
-    return this.request<ApiResponseSchema<ApprovalSchema>>(`/approvals/${id}`);
+    return this.request<ApiResponse<z.infer<typeof ApprovalSchema>>>(`/approvals/${id}`);
   }
 
   async createApproval(approvalData: {
@@ -834,27 +847,27 @@ class ApiClient {
     description?: string;
     payload: any;
   }) {
-    return this.request<ApiResponseSchema<ApprovalSchema>>('/approvals', {
+    return this.request<ApiResponse<z.infer<typeof ApprovalSchema>>>('/approvals', {
       method: 'POST',
       body: JSON.stringify(approvalData),
     });
   }
 
   async approveApproval(id: string) {
-    return this.request<ApiResponseSchema<ApprovalSchema>>(`/approvals/${id}/approve`, {
+    return this.request<ApiResponse<z.infer<typeof ApprovalSchema>>>(`/approvals/${id}/approve`, {
       method: 'PATCH',
     });
   }
 
   async rejectApproval(id: string, note: string) {
-    return this.request<ApiResponseSchema<ApprovalSchema>>(`/approvals/${id}/reject`, {
+    return this.request<ApiResponse<z.infer<typeof ApprovalSchema>>>(`/approvals/${id}/reject`, {
       method: 'PATCH',
       body: JSON.stringify({ note }),
     });
   }
 
   async getApprovalStats() {
-    return this.request('/approvals/stats');
+    return this.request<ApiResponse<Record<string, number>>>('/approvals/stats');
   }
 
   // Reports endpoints
@@ -869,7 +882,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/reports/income-vs-expense?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/reports/income-vs-expense?${searchParams}`);
   }
 
   async getCashFlowReport(params?: {
@@ -882,7 +895,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/reports/cash-flow?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/reports/cash-flow?${searchParams}`);
   }
 
   async getMemberDuesReport(params?: {
@@ -895,11 +908,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/reports/member-dues?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/reports/member-dues?${searchParams}`);
   }
 
   async getBankCashReport() {
-    return this.request('/reports/bank-vs-cash');
+    return this.request<ApiResponse<any>>('/reports/bank-vs-cash');
   }
 
   async getCollectionReport(params?: {
@@ -914,7 +927,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request(`/reports/collection?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/reports/collection?${searchParams}`);
   }
 
   // Global search
@@ -922,7 +935,7 @@ class ApiClient {
     const searchParams = new URLSearchParams();
     searchParams.set('q', query);
     if (limit) searchParams.set('limit', limit.toString());
-    return this.request(`/search?${searchParams}`);
+    return this.request<ApiResponse<any>>(`/search?${searchParams}`);
   }
 
   // FAQ endpoints
@@ -933,25 +946,25 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<FAQSchema[]>>(`/faq?${searchParams}`);
+    return this.request<ApiResponse<z.infer<typeof FAQSchema>[]>>(`/faq?${searchParams}`);
   }
 
   async createFAQ(faqData: { question: string; answer: string; category?: string }) {
-    return this.request<ApiResponseSchema<FAQSchema>>('/faq', {
+    return this.request<ApiResponse<z.infer<typeof FAQSchema>>>('/faq', {
       method: 'POST',
       body: JSON.stringify(faqData),
     });
   }
 
   async updateFAQ(id: string, faqData: Partial<{ question: string; answer: string }>) {
-    return this.request<ApiResponseSchema<FAQSchema>>(`/faq/${id}`, {
+    return this.request<ApiResponse<z.infer<typeof FAQSchema>>>(`/faq/${id}`, {
       method: 'PUT',
       body: JSON.stringify(faqData),
     });
   }
 
   async deleteFAQ(id: string) {
-    return this.request<ApiResponseSchema<null>>(`/faq/${id}`, {
+    return this.request<ApiResponse<null>>(`/faq/${id}`, {
       method: 'DELETE',
     });
   }
@@ -969,11 +982,11 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponseSchema<PaymentSchema[]>>(`/payments?${searchParams}`);
+    return this.request<ApiResponse<z.infer<typeof PaymentSchema>[]>>(`/payments?${searchParams}`);
   }
 
   async verifyPayment(id: string, verificationData: { status: string; note?: string }) {
-    return this.request<ApiResponseSchema<PaymentSchema>>(`/payments/${id}/verify`, {
+    return this.request<ApiResponse<z.infer<typeof PaymentSchema>>>(`/payments/${id}/verify`, {
       method: 'PATCH',
       body: JSON.stringify(verificationData),
     });

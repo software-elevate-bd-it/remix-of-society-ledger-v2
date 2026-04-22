@@ -31,7 +31,7 @@ export default function RolesPage() {
 
   const openEdit = (role: Role) => {
     setEditingRole(role);
-    setForm({ name: role.name, description: role.description ?? '', permissions: [...role.permissions] });
+    setForm({ name: role.name, description: role.description ?? '', permissions: [...(role.permissions as Permission[])] });
     setOpen(true);
   };
 

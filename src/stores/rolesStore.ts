@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { apiClient, type Role } from '@/lib/api';
 
+export type { Role };
+
 export type Permission =
   | 'collection.create' | 'collection.approve'
   | 'expense.create' | 'expense.approve'
@@ -105,7 +107,7 @@ export const useRolesStore = create<RolesState>()(
       addRole: async (role) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.createRole(role);
+          const response = await apiClient.createRole(role as { name: string; description?: string; permissions: string[] });
           const newRole = response.data;
           set((s) => ({ roles: [...s.roles, newRole], isLoading: false }));
           return newRole;
@@ -197,7 +199,7 @@ export const useRolesStore = create<RolesState>()(
         const userRoleIds = assignments.filter((a) => a.userId === userId).map((a) => a.roleId);
         const perms = new Set<Permission>();
         userRoleIds.forEach((rid) => {
-          roles.find((r) => r.id === rid)?.permissions.forEach((p) => perms.add(p));
+          roles.find((r) => r.id === rid)?.permissions.forEach((p) => perms.add(p as Permission));
         });
         return Array.from(perms);
       },
