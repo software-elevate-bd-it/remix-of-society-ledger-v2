@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import HelpModal from '@/components/shared/HelpModal';
-import { transactions, members, Transaction } from '@/data/dummyData';
+import { useCollectionsStore } from '@/stores/collectionsStore';
+import { useMembersStore } from '@/stores/membersStore';
+import type { CollectionSchema } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,12 +29,18 @@ const collectionSchema = z.object({
 type CollectionFormData = z.infer<typeof collectionSchema>;
 
 export default function CollectionsPage() {
-  const collections = transactions.filter(t => t.type === 'collection');
+  const { t } = useTranslation();
+  const { collections, isLoading, loadCollections, createCollection } = useCollectionsStore();
+  const { members, loadMembers } = useMembersStore();
   const [open, setOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-  const { t } = useTranslation();
 
-  const columns: Column<Transaction>[] = [
+  useEffect(() => {
+    loadCollections();
+    loadMembers();
+  }, [loadCollections, loadMembers]);
+
+  const columns: Column<CollectionSchema>[] = [
     { key: 'memberName', label: t('nav.members'), sortable: true },
     { key: 'category', label: t('common.category') },
     { key: 'amount', label: t('common.amount'), render: (tx) => `৳${tx.amount.toLocaleString()}`, sortable: true },
@@ -51,10 +59,22 @@ export default function CollectionsPage() {
 
   const method = form.watch('method');
 
-  const handleSubmit = (_data: CollectionFormData) => {
-    setOpen(false);
-    form.reset();
-    toast.success(t('collections.collectionRecorded'));
+  const handleSubmit = async (data: CollectionFormData) => {
+    try {
+      await createCollection({
+        memberId: data.memberId,
+        amount: data.amount,
+        date: new Date().toISOString().split('T')[0],
+        category: data.category,
+        method: data.method,
+        transactionId: data.transactionId,
+      });
+      setOpen(false);
+      form.reset();
+      toast.success(t('collections.collectionRecorded'));
+    } catch (error) {
+      toast.error(t('collections.collectionFailed'));
+    }
   };
 
   const copyPaymentLink = (link: string) => {

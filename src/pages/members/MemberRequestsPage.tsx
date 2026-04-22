@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable, { Column } from '@/components/shared/DataTable';
-import { memberRequests, MemberRequest } from '@/data/dummyData';
+import { useMemberRequestsStore } from '@/stores/memberRequestsStore';
+import type { MemberRequest } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CheckCircle, XCircle, Eye, UserCheck, UserX, Clock } from 'lucide-react';
@@ -14,12 +17,19 @@ import StatsCard from '@/components/shared/StatsCard';
 
 export default function MemberRequestsPage() {
   const { t } = useTranslation();
-  const [requests, setRequests] = useState(memberRequests);
+  const { requests, isLoading, loadMemberRequests, approveMemberRequest, rejectMemberRequest } = useMemberRequestsStore();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
   const [rejectNote, setRejectNote] = useState('');
+  const [monthlyFee, setMonthlyFee] = useState('');
+  const [billingCycle, setBillingCycle] = useState('monthly');
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+
+  useEffect(() => {
+    loadMemberRequests({ status: filterStatus === 'all' ? undefined : filterStatus });
+  }, [filterStatus, loadMemberRequests]);
 
   const filtered = filterStatus === 'all' ? requests : requests.filter(r => r.status === filterStatus);
 
@@ -27,18 +37,46 @@ export default function MemberRequestsPage() {
   const approvedCount = requests.filter(r => r.status === 'approved').length;
   const rejectedCount = requests.filter(r => r.status === 'rejected').length;
 
-  const handleApprove = (req: MemberRequest) => {
-    setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: 'approved' as const } : r));
-    toast.success(t('memberRequests.approved', { name: req.name }));
+  const handleApproveClick = (req: MemberRequest) => {
+    setSelectedRequest(req);
+    setMonthlyFee('');
+    setBillingCycle('monthly');
+    setApproveDialogOpen(true);
   };
 
-  const handleReject = () => {
-    if (!selectedRequest) return;
-    setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status: 'rejected' as const, rejectionNote: rejectNote } : r));
-    toast.success(t('memberRequests.rejected', { name: selectedRequest.name }));
-    setRejectDialogOpen(false);
-    setRejectNote('');
-    setSelectedRequest(null);
+  const handleApproveConfirm = async () => {
+    if (!selectedRequest || !monthlyFee) {
+      toast.error(t('memberRequests.monthlyFeeRequired'));
+      return;
+    }
+    
+    try {
+      await approveMemberRequest(selectedRequest.id, parseFloat(monthlyFee), billingCycle);
+      toast.success(t('memberRequests.approved', { name: selectedRequest.name }));
+      setApproveDialogOpen(false);
+      setViewDialogOpen(false);
+      setSelectedRequest(null);
+    } catch (error) {
+      toast.error(t('memberRequests.approveFailed'));
+    }
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!selectedRequest || !rejectNote) {
+      toast.error(t('memberRequests.rejectionNoteRequired'));
+      return;
+    }
+    
+    try {
+      await rejectMemberRequest(selectedRequest.id, rejectNote);
+      toast.success(t('memberRequests.rejected', { name: selectedRequest.name }));
+      setRejectDialogOpen(false);
+      setViewDialogOpen(false);
+      setSelectedRequest(null);
+      setRejectNote('');
+    } catch (error) {
+      toast.error(t('memberRequests.rejectFailed'));
+    }
   };
 
   const columns: Column<MemberRequest>[] = [
@@ -58,10 +96,10 @@ export default function MemberRequestsPage() {
         </Button>
         {r.status === 'pending' && (
           <>
-            <Button size="sm" variant="ghost" className="text-green-600" onClick={() => handleApprove(r)}>
+            <Button size="sm" variant="ghost" className="text-green-600" onClick={() => handleApproveClick(r)} disabled={isLoading}>
               <CheckCircle className="h-3.5 w-3.5" />
             </Button>
-            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { setSelectedRequest(r); setRejectDialogOpen(true); }}>
+            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { setSelectedRequest(r); setRejectDialogOpen(true); }} disabled={isLoading}>
               <XCircle className="h-3.5 w-3.5" />
             </Button>
           </>
@@ -109,9 +147,9 @@ export default function MemberRequestsPage() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">{t('common.name')}:</span> <strong>{selectedRequest.name}</strong></div>
-                <div><span className="text-muted-foreground">{t('members.shopName')}:</span> <strong>{selectedRequest.shopName}</strong></div>
+                <div><span className="text-muted-foreground">{t('members.shopName')}:</span> <strong>{selectedRequest.shopName || '-'}</strong></div>
                 <div><span className="text-muted-foreground">{t('common.phone')}:</span> <strong>{selectedRequest.phone}</strong></div>
-                <div><span className="text-muted-foreground">{t('common.address')}:</span> <strong>{selectedRequest.address}</strong></div>
+                <div><span className="text-muted-foreground">{t('common.address')}:</span> <strong>{selectedRequest.address || '-'}</strong></div>
                 {selectedRequest.nid && <div><span className="text-muted-foreground">{t('members.nid')}:</span> <strong>{selectedRequest.nid}</strong></div>}
                 <div><span className="text-muted-foreground">{t('common.status')}:</span> <Badge variant={selectedRequest.status === 'approved' ? 'default' : selectedRequest.status === 'pending' ? 'secondary' : 'destructive'}>{t(`common.${selectedRequest.status}`)}</Badge></div>
               </div>
@@ -122,16 +160,45 @@ export default function MemberRequestsPage() {
               )}
               {selectedRequest.status === 'pending' && (
                 <div className="flex gap-2 pt-2">
-                  <Button className="flex-1" onClick={() => { handleApprove(selectedRequest); setViewDialogOpen(false); }}>
+                  <Button className="flex-1" onClick={() => setApproveDialogOpen(true)} disabled={isLoading}>
                     <CheckCircle className="h-4 w-4 mr-2" /> {t('memberRequests.approve')}
                   </Button>
-                  <Button variant="destructive" className="flex-1" onClick={() => { setViewDialogOpen(false); setRejectDialogOpen(true); }}>
+                  <Button variant="destructive" className="flex-1" onClick={() => setRejectDialogOpen(true)} disabled={isLoading}>
                     <XCircle className="h-4 w-4 mr-2" /> {t('memberRequests.reject')}
                   </Button>
                 </div>
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Approve Dialog */}
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="font-heading">{t('memberRequests.approveRequest')}</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">{t('memberRequests.approveConfirm', { name: selectedRequest?.name })}</p>
+            <div className="space-y-2">
+              <Label>{t('members.monthlyFee')} *</Label>
+              <Input type="number" placeholder="500" value={monthlyFee} onChange={(e) => setMonthlyFee(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('members.billingCycle')}</Label>
+              <Select value={billingCycle} onValueChange={setBillingCycle}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">{t('common.monthly')}</SelectItem>
+                  <SelectItem value="quarterly">{t('common.quarterly')}</SelectItem>
+                  <SelectItem value="yearly">{t('common.yearly')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setApproveDialogOpen(false)} disabled={isLoading}>{t('common.cancel')}</Button>
+              <Button className="flex-1" onClick={handleApproveConfirm} disabled={isLoading}>{t('memberRequests.approve')}</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -143,8 +210,8 @@ export default function MemberRequestsPage() {
             <p className="text-sm text-muted-foreground">{t('memberRequests.rejectConfirm', { name: selectedRequest?.name })}</p>
             <Textarea placeholder={t('memberRequests.rejectionNotePlaceholder')} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} rows={3} />
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setRejectDialogOpen(false)}>{t('common.cancel')}</Button>
-              <Button variant="destructive" className="flex-1" onClick={handleReject}>{t('memberRequests.reject')}</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setRejectDialogOpen(false)} disabled={isLoading}>{t('common.cancel')}</Button>
+              <Button variant="destructive" className="flex-1" onClick={handleRejectConfirm} disabled={isLoading}>{t('memberRequests.reject')}</Button>
             </div>
           </div>
         </DialogContent>

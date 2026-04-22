@@ -79,7 +79,7 @@ export default function MainUserDashboard() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <StatsCard title={t('dashboard.totalMembers')} value={members.length} icon={Users} change="+2 new" changeType="positive" />
+        <StatsCard title={t('dashboard.totalMembers')} value={stats.totalMembers} icon={Users} change="+2 new" changeType="positive" />
         <StatsCard title={t('dashboard.monthlyCollection')} value={`৳${totalCollection.toLocaleString()}`} icon={Wallet} change="+12%" changeType="positive" />
         <StatsCard title={t('dashboard.totalExpense')} value={`৳${totalExpense.toLocaleString()}`} icon={Receipt} />
         <StatsCard title={t('dashboard.todayCollection')} value={`৳${todayCollection.toLocaleString()}`} icon={TrendingUp} changeType="positive" />
@@ -153,7 +153,7 @@ export default function MainUserDashboard() {
         <Card>
           <CardHeader><CardTitle className="font-heading text-base">{t('dashboard.recentTransactions')}</CardTitle></CardHeader>
           <CardContent>
-            <DataTable data={transactions.slice(0, 5)} columns={recentTxColumns} searchKey="memberName" />
+            <DataTable data={filteredTx.slice(0, 5)} columns={recentTxColumns} searchKey="memberName" />
           </CardContent>
         </Card>
         <ActivityLog />

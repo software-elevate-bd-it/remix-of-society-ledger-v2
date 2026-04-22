@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DataTable, { Column } from '@/components/shared/DataTable';
-import { transactions, expenseCategories, Transaction } from '@/data/dummyData';
+import { useExpensesStore } from '@/stores/expensesStore';
+import { useApprovalsStore } from '@/stores/approvalsStore';
+import { useAuthStore } from '@/stores/authStore';
+import type { ExpenseSchema } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,12 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Receipt, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { useApprovalsStore } from '@/stores/approvalsStore';
-import { useAuthStore } from '@/stores/authStore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PermissionGuard } from '@/components/shared/PermissionGuard';
 
-const columns: Column<Transaction>[] = [
+const columns: Column<ExpenseSchema>[] = [
   { key: 'category', label: 'Category', sortable: true },
   { key: 'amount', label: 'Amount', render: (t) => `৳${t.amount.toLocaleString()}`, sortable: true },
   { key: 'method', label: 'Method', render: (t) => <span className="capitalize">{t.method}</span> },
@@ -26,8 +27,14 @@ const columns: Column<Transaction>[] = [
 ];
 
 export default function ExpensesPage() {
-  const expenses = transactions.filter(t => t.type === 'expense');
+  const { expenses, isLoading, loadExpenses, createExpense, getExpenseCategories } = useExpensesStore();
+  const [expenseCategories, setExpenseCategories] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    loadExpenses();
+    getExpenseCategories().then(setExpenseCategories);
+  }, [loadExpenses, getExpenseCategories]);
   const [form, setForm] = useState({ category: '', amount: '', date: new Date().toISOString().split('T')[0], note: '', method: 'cash' });
   const submit = useApprovalsStore((s) => s.submit);
   const pendingExpenses = useApprovalsStore((s) => s.items.filter(i => i.type === 'expense'));

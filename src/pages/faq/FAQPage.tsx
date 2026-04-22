@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { faqs, FAQ } from '@/data/dummyData';
+import { useFAQsStore } from '@/stores/faqStore';
+import type { FAQ } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,19 +14,31 @@ import { toast } from 'sonner';
 
 export default function FAQPage() {
   const { t } = useTranslation();
-  const [faqList, setFaqList] = useState(faqs);
+  const { faqs, isLoading, loadFAQs, createFAQ } = useFAQsStore();
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
 
-  const filtered = faqList.filter(f => f.question.toLowerCase().includes(search.toLowerCase()) || f.answer.toLowerCase().includes(search.toLowerCase()));
-  const categories = [...new Set(faqList.map(f => f.category))];
+  useEffect(() => {
+    loadFAQs();
+  }, [loadFAQs]);
 
-  const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
+  const filtered = faqs.filter(f => f.question.toLowerCase().includes(search.toLowerCase()) || f.answer.toLowerCase().includes(search.toLowerCase()));
+  const categories = [...new Set(faqs.map(f => f.category).filter(Boolean))];
+
+  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    setFaqList([...faqList, { id: `f${Date.now()}`, question: fd.get('question') as string, answer: fd.get('answer') as string, category: fd.get('category') as string }]);
-    setOpen(false);
-    toast.success(t('faq.faqAdded'));
+    try {
+      await createFAQ({
+        question: fd.get('question') as string,
+        answer: fd.get('answer') as string,
+        category: fd.get('category') as string,
+      });
+      setOpen(false);
+      toast.success(t('faq.faqAdded'));
+    } catch (error) {
+      toast.error(t('faq.faqAddFailed'));
+    }
   };
 
   return (

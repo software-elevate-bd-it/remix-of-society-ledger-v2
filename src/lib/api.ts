@@ -94,6 +94,23 @@ export const MemberSchema = z.object({
   paymentLink: z.string().optional(),
 });
 
+// Member Request schemas
+export const MemberRequestSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  shopName: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  nid: z.string().optional(),
+  photo: z.string().nullable().optional(),
+  status: z.enum(['pending', 'approved', 'rejected']),
+  appliedAt: z.string(),
+  somiteeId: z.string(),
+  rejectionNote: z.string().optional(),
+});
+
+export type MemberRequest = z.infer<typeof MemberRequestSchema>;
+
 // Collection schemas
 export const CollectionSchema = z.object({
   id: z.string(),
@@ -178,6 +195,30 @@ export const ApprovalSchema = z.object({
   reviewedAt: z.string().optional(),
   rejectionNote: z.string().optional(),
 });
+
+// FAQ schemas
+export const FAQSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  answer: z.string(),
+  category: z.string().optional(),
+});
+
+export type FAQ = z.infer<typeof FAQSchema>;
+
+// Payment schemas
+export const PaymentSchema = z.object({
+  id: z.string(),
+  memberId: z.string(),
+  memberName: z.string(),
+  amount: z.number(),
+  date: z.string(),
+  method: z.string(),
+  status: z.enum(['pending', 'verified', 'failed']),
+  transactionId: z.string().optional(),
+});
+
+export type Payment = z.infer<typeof PaymentSchema>;
 
 // API Client class
 class ApiClient {
@@ -386,6 +427,57 @@ class ApiClient {
 
   async getMemberDueHistory(id: string) {
     return this.request(`/members/${id}/due-history`);
+  }
+
+  // Member Requests endpoints
+  async getMemberRequests(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) searchParams.set(key, value.toString());
+      });
+    }
+    return this.request<ApiResponseSchema<MemberRequestSchema[]>>(`/member-requests?${searchParams}`);
+  }
+
+  async approveMemberRequest(id: string, approvalData: {
+    monthlyFee: number;
+    billingCycle: string;
+  }) {
+    return this.request<ApiResponseSchema<{
+      requestId: string;
+      memberId: string;
+      name: string;
+      status: string;
+      approvedAt: string;
+    }>>(`/member-requests/${id}/approve`, {
+      method: 'PATCH',
+      body: JSON.stringify(approvalData),
+    });
+  }
+
+  async rejectMemberRequest(id: string, rejectionData: {
+    rejectionNote: string;
+  }) {
+    return this.request<ApiResponseSchema<{
+      requestId: string;
+      status: string;
+      rejectionNote: string;
+      rejectedAt: string;
+    }>>(`/member-requests/${id}/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify(rejectionData),
+    });
+  }
+
+  async deleteMemberRequest(id: string) {
+    return this.request<ApiResponseSchema<null>>(`/member-requests/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Collections endpoints
@@ -829,6 +921,60 @@ class ApiClient {
     searchParams.set('q', query);
     if (limit) searchParams.set('limit', limit.toString());
     return this.request(`/search?${searchParams}`);
+  }
+
+  // FAQ endpoints
+  async getFAQs(params?: { category?: string; search?: string }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) searchParams.set(key, value.toString());
+      });
+    }
+    return this.request<ApiResponseSchema<FAQSchema[]>>(`/faq?${searchParams}`);
+  }
+
+  async createFAQ(faqData: { question: string; answer: string; category?: string }) {
+    return this.request<ApiResponseSchema<FAQSchema>>('/faq', {
+      method: 'POST',
+      body: JSON.stringify(faqData),
+    });
+  }
+
+  async updateFAQ(id: string, faqData: Partial<{ question: string; answer: string }>) {
+    return this.request<ApiResponseSchema<FAQSchema>>(`/faq/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(faqData),
+    });
+  }
+
+  async deleteFAQ(id: string) {
+    return this.request<ApiResponseSchema<null>>(`/faq/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Payments endpoints
+  async getPayments(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    method?: string;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) searchParams.set(key, value.toString());
+      });
+    }
+    return this.request<ApiResponseSchema<PaymentSchema[]>>(`/payments?${searchParams}`);
+  }
+
+  async verifyPayment(id: string, verificationData: { status: string; note?: string }) {
+    return this.request<ApiResponseSchema<PaymentSchema>>(`/payments/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify(verificationData),
+    });
   }
 }
 
