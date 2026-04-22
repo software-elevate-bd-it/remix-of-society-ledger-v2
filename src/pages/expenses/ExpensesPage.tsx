@@ -33,8 +33,8 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     loadExpenses();
-    getExpenseCategories().then(setExpenseCategories);
-  }, [loadExpenses, getExpenseCategories]);
+    loadCategories();
+  }, [loadExpenses, loadCategories]);
   const [form, setForm] = useState({ category: '', amount: '', date: new Date().toISOString().split('T')[0], note: '', method: 'cash' });
   const submit = useApprovalsStore((s) => s.submit);
   const pendingExpenses = useApprovalsStore((s) => s.items.filter(i => i.type === 'expense'));
