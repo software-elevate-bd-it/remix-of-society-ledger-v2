@@ -386,7 +386,7 @@ class ApiClient {
     });
   }
 
-  async updateMember(id: string, memberData: Partial<MemberSchema>) {
+  async updateMember(id: string, memberData: Partial<z.infer<typeof MemberSchema>>) {
     return this.request<ApiResponse<z.infer<typeof MemberSchema>>>(`/members/${id}`, {
       method: 'PUT',
       body: JSON.stringify(memberData),
@@ -527,7 +527,7 @@ class ApiClient {
     });
   }
 
-  async updateCollection(id: string, collectionData: Partial<CollectionSchema>) {
+  async updateCollection(id: string, collectionData: Partial<z.infer<typeof CollectionSchema>>) {
     return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>(`/collections/${id}`, {
       method: 'PUT',
       body: JSON.stringify(collectionData),
@@ -586,7 +586,7 @@ class ApiClient {
     });
   }
 
-  async updateExpense(id: string, expenseData: Partial<ExpenseSchema>) {
+  async updateExpense(id: string, expenseData: Partial<z.infer<typeof ExpenseSchema>>) {
     return this.request<ApiResponse<z.infer<typeof ExpenseSchema>>>(`/expenses/${id}`, {
       method: 'PUT',
       body: JSON.stringify(expenseData),
@@ -620,7 +620,7 @@ class ApiClient {
     });
   }
 
-  async updateBankAccount(id: string, accountData: Partial<BankAccountSchema>) {
+  async updateBankAccount(id: string, accountData: Partial<z.infer<typeof BankAccountSchema>>) {
     return this.request<ApiResponse<z.infer<typeof BankAccountSchema>>>(`/bank-accounts/${id}`, {
       method: 'PUT',
       body: JSON.stringify(accountData),
@@ -769,7 +769,7 @@ class ApiClient {
     });
   }
 
-  async updateRole(id: string, roleData: Partial<RoleSchema>) {
+  async updateRole(id: string, roleData: Partial<z.infer<typeof RoleSchema>>) {
     return this.request<ApiResponse<z.infer<typeof RoleSchema>>>(`/roles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roleData),
