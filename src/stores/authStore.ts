@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { useUsersStore } from './usersStore';
 import { useRolesStore } from './rolesStore';
 import { apiClient, type User } from '@/lib/api';
+import { findDemoUser } from '@/data/demoUsers';
 
 export type UserRole = 'super_admin' | 'main_user' | 'member';
 
