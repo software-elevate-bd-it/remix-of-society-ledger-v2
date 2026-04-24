@@ -15,6 +15,7 @@ import DataTable, { Column } from '@/components/shared/DataTable';
 import { Wallet, CheckCircle, CalendarDays, Users, DollarSign, Search, Zap, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
+import { useCollectionsStore } from '@/stores/collectionsStore';
 
 const collectionSchema = z.object({
   memberId: z.string().min(1, 'Select a member'),
