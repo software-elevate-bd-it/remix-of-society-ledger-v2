@@ -530,10 +530,16 @@ class ApiClient {
     memberId: string;
     amount: number;
     date: string;
-    category: string;
+    category?: string;
     method: string;
     transactionId?: string;
     note?: string;
+    // Financial year-based collection
+    financialYear?: string;
+    months?: number[];
+    lateFee?: number;
+    discount?: number;
+    totalPaid?: number;
   }) {
     return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>('/collections', {
       method: 'POST',
