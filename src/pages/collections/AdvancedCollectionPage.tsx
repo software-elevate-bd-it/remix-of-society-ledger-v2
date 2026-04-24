@@ -78,11 +78,30 @@ export default function AdvancedCollectionPage() {
     }
   };
 
-  const handleSubmit = (data: CollectionFormData) => {
+  const { createCollection } = useCollectionsStore();
+
+  const handleSubmit = async (data: CollectionFormData) => {
     const existingPaid = getPaidMonths(data.memberId, data.financialYear);
     if (data.months.some(m => existingPaid.includes(m))) {
       toast.error(t('advancedCollection.duplicatePayment'));
       return;
+    }
+    try {
+      await createCollection({
+        memberId: data.memberId,
+        amount: subtotal,
+        date: new Date().toISOString().split('T')[0],
+        category: 'Monthly Fee',
+        method: data.method,
+        transactionId: data.transactionId,
+        financialYear: data.financialYear,
+        months: data.months,
+        lateFee,
+        discount: data.discount,
+        totalPaid: total,
+      });
+    } catch (e) {
+      // API may be unavailable in demo; still record locally below
     }
     const newPayment: MemberPayment = {
       id: `mp${Date.now()}`,
