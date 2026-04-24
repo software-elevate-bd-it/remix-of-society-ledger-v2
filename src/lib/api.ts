@@ -129,18 +129,28 @@ export const CollectionSchema = z.object({
   id: z.string(),
   memberId: z.string(),
   memberName: z.string(),
-  type: z.string(),
+  type: z.string().optional(),
   amount: z.number(),
   date: z.string(),
-  category: z.string(),
+  category: z.string().optional(),
   method: z.string(),
   status: z.enum(['pending', 'approved', 'rejected']),
   note: z.string().optional(),
   transactionId: z.string().optional(),
   receiptUrl: z.string().optional(),
-  createdAt: z.string(),
+  createdAt: z.string().optional(),
   approvedBy: z.string().optional(),
   approvedAt: z.string().optional(),
+  rejectedBy: z.string().optional(),
+  rejectedAt: z.string().optional(),
+  rejectionReason: z.string().optional(),
+  // Financial year-based collection fields
+  financialYear: z.string().optional(),
+  months: z.array(z.number()).optional(),
+  lateFee: z.number().optional(),
+  discount: z.number().optional(),
+  totalPaid: z.number().optional(),
+  createdBy: z.string().optional(),
 });
 
 // Expense schemas
@@ -520,10 +530,16 @@ class ApiClient {
     memberId: string;
     amount: number;
     date: string;
-    category: string;
+    category?: string;
     method: string;
     transactionId?: string;
     note?: string;
+    // Financial year-based collection
+    financialYear?: string;
+    months?: number[];
+    lateFee?: number;
+    discount?: number;
+    totalPaid?: number;
   }) {
     return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>('/collections', {
       method: 'POST',

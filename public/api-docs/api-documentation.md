@@ -1119,9 +1119,11 @@ List all collections. **Role:** `main_user`
 
 ## POST `/collections`
 
-Record a new collection. **Role:** `main_user`
+Record a new collection. **Role:** `main_user`, or any user with `collection.create` permission.
 
-**Request Body:**
+Supports two payload modes:
+
+### Mode A — Simple single payment (legacy)
 ```json
 {
   "memberId": "m1",
@@ -1134,6 +1136,48 @@ Record a new collection. **Role:** `main_user`
 }
 ```
 
+### Mode B — Financial-year multi-month payment ⭐ NEW
+
+Used by the Advanced Collection (Quick Pay) form. The client selects a financial year and one or more months from the month grid, optionally applies discount/late fee, and posts a single collection record covering the whole batch.
+
+```json
+{
+  "memberId": "m1",
+  "financialYear": "2024-2025",
+  "months": [7, 8, 9, 10],
+  "amount": 2000,
+  "lateFee": 0,
+  "discount": 100,
+  "totalPaid": 1900,
+  "date": "2026-04-24",
+  "method": "bkash",
+  "transactionId": "BK12345",
+  "note": "Jul-Oct 2024-25 dues"
+}
+```
+
+**Field reference:**
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `memberId` | string | ✅ | Target member |
+| `amount` | number | ✅ | Subtotal before discount/late fee (months × monthlyFee in mode B) |
+| `date` | string (YYYY-MM-DD) | ✅ | Collection date |
+| `method` | enum | ✅ | `cash` \| `bkash` \| `nagad` \| `bank` \| `sslcommerz` |
+| `category` | string | optional in mode B | E.g. `Monthly Fee`, `Late Fee`, `Custom` |
+| `transactionId` | string | conditional | Required when method is `bkash` / `nagad` / `bank` / `sslcommerz` |
+| `note` | string | optional | Free-text |
+| `financialYear` | string | mode B | Format `YYYY-YYYY`, e.g. `2024-2025` |
+| `months` | number[] | mode B | Array of month numbers `1..12` (somitee fiscal calendar) |
+| `lateFee` | number | optional | Added on top of `amount` |
+| `discount` | number | optional | Subtracted from `amount + lateFee` |
+| `totalPaid` | number | optional | Final paid amount; server should validate against `amount + lateFee - discount` |
+
+**Server-side validation (mode B):**
+- Reject if any month in `months` is already paid for `(memberId, financialYear)` → `409 DUPLICATE_PAYMENT`.
+- If `totalPaid` is provided, it must equal `amount + (lateFee||0) - (discount||0)` (±1 tolerance).
+- Created record has `status: "pending"` when an approval workflow is active for the somitee, otherwise `approved`.
+
 **✅ 201 Created:**
 ```json
 {
@@ -1145,13 +1189,20 @@ Record a new collection. **Role:** `main_user`
     "memberId": "m1",
     "memberName": "Karim Mia",
     "type": "collection",
-    "amount": 500,
-    "date": "2024-12-01",
+    "amount": 2000,
+    "lateFee": 0,
+    "discount": 100,
+    "totalPaid": 1900,
+    "financialYear": "2024-2025",
+    "months": [7, 8, 9, 10],
+    "date": "2026-04-24",
     "category": "Monthly Fee",
     "method": "bkash",
     "status": "pending",
     "transactionId": "BK12345",
-    "note": "December payment"
+    "note": "Jul-Oct 2024-25 dues",
+    "createdAt": "2026-04-24T10:30:00Z",
+    "createdBy": "u-collector-1"
   }
 }
 ```
@@ -1165,7 +1216,20 @@ Record a new collection. **Role:** `main_user`
   "errors": [
     { "field": "memberId", "message": "Member is required" },
     { "field": "amount", "message": "Amount must be greater than 0" },
+    { "field": "months", "message": "Select at least one month" },
     { "field": "transactionId", "message": "Transaction ID required for bKash/Nagad/Bank" }
+  ]
+}
+```
+
+**❌ 409 Duplicate Payment:**
+```json
+{
+  "success": false,
+  "statusCode": 409,
+  "message": "One or more selected months are already paid for this financial year",
+  "errors": [
+    { "field": "months", "message": "Already paid: [7, 8]" }
   ]
 }
 ```
