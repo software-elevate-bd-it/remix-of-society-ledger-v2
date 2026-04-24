@@ -29,10 +29,15 @@ interface CollectionsState {
     memberId: string;
     amount: number;
     date: string;
-    category: string;
+    category?: string;
     method: string;
     transactionId?: string;
     note?: string;
+    financialYear?: string;
+    months?: number[];
+    lateFee?: number;
+    discount?: number;
+    totalPaid?: number;
   }) => Promise<Collection>;
 
   updateCollection: (id: string, collectionData: Partial<Collection>) => Promise<void>;
