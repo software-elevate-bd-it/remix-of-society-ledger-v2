@@ -20,8 +20,10 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     email: 'info@bananimarket.com',
     signature: '',
     founders: [
+      { name: 'Founder One', title: 'Founder', photo: '' },
+      { name: 'Founder Two', title: 'Founder', photo: '' },
+      { name: 'Founder Three', title: 'Founder', photo: '' },
       { name: 'President Name', title: 'President', photo: '' },
-      { name: 'Founder Name', title: 'Founder', photo: '' },
       { name: 'Secretary Name', title: 'Secretary', photo: '' },
     ],
   },
