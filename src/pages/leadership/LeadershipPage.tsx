@@ -32,9 +32,9 @@ export default function LeadershipPage() {
   const { company } = useCompanyStore();
   const all = company.founders || [];
 
-  const founders = all.filter((f) => /founder/i.test(f.title));
-  const president = all.find((f) => /president/i.test(f.title));
-  const secretary = all.find((f) => /secretary/i.test(f.title));
+  const founders = all.filter((f) => /founder/i.test(f.title || ''));
+  const president = all.find((f) => /president/i.test(f.title || ''));
+  const secretary = all.find((f) => /secretary/i.test(f.title || ''));
   const officeBearers = [president, secretary].filter(Boolean) as Person[];
 
   return (
