@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useCompanyStore } from '@/stores/companyStore';
+import { Crown, Award, Users, Sparkles, Mail, Phone } from 'lucide-react';
 
 interface Person {
   name?: string;
@@ -9,20 +11,95 @@ interface Person {
   photo?: string;
 }
 
-function PersonCard({ p, size = 'md' }: { p: Person; size?: 'lg' | 'md' }) {
-  const sizes = size === 'lg' ? 'h-28 w-28 ring-4 ring-primary/20' : 'h-24 w-24 ring-2 ring-border';
+function FounderCard({ p, index }: { p: Person; index: number }) {
   return (
-    <div className="flex flex-col items-center text-center gap-2">
-      <Avatar className={sizes}>
-        {p.photo ? <AvatarImage src={p.photo} alt={p.name} /> : null}
-        <AvatarFallback className="bg-primary/10 text-primary font-heading text-lg">
-          {p.name?.charAt(0) || '?'}
-        </AvatarFallback>
-      </Avatar>
-      <div>
-        <p className="font-heading font-semibold text-sm">{p.name || '—'}</p>
-        <p className="text-xs text-muted-foreground">{p.title}</p>
-      </div>
+    <div className="group relative">
+      {/* Glow effect */}
+      <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/40 via-primary/10 to-transparent rounded-2xl blur opacity-60 group-hover:opacity-100 transition" />
+      <Card className="relative overflow-hidden border-0 bg-card/95 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+        {/* Decorative top band */}
+        <div className="h-24 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/30 relative">
+          <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(var(--primary)) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(var(--accent)) 0%, transparent 50%)' }} />
+          <Badge className="absolute top-3 right-3 bg-background/80 text-foreground backdrop-blur border-0">
+            <Sparkles className="h-3 w-3 mr-1" />
+            Founder #{index + 1}
+          </Badge>
+        </div>
+
+        <CardContent className="pt-0 pb-6 px-6 -mt-14 text-center">
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/40 rounded-full blur-md opacity-50" />
+              <Avatar className="relative h-28 w-28 ring-4 ring-background shadow-xl">
+                {p.photo ? <AvatarImage src={p.photo} alt={p.name} /> : null}
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-heading text-2xl">
+                  {p.name?.charAt(0) || '?'}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </div>
+
+          <h3 className="mt-4 font-heading font-bold text-lg leading-tight">{p.name || '—'}</h3>
+          <p className="text-xs uppercase tracking-widest text-primary mt-1 font-semibold">{p.title}</p>
+
+          <div className="mt-4 pt-4 border-t border-dashed border-border flex items-center justify-center gap-3 text-muted-foreground">
+            <button className="hover:text-primary transition" aria-label="Email">
+              <Mail className="h-4 w-4" />
+            </button>
+            <span className="text-xs">•</span>
+            <button className="hover:text-primary transition" aria-label="Phone">
+              <Phone className="h-4 w-4" />
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function OfficerCard({ p, icon: Icon, accent }: { p: Person; icon: typeof Crown; accent: string }) {
+  return (
+    <div className="group relative">
+      <div className={`absolute -inset-1 ${accent} rounded-3xl blur-lg opacity-40 group-hover:opacity-70 transition`} />
+      <Card className="relative overflow-hidden border-0 shadow-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-5">
+          {/* Photo column */}
+          <div className="sm:col-span-2 relative bg-gradient-to-br from-primary/20 to-accent/30 min-h-[260px] flex items-center justify-center p-6">
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(hsl(var(--primary)) 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl" />
+              <Avatar className="relative h-40 w-40 ring-4 ring-background shadow-2xl">
+                {p.photo ? <AvatarImage src={p.photo} alt={p.name} /> : null}
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-heading text-4xl">
+                  {p.name?.charAt(0) || '?'}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </div>
+
+          {/* Content column */}
+          <div className="sm:col-span-3 p-6 flex flex-col justify-center">
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`p-2 rounded-lg ${accent} text-primary-foreground`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <Badge variant="outline" className="uppercase tracking-wider text-[10px]">
+                {p.title}
+              </Badge>
+            </div>
+            <h3 className="font-heading font-bold text-2xl leading-tight">{p.name || '—'}</h3>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              Leading the somitee with vision and dedication. Committed to transparency, member welfare, and sustainable growth of our community.
+            </p>
+            <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5" />
+                contact@somitee.com
+              </span>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -35,58 +112,92 @@ export default function LeadershipPage() {
   const founders = all.filter((f) => /founder/i.test(f.title || ''));
   const president = all.find((f) => /president/i.test(f.title || ''));
   const secretary = all.find((f) => /secretary/i.test(f.title || ''));
-  const officeBearers = [president, secretary].filter(Boolean) as Person[];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">{t('leadership.title') || 'Leadership'}</h1>
-        <p className="text-muted-foreground">{t('leadership.subtitle') || 'Founders & office bearers of the somitee'}</p>
-      </div>
-
-      {/* Founders Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-heading text-lg text-center">
-            {t('leadership.founders') || 'Founders'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {founders.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              {t('leadership.noFounders') || 'No founders added yet. Add them in Settings → Founders.'}
-            </p>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-8">
-              {founders.map((f, i) => (
-                <PersonCard key={i} p={f} size="lg" />
-              ))}
+    <div className="space-y-12 pb-8">
+      {/* Hero */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-background to-accent/20 border p-8 md:p-12">
+        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 15% 20%, hsl(var(--primary) / 0.4) 0%, transparent 40%), radial-gradient(circle at 85% 80%, hsl(var(--accent) / 0.4) 0%, transparent 40%)' }} />
+        <div className="relative text-center max-w-2xl mx-auto">
+          <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
+            <Users className="h-3 w-3 mr-1.5" />
+            {t('leadership.title') || 'Our Leadership'}
+          </Badge>
+          <h1 className="text-3xl md:text-5xl font-heading font-bold tracking-tight">
+            Meet the People <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Behind Our Somitee</span>
+          </h1>
+          <p className="mt-4 text-muted-foreground text-base md:text-lg leading-relaxed">
+            Our founders and office bearers bring decades of experience, dedication, and a shared vision to serve every member of our community.
+          </p>
+          <div className="flex items-center justify-center gap-6 mt-6">
+            <div className="text-center">
+              <p className="text-2xl font-heading font-bold text-primary">{founders.length}</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Founders</p>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* President & Secretary Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-heading text-lg text-center">
-            {t('leadership.officeBearers') || 'President & Secretary'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {officeBearers.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              {t('leadership.noOfficeBearers') || 'No office bearers added yet.'}
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-xl mx-auto">
-              {officeBearers.map((p, i) => (
-                <PersonCard key={i} p={p} />
-              ))}
+            <div className="h-8 w-px bg-border" />
+            <div className="text-center">
+              <p className="text-2xl font-heading font-bold text-primary">{(president ? 1 : 0) + (secretary ? 1 : 0)}</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Officers</p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="h-8 w-px bg-border" />
+            <div className="text-center">
+              <p className="text-2xl font-heading font-bold text-primary">{all.length}</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Total</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Founders */}
+      <section>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-heading font-bold text-2xl">Founders</h2>
+            <p className="text-sm text-muted-foreground">The visionaries who started it all</p>
+          </div>
+          <div className="ml-auto h-px flex-1 bg-gradient-to-r from-border to-transparent hidden md:block" />
+        </div>
+
+        {founders.length === 0 ? (
+          <Card className="p-12 text-center text-muted-foreground border-dashed">
+            No founders added yet. Add them in Settings → Founders.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {founders.map((f, i) => (
+              <FounderCard key={i} p={f} index={i} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Office bearers */}
+      <section>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <Crown className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-heading font-bold text-2xl">President & Secretary</h2>
+            <p className="text-sm text-muted-foreground">Current office bearers leading day-to-day operations</p>
+          </div>
+          <div className="ml-auto h-px flex-1 bg-gradient-to-r from-border to-transparent hidden md:block" />
+        </div>
+
+        {!president && !secretary ? (
+          <Card className="p-12 text-center text-muted-foreground border-dashed">
+            No office bearers added yet.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {president && <OfficerCard p={president} icon={Crown} accent="bg-gradient-to-br from-primary to-primary/60" />}
+            {secretary && <OfficerCard p={secretary} icon={Award} accent="bg-gradient-to-br from-accent-foreground/80 to-primary/60" />}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
