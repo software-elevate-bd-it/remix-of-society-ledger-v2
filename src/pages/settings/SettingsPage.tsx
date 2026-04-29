@@ -57,6 +57,7 @@ export default function SettingsPage() {
         <TabsList className="flex-wrap">
           <TabsTrigger value="profile">{t('settings.profile')}</TabsTrigger>
           <TabsTrigger value="company">{t('settings.company')}</TabsTrigger>
+          <TabsTrigger value="founders">{t('settings.founders') || 'Founders'}</TabsTrigger>
           <TabsTrigger value="fees">{t('settings.feeSetup')}</TabsTrigger>
           <TabsTrigger value="sms">{t('settings.smsConfig')}</TabsTrigger>
           <TabsTrigger value="payment">{t('settings.paymentGateway')}</TabsTrigger>
