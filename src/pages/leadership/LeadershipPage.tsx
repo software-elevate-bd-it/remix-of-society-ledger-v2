@@ -4,8 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCompanyStore } from '@/stores/companyStore';
 
 interface Person {
-  name: string;
-  title: string;
+  name?: string;
+  title?: string;
   photo?: string;
 }
 
