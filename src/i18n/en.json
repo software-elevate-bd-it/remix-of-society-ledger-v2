@@ -72,6 +72,7 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "analytics": "Analytics",
     "somiteeManagement": "Somitee Management",
     "subscriptions": "Subscriptions",
     "globalAnalytics": "Global Analytics",

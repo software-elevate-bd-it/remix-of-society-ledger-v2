@@ -11,8 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuthStore } from '@/stores/authStore';
+import { useCompanyStore } from '@/stores/companyStore';
 
 interface Transaction {
   id: string;
@@ -26,6 +28,7 @@ interface Transaction {
 
 export default function MainUserDashboard() {
   const user = useAuthStore((s) => s.user);
+  const { company } = useCompanyStore();
   const { t } = useTranslation();
   const { stats, isLoading, loadStats } = useDashboardStore();
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -77,6 +80,45 @@ export default function MainUserDashboard() {
         <h1 className="text-2xl font-heading font-bold">{user?.somiteeName || t('common.dashboard')}</h1>
         <p className="text-muted-foreground">{t('common.welcome')}, {user?.name}</p>
       </div>
+
+      {/* Founders Section */}
+      {company.founders && company.founders.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="font-heading text-base text-center">{t('dashboard.ourLeadership') || 'Our Leadership'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const founderItem = company.founders.find(f => /founder/i.test(f.title)) || company.founders[1] || company.founders[0];
+              const president = company.founders.find(f => /president/i.test(f.title)) || company.founders[0];
+              const secretary = company.founders.find(f => /secretary/i.test(f.title)) || company.founders[2];
+              const renderPerson = (p: typeof founderItem, size: 'lg' | 'md' = 'md') => (
+                <div className="flex flex-col items-center text-center gap-2">
+                  <Avatar className={size === 'lg' ? 'h-28 w-28 ring-4 ring-primary/20' : 'h-20 w-20 ring-2 ring-border'}>
+                    {p?.photo ? <AvatarImage src={p.photo} alt={p.name} /> : null}
+                    <AvatarFallback className="bg-primary/10 text-primary font-heading text-lg">
+                      {p?.name?.charAt(0) || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className={`font-heading font-semibold ${size === 'lg' ? 'text-base' : 'text-sm'}`}>{p?.name}</p>
+                    <p className="text-xs text-muted-foreground">{p?.title}</p>
+                  </div>
+                </div>
+              );
+              return (
+                <div className="flex flex-col items-center gap-6">
+                  {founderItem && renderPerson(founderItem, 'lg')}
+                  <div className="grid grid-cols-2 gap-12 w-full max-w-md">
+                    {president && renderPerson(president)}
+                    {secretary && renderPerson(secretary)}
+                  </div>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatsCard title={t('dashboard.totalMembers')} value={stats.totalMembers} icon={Users} change="+2 new" changeType="positive" />

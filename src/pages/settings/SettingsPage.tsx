@@ -57,6 +57,7 @@ export default function SettingsPage() {
         <TabsList className="flex-wrap">
           <TabsTrigger value="profile">{t('settings.profile')}</TabsTrigger>
           <TabsTrigger value="company">{t('settings.company')}</TabsTrigger>
+          <TabsTrigger value="founders">{t('settings.founders') || 'Founders'}</TabsTrigger>
           <TabsTrigger value="fees">{t('settings.feeSetup')}</TabsTrigger>
           <TabsTrigger value="sms">{t('settings.smsConfig')}</TabsTrigger>
           <TabsTrigger value="payment">{t('settings.paymentGateway')}</TabsTrigger>
@@ -113,6 +114,89 @@ export default function SettingsPage() {
                   <Button type="submit">{t('common.save')}</Button>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="founders">
+          <Card>
+            <CardHeader><CardTitle className="font-heading">{t('settings.foundersTitle') || 'Founders & Leadership'}</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">{t('settings.foundersDesc') || 'Manage the leadership shown on the dashboard. Add up to 3 people (Founder, President, Secretary).'}</p>
+              {(company.founders || []).map((f, idx) => (
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end p-3 border rounded-lg">
+                  <div className="md:col-span-4 space-y-1">
+                    <Label>{t('common.name')}</Label>
+                    <Input
+                      value={f.name}
+                      onChange={(e) => {
+                        const next = [...(company.founders || [])];
+                        next[idx] = { ...next[idx], name: e.target.value };
+                        updateCompany({ founders: next });
+                      }}
+                    />
+                  </div>
+                  <div className="md:col-span-3 space-y-1">
+                    <Label>{t('settings.role') || 'Role'}</Label>
+                    <Input
+                      placeholder="Founder / President / Secretary"
+                      value={f.title}
+                      onChange={(e) => {
+                        const next = [...(company.founders || [])];
+                        next[idx] = { ...next[idx], title: e.target.value };
+                        updateCompany({ founders: next });
+                      }}
+                    />
+                  </div>
+                  <div className="md:col-span-4 space-y-1">
+                    <Label>{t('settings.photo') || 'Photo'}</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          const next = [...(company.founders || [])];
+                          next[idx] = { ...next[idx], photo: reader.result as string };
+                          updateCompany({ founders: next });
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                    {f.photo && <img src={f.photo} alt={f.name} className="h-10 mt-1 rounded border object-cover" />}
+                  </div>
+                  <div className="md:col-span-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const next = (company.founders || []).filter((_, i) => i !== idx);
+                        updateCompany({ founders: next });
+                      }}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                {(company.founders?.length || 0) < 6 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const next = [...(company.founders || []), { name: '', title: '', photo: '' }];
+                      updateCompany({ founders: next });
+                    }}
+                  >
+                    + {t('settings.addFounder') || 'Add Person'}
+                  </Button>
+                )}
+                <Button onClick={() => toast.success(t('settings.foundersSaved') || 'Leadership updated')}>{t('common.save')}</Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

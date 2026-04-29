@@ -79,6 +79,12 @@ export const RegisterResponseSchema = ApiResponseSchema(z.object({
 }));
 
 // Company schemas
+export const FounderSchema = z.object({
+  name: z.string(),
+  title: z.string(),
+  photo: z.string().optional(),
+});
+
 export const CompanySettingsSchema = z.object({
   name: z.string(),
   logo: z.string().optional(),
@@ -86,6 +92,7 @@ export const CompanySettingsSchema = z.object({
   phone: z.string().optional(),
   email: z.string().optional(),
   signature: z.string().optional(),
+  founders: z.array(FounderSchema).optional(),
 });
 
 // Member schemas
