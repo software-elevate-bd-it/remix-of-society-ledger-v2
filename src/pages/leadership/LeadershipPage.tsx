@@ -14,44 +14,50 @@ interface Person {
 function FounderCard({ p, index }: { p: Person; index: number }) {
   return (
     <div className="group relative">
-      {/* Glow effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/40 via-primary/10 to-transparent rounded-2xl blur opacity-60 group-hover:opacity-100 transition" />
-      <Card className="relative overflow-hidden border-0 bg-card/95 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-        {/* Decorative top band */}
-        <div className="h-24 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/30 relative">
-          <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(var(--primary)) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(var(--accent)) 0%, transparent 50%)' }} />
-          <Badge className="absolute top-3 right-3 bg-background/80 text-foreground backdrop-blur border-0">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Founder #{index + 1}
-          </Badge>
-        </div>
-
-        <CardContent className="pt-0 pb-6 px-6 -mt-14 text-center">
-          <div className="flex justify-center">
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/40 via-primary/10 to-accent/40 rounded-2xl blur opacity-50 group-hover:opacity-100 transition" />
+      <Card className="relative overflow-hidden border-0 bg-card/95 backdrop-blur transition-all duration-300 hover:shadow-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-12 items-stretch">
+          {/* Photo */}
+          <div className="md:col-span-3 relative bg-gradient-to-br from-primary/15 via-primary/5 to-accent/20 p-6 flex items-center justify-center min-h-[220px]">
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(hsl(var(--primary)) 1px, transparent 1px)', backgroundSize: '14px 14px' }} />
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/40 rounded-full blur-md opacity-50" />
-              <Avatar className="relative h-28 w-28 ring-4 ring-background shadow-xl">
+              <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl" />
+              <Avatar className="relative h-32 w-32 ring-4 ring-background shadow-xl">
                 {p.photo ? <AvatarImage src={p.photo} alt={p.name} /> : null}
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-heading text-2xl">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-heading text-3xl">
                   {p.name?.charAt(0) || '?'}
                 </AvatarFallback>
               </Avatar>
             </div>
           </div>
 
-          <h3 className="mt-4 font-heading font-bold text-lg leading-tight">{p.name || '—'}</h3>
-          <p className="text-xs uppercase tracking-widest text-primary mt-1 font-semibold">{p.title}</p>
-
-          <div className="mt-4 pt-4 border-t border-dashed border-border flex items-center justify-center gap-3 text-muted-foreground">
-            <button className="hover:text-primary transition" aria-label="Email">
-              <Mail className="h-4 w-4" />
-            </button>
-            <span className="text-xs">•</span>
-            <button className="hover:text-primary transition" aria-label="Phone">
-              <Phone className="h-4 w-4" />
-            </button>
+          {/* Content */}
+          <div className="md:col-span-9 p-6 md:p-8 flex flex-col justify-center">
+            <div className="flex items-center gap-2 mb-3">
+              <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Founder #{index + 1}
+              </Badge>
+              <Badge variant="outline" className="uppercase tracking-wider text-[10px]">
+                {p.title}
+              </Badge>
+            </div>
+            <h3 className="font-heading font-bold text-2xl md:text-3xl leading-tight">{p.name || '—'}</h3>
+            <p className="text-sm text-muted-foreground mt-3 leading-relaxed max-w-2xl">
+              A founding member who helped establish the somitee with a vision for community welfare, financial transparency, and long-term sustainability for every member.
+            </p>
+            <div className="flex flex-wrap items-center gap-4 mt-5 pt-5 border-t border-dashed border-border text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5 hover:text-primary transition cursor-pointer">
+                <Mail className="h-4 w-4" />
+                founder{index + 1}@somitee.com
+              </span>
+              <span className="flex items-center gap-1.5 hover:text-primary transition cursor-pointer">
+                <Phone className="h-4 w-4" />
+                +880 17{10 + index} 000 000
+              </span>
+            </div>
           </div>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
@@ -166,7 +172,7 @@ export default function LeadershipPage() {
             No founders added yet. Add them in Settings → Founders.
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {founders.map((f, i) => (
               <FounderCard key={i} p={f} index={i} />
             ))}
