@@ -166,7 +166,7 @@ export default function LeadershipPage() {
             No founders added yet. Add them in Settings → Founders.
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {founders.map((f, i) => (
               <FounderCard key={i} p={f} index={i} />
             ))}
