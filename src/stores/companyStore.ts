@@ -1,5 +1,10 @@
 import { create } from 'zustand';
 import { apiClient, type CompanySettings } from '@/lib/api';
+import leader1 from '@/assets/leader-1.jpg';
+import leader2 from '@/assets/leader-2.jpg';
+import leader3 from '@/assets/leader-3.jpg';
+import leader4 from '@/assets/leader-4.jpg';
+import leader5 from '@/assets/leader-5.jpg';
 
 interface CompanyState {
   company: CompanySettings;
@@ -20,11 +25,11 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     email: 'info@bananimarket.com',
     signature: '',
     founders: [
-      { name: 'Founder One', title: 'Founder', photo: '' },
-      { name: 'Founder Two', title: 'Founder', photo: '' },
-      { name: 'Founder Three', title: 'Founder', photo: '' },
-      { name: 'President Name', title: 'President', photo: '' },
-      { name: 'Secretary Name', title: 'Secretary', photo: '' },
+      { name: 'Md. Abdul Karim', title: 'Founder', photo: leader1 },
+      { name: 'Hasan Mahmud', title: 'Founder', photo: leader2 },
+      { name: 'Dr. Imran Hossain', title: 'Founder', photo: leader3 },
+      { name: 'Rafiqul Islam', title: 'President', photo: leader4 },
+      { name: 'Shahidul Alam', title: 'Secretary', photo: leader5 },
     ],
   },
   isLoading: false,
