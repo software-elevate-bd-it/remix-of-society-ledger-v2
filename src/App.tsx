@@ -37,6 +37,7 @@ import ApiDocsPage from "@/pages/docs/ApiDocsPage";
 import RolesPage from "@/pages/roles/RolesPage";
 import ApprovalsPage from "@/pages/approvals/ApprovalsPage";
 import UsersPage from "@/pages/users/UsersPage";
+import LeadershipPage from "@/pages/leadership/LeadershipPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -100,6 +101,7 @@ const App = () => (
           <Route path="/apply" element={<PublicRegistrationPage />} />
           <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="leadership" element={<LeadershipPage />} />
             <Route path="somitees" element={<SomiteesPage />} />
             <Route path="subscriptions" element={<DashboardPage />} />
             <Route path="analytics" element={<DashboardPage />} />
