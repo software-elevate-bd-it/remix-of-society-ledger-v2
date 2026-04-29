@@ -183,7 +183,7 @@ export default function SettingsPage() {
                 </div>
               ))}
               <div className="flex gap-2">
-                {(company.founders?.length || 0) < 6 && (
+                {(company.founders?.length || 0) < 10 && (
                   <Button
                     type="button"
                     variant="outline"
