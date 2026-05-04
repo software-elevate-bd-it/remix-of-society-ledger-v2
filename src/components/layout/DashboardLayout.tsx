@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
+import WelcomeModal from '@/components/shared/WelcomeModal';
 import { useCompanyStore } from '@/stores/companyStore';
 import { useApprovalsStore } from '@/stores/approvalsStore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -111,6 +112,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <WelcomeModal />
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 border-r border-sidebar-border bg-sidebar flex flex-col`}>
         <div className="flex items-center gap-2 p-4 border-b border-sidebar-border">
