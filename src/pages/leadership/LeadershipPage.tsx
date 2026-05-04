@@ -115,9 +115,8 @@ export default function LeadershipPage() {
   const { company } = useCompanyStore();
   const all = company.founders || [];
 
-  const founders = all.filter((f) => /founder/i.test(f.title || ''));
-  const president = all.find((f) => /president/i.test(f.title || ''));
-  const secretary = all.find((f) => /secretary/i.test(f.title || ''));
+  const president = all[0];
+  const others = all.slice(1);
 
   return (
     <div className="space-y-12 pb-8">
@@ -127,83 +126,62 @@ export default function LeadershipPage() {
         <div className="relative text-center max-w-2xl mx-auto">
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
             <Users className="h-3 w-3 mr-1.5" />
-            {t('leadership.title') || 'Our Leadership'}
+            {t('leadership.title') || 'আমাদের নেতৃত্ব'}
           </Badge>
           <h1 className="text-3xl md:text-5xl font-heading font-bold tracking-tight">
-            Meet the People <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Behind Our Somitee</span>
+            পরিচিতি <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">সমিতির কর্মকর্তাবৃন্দ</span>
           </h1>
           <p className="mt-4 text-muted-foreground text-base md:text-lg leading-relaxed">
-            Our founders and office bearers bring decades of experience, dedication, and a shared vision to serve every member of our community.
+            আমাদের কর্মকর্তাবৃন্দ অভিজ্ঞতা, নিষ্ঠা ও দূরদৃষ্টি নিয়ে সমিতির প্রতিটি সদস্যের কল্যাণে কাজ করছেন।
           </p>
           <div className="flex items-center justify-center gap-6 mt-6">
             <div className="text-center">
-              <p className="text-2xl font-heading font-bold text-primary">{founders.length}</p>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Founders</p>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div className="text-center">
-              <p className="text-2xl font-heading font-bold text-primary">{(president ? 1 : 0) + (secretary ? 1 : 0)}</p>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Officers</p>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div className="text-center">
               <p className="text-2xl font-heading font-bold text-primary">{all.length}</p>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Total</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">মোট কর্মকর্তা</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Founders */}
-      <section>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <Sparkles className="h-5 w-5" />
+      {/* President - featured */}
+      {president && (
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Crown className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-heading font-bold text-2xl">সভাপতি</h2>
+              <p className="text-sm text-muted-foreground">সমিতির শীর্ষ নেতৃত্ব</p>
+            </div>
+            <div className="ml-auto h-px flex-1 bg-gradient-to-r from-border to-transparent hidden md:block" />
           </div>
-          <div>
-            <h2 className="font-heading font-bold text-2xl">Founders</h2>
-            <p className="text-sm text-muted-foreground">The visionaries who started it all</p>
+          <div className="grid grid-cols-1 gap-6">
+            <OfficerCard p={president} icon={Crown} accent="bg-gradient-to-br from-primary to-primary/60" />
           </div>
-          <div className="ml-auto h-px flex-1 bg-gradient-to-r from-border to-transparent hidden md:block" />
-        </div>
+        </section>
+      )}
 
-        {founders.length === 0 ? (
-          <Card className="p-12 text-center text-muted-foreground border-dashed">
-            No founders added yet. Add them in Settings → Founders.
-          </Card>
-        ) : (
+      {/* Other officers in sequence */}
+      {others.length > 0 && (
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-heading font-bold text-2xl">কার্যনির্বাহী কমিটি</h2>
+              <p className="text-sm text-muted-foreground">সাধারণ সম্পাদক ও অন্যান্য কর্মকর্তাবৃন্দ</p>
+            </div>
+            <div className="ml-auto h-px flex-1 bg-gradient-to-r from-border to-transparent hidden md:block" />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {founders.map((f, i) => (
-              <FounderCard key={i} p={f} index={i} />
+            {others.map((f, i) => (
+              <FounderCard key={i} p={f} index={i + 1} />
             ))}
           </div>
-        )}
-      </section>
-
-      {/* Office bearers */}
-      <section>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <Crown className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-heading font-bold text-2xl">President & Secretary</h2>
-            <p className="text-sm text-muted-foreground">Current office bearers leading day-to-day operations</p>
-          </div>
-          <div className="ml-auto h-px flex-1 bg-gradient-to-r from-border to-transparent hidden md:block" />
-        </div>
-
-        {!president && !secretary ? (
-          <Card className="p-12 text-center text-muted-foreground border-dashed">
-            No office bearers added yet.
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {president && <OfficerCard p={president} icon={Crown} accent="bg-gradient-to-br from-primary to-primary/60" />}
-            {secretary && <OfficerCard p={secretary} icon={Award} accent="bg-gradient-to-br from-accent-foreground/80 to-primary/60" />}
-          </div>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 }
