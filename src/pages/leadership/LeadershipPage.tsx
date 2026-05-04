@@ -36,15 +36,15 @@ function FounderCard({ p, index }: { p: Person; index: number }) {
             <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
               <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
                 <Sparkles className="h-3 w-3 mr-1" />
-                Founder #{index + 1}
+                ক্রম #{index + 1}
               </Badge>
             </div>
             <h3 className="font-heading font-bold text-xl leading-tight">{p.name || '—'}</h3>
-            <Badge variant="outline" className="uppercase tracking-wider text-[10px] mt-2">
+            <Badge variant="outline" className="tracking-wider text-[11px] mt-2">
               {p.title}
             </Badge>
             <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-              A founding member who helped establish the somitee with a vision for community welfare and transparency.
+              সমিতির একজন নিবেদিতপ্রাণ কর্মকর্তা, যিনি সদস্যদের কল্যাণ ও স্বচ্ছতার লক্ষ্যে নিরলসভাবে কাজ করছেন।
             </p>
             <div className="flex flex-col items-center gap-2 mt-4 pt-4 border-t border-dashed border-border w-full text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5 hover:text-primary transition cursor-pointer">
