@@ -16,13 +16,13 @@ function FounderCard({ p, index }: { p: Person; index: number }) {
     <div className="group relative">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/40 via-primary/10 to-accent/40 rounded-2xl blur opacity-50 group-hover:opacity-100 transition" />
       <Card className="relative overflow-hidden border-0 bg-card/95 backdrop-blur transition-all duration-300 hover:shadow-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-12 items-stretch">
+        <div className="flex flex-col">
           {/* Photo */}
-          <div className="md:col-span-3 relative bg-gradient-to-br from-primary/15 via-primary/5 to-accent/20 p-6 flex items-center justify-center min-h-[220px]">
+          <div className="relative bg-gradient-to-br from-primary/15 via-primary/5 to-accent/20 p-6 flex items-center justify-center min-h-[200px]">
             <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(hsl(var(--primary)) 1px, transparent 1px)', backgroundSize: '14px 14px' }} />
             <div className="relative">
               <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl" />
-              <Avatar className="relative h-32 w-32 ring-4 ring-background shadow-xl">
+              <Avatar className="relative h-28 w-28 ring-4 ring-background shadow-xl">
                 {p.photo ? <AvatarImage src={p.photo} alt={p.name} /> : null}
                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-heading text-3xl">
                   {p.name?.charAt(0) || '?'}
@@ -32,27 +32,27 @@ function FounderCard({ p, index }: { p: Person; index: number }) {
           </div>
 
           {/* Content */}
-          <div className="md:col-span-9 p-6 md:p-8 flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-3">
+          <div className="p-6 flex flex-col text-center items-center">
+            <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
               <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
                 <Sparkles className="h-3 w-3 mr-1" />
                 Founder #{index + 1}
               </Badge>
-              <Badge variant="outline" className="uppercase tracking-wider text-[10px]">
-                {p.title}
-              </Badge>
             </div>
-            <h3 className="font-heading font-bold text-2xl md:text-3xl leading-tight">{p.name || '—'}</h3>
-            <p className="text-sm text-muted-foreground mt-3 leading-relaxed max-w-2xl">
-              A founding member who helped establish the somitee with a vision for community welfare, financial transparency, and long-term sustainability for every member.
+            <h3 className="font-heading font-bold text-xl leading-tight">{p.name || '—'}</h3>
+            <Badge variant="outline" className="uppercase tracking-wider text-[10px] mt-2">
+              {p.title}
+            </Badge>
+            <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+              A founding member who helped establish the somitee with a vision for community welfare and transparency.
             </p>
-            <div className="flex flex-wrap items-center gap-4 mt-5 pt-5 border-t border-dashed border-border text-sm text-muted-foreground">
+            <div className="flex flex-col items-center gap-2 mt-4 pt-4 border-t border-dashed border-border w-full text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5 hover:text-primary transition cursor-pointer">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-3.5 w-3.5" />
                 founder{index + 1}@somitee.com
               </span>
               <span className="flex items-center gap-1.5 hover:text-primary transition cursor-pointer">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-3.5 w-3.5" />
                 +880 17{10 + index} 000 000
               </span>
             </div>
@@ -172,7 +172,7 @@ export default function LeadershipPage() {
             No founders added yet. Add them in Settings → Founders.
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {founders.map((f, i) => (
               <FounderCard key={i} p={f} index={i} />
             ))}
