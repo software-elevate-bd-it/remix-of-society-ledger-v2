@@ -95,7 +95,8 @@
     "myLedger": "My Ledger",
     "settings": "Settings",
     "faqHelp": "FAQ & Help",
-    "apiDocs": "API Docs"
+    "apiDocs": "API Docs",
+    "themeStudio": "Branding & Theme Studio"
   },
   "dashboard": {
     "totalMembers": "Total Members",

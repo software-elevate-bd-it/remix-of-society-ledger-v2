@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/stores/authStore";
 import { apiClient } from "@/lib/api";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import ThemeProvider from "@/components/shared/ThemeProvider";
+import ThemeStudioPage from "@/pages/settings/ThemeStudioPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
@@ -89,6 +91,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppInitializer />
+    <ThemeProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -131,11 +134,13 @@ const App = () => (
             <Route path="approvals" element={<ApprovalsPage />} />
             <Route path="faq" element={<FAQPage />} />
             <Route path="api-docs" element={<ApiDocsPage />} />
+            <Route path="theme-studio" element={<ThemeStudioPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

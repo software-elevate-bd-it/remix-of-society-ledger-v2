@@ -7,7 +7,7 @@ import {
   FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
   ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, UserPlus, ClipboardList, Inbox,
-  Globe2, Facebook, Phone, MessageCircle, Cpu
+  Globe2, Facebook, Phone, MessageCircle, Cpu, Palette
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
@@ -68,6 +68,7 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.roles', path: '/roles', icon: ShieldCheck, roles: ['main_user'], permissions: ['roles.manage'] },
   { labelKey: 'nav.myLedger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
   { labelKey: 'nav.settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
+  { labelKey: 'nav.themeStudio', path: '/theme-studio', icon: Palette, roles: ['super_admin', 'main_user'] },
   { labelKey: 'nav.faqHelp', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
   { labelKey: 'nav.apiDocs', path: '/api-docs', icon: FileText, roles: ['super_admin', 'main_user'] },
 ];
