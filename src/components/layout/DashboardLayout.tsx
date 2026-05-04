@@ -115,6 +115,7 @@ export default function DashboardLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <WelcomeModal />
+      <AboutDeveloperModal open={aboutOpen} onOpenChange={setAboutOpen} />
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 border-r border-sidebar-border bg-sidebar flex flex-col`}>
         <div className="flex items-center gap-2 p-4 border-b border-sidebar-border">
