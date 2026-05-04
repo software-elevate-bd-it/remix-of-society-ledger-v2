@@ -13,6 +13,7 @@ import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import WelcomeModal from '@/components/shared/WelcomeModal';
 import AboutDeveloperModal from '@/components/shared/AboutDeveloperModal';
+import AppFooter from '@/components/shared/AppFooter';
 import { useCompanyStore } from '@/stores/companyStore';
 import { useApprovalsStore } from '@/stores/approvalsStore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -345,6 +346,9 @@ export default function DashboardLayout() {
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
+
+        {/* Sticky Footer */}
+        <AppFooter />
       </div>
     </div>
   );
