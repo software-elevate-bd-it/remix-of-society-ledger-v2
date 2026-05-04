@@ -30,6 +30,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       { name: 'মোঃ হাসান', title: 'সাংগঠনিক সম্পাদক', photo: leader3 },
       { name: 'মোঃ ফোরকান উদ্দিন', title: 'অর্থ সম্পাদক', photo: leader4 },
       { name: 'মোঃ ইলিয়াছ', title: 'সহ সাংগঠনিক সম্পাদক', photo: leader5 },
+      { name: 'মোঃ আবদুস সবুর', title: 'দপ্তর সম্পাদক', photo: leader1 },
     ],
   },
   isLoading: false,
