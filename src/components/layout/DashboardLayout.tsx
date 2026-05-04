@@ -12,6 +12,7 @@ import {
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import WelcomeModal from '@/components/shared/WelcomeModal';
+import AboutDeveloperModal from '@/components/shared/AboutDeveloperModal';
 import { useCompanyStore } from '@/stores/companyStore';
 import { useApprovalsStore } from '@/stores/approvalsStore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -79,6 +80,7 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const pendingApprovals = useApprovalsStore((s) => s.items.filter(i => i.status === 'pending').length);
   const { has } = usePermissions();
