@@ -6,7 +6,8 @@ import {
   LayoutDashboard, Users, Wallet, Receipt, Building2, CreditCard,
   FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
-  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, UserPlus, ClipboardList, Inbox
+  ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, UserPlus, ClipboardList, Inbox,
+  Globe2, Facebook, Phone, MessageCircle
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
@@ -185,6 +186,85 @@ export default function DashboardLayout() {
             <LogOut className="h-4 w-4 mr-2" />
             {sidebarOpen && t('common.logout')}
           </Button>
+        </div>
+
+        {/* Branding Section */}
+        <div className="border-t border-sidebar-border bg-sidebar-accent/30">
+          {sidebarOpen ? (
+            <div className="px-3 py-3 space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
+              </div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Powered by
+              </p>
+              <a
+                href="https://www.softwareelevate.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-xs font-bold text-sidebar-foreground hover:text-primary transition-colors"
+              >
+                Software Elevated
+              </a>
+              <div className="flex flex-col gap-1 pt-1">
+                <a
+                  href="https://www.softwareelevate.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Globe2 className="h-3 w-3 shrink-0" />
+                  <span className="truncate">softwareelevate.com</span>
+                </a>
+                <a
+                  href="https://facebook.com/profile.php?id=61571454874255"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Facebook className="h-3 w-3 shrink-0" />
+                  <span className="truncate">Facebook</span>
+                </a>
+                <a
+                  href="tel:01922500433"
+                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Phone className="h-3 w-3 shrink-0" />
+                  <span className="truncate">01922500433</span>
+                </a>
+                <a
+                  href="https://wa.me/8801312978030"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-success transition-colors"
+                >
+                  <MessageCircle className="h-3 w-3 shrink-0" />
+                  <span className="truncate">WhatsApp: 01312978030</span>
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="py-2 flex flex-col items-center gap-2">
+              <a
+                href="https://www.softwareelevate.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Software Elevated"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Globe2 className="h-4 w-4" />
+              </a>
+              <a
+                href="https://wa.me/8801312978030"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="WhatsApp"
+                className="text-muted-foreground hover:text-success transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </a>
+            </div>
+          )}
         </div>
       </aside>
 
