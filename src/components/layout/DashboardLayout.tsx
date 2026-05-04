@@ -7,11 +7,12 @@ import {
   FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
   ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, UserPlus, ClipboardList, Inbox,
-  Globe2, Facebook, Phone, MessageCircle
+  Globe2, Facebook, Phone, MessageCircle, Cpu
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import WelcomeModal from '@/components/shared/WelcomeModal';
+import AboutDeveloperModal from '@/components/shared/AboutDeveloperModal';
 import { useCompanyStore } from '@/stores/companyStore';
 import { useApprovalsStore } from '@/stores/approvalsStore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -79,6 +80,7 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const pendingApprovals = useApprovalsStore((s) => s.items.filter(i => i.status === 'pending').length);
   const { has } = usePermissions();
@@ -113,6 +115,7 @@ export default function DashboardLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <WelcomeModal />
+      <AboutDeveloperModal open={aboutOpen} onOpenChange={setAboutOpen} />
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 border-r border-sidebar-border bg-sidebar flex flex-col`}>
         <div className="flex items-center gap-2 p-4 border-b border-sidebar-border">
@@ -181,6 +184,15 @@ export default function DashboardLayout() {
               </Link>
             );
           })}
+
+          {/* About Developer */}
+          <button
+            onClick={() => setAboutOpen(true)}
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <Cpu className="h-4 w-4 shrink-0" />
+            {sidebarOpen && <span className="truncate text-left flex-1">About Developer</span>}
+          </button>
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">
