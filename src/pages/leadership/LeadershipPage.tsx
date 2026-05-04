@@ -116,7 +116,8 @@ export default function LeadershipPage() {
   const all = company.founders || [];
 
   const president = all[0];
-  const others = all.slice(1);
+  const secretary = all[1];
+  const others = all.slice(2);
 
   return (
     <div className="space-y-12 pb-8">
@@ -143,26 +144,27 @@ export default function LeadershipPage() {
         </div>
       </section>
 
-      {/* President - featured */}
-      {president && (
+      {/* President & Secretary - side by side */}
+      {(president || secretary) && (
         <section>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <Crown className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="font-heading font-bold text-2xl">সভাপতি</h2>
+              <h2 className="font-heading font-bold text-2xl">সভাপতি ও সাধারণ সম্পাদক</h2>
               <p className="text-sm text-muted-foreground">সমিতির শীর্ষ নেতৃত্ব</p>
             </div>
             <div className="ml-auto h-px flex-1 bg-gradient-to-r from-border to-transparent hidden md:block" />
           </div>
-          <div className="grid grid-cols-1 gap-6">
-            <OfficerCard p={president} icon={Crown} accent="bg-gradient-to-br from-primary to-primary/60" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {president && <OfficerCard p={president} icon={Crown} accent="bg-gradient-to-br from-primary to-primary/60" />}
+            {secretary && <OfficerCard p={secretary} icon={Award} accent="bg-gradient-to-br from-accent-foreground/80 to-primary/60" />}
           </div>
         </section>
       )}
 
-      {/* Other officers in sequence */}
+      {/* Other officers - 2 per row */}
       {others.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-6">
@@ -171,13 +173,13 @@ export default function LeadershipPage() {
             </div>
             <div>
               <h2 className="font-heading font-bold text-2xl">কার্যনির্বাহী কমিটি</h2>
-              <p className="text-sm text-muted-foreground">সাধারণ সম্পাদক ও অন্যান্য কর্মকর্তাবৃন্দ</p>
+              <p className="text-sm text-muted-foreground">অন্যান্য কর্মকর্তাবৃন্দ</p>
             </div>
             <div className="ml-auto h-px flex-1 bg-gradient-to-r from-border to-transparent hidden md:block" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {others.map((f, i) => (
-              <FounderCard key={i} p={f} index={i + 1} />
+              <FounderCard key={i} p={f} index={i + 2} />
             ))}
           </div>
         </section>
