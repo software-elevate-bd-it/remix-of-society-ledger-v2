@@ -183,6 +183,15 @@ export default function DashboardLayout() {
               </Link>
             );
           })}
+
+          {/* About Developer */}
+          <button
+            onClick={() => setAboutOpen(true)}
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <Cpu className="h-4 w-4 shrink-0" />
+            {sidebarOpen && <span className="truncate text-left flex-1">About Developer</span>}
+          </button>
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">
