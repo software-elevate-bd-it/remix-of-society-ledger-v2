@@ -37,6 +37,7 @@ import SomiteesPage from "@/pages/somitees/SomiteesPage";
 import FAQPage from "@/pages/faq/FAQPage";
 import ApiDocsPage from "@/pages/docs/ApiDocsPage";
 import UserManualPage from "@/pages/docs/UserManualPage";
+import HelpCenterPage from "@/pages/help/HelpCenterPage";
 import RolesPage from "@/pages/roles/RolesPage";
 import ApprovalsPage from "@/pages/approvals/ApprovalsPage";
 import UsersPage from "@/pages/users/UsersPage";
