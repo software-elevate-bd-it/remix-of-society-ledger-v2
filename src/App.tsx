@@ -105,6 +105,8 @@ const App = () => (
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/apply" element={<PublicRegistrationPage />} />
+          <Route path="/docs" element={<HelpCenterPage publicView />} />
+          <Route path="/docs/:articleId" element={<HelpCenterPage publicView />} />
           <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="leadership" element={<LeadershipPage />} />
@@ -138,6 +140,9 @@ const App = () => (
             <Route path="faq" element={<FAQPage />} />
             <Route path="api-docs" element={<ApiDocsPage />} />
             <Route path="user-manual" element={<UserManualPage />} />
+            <Route path="help" element={<HelpCenterPage />} />
+            <Route path="help/:articleId" element={<HelpCenterPage />} />
+            <Route path="how-to-work" element={<Navigate to="/help" replace />} />
             <Route path="theme-studio" element={<ThemeStudioPage />} />
             <Route path="draw-savings" element={<DrawSavingsPage />} />
           </Route>
