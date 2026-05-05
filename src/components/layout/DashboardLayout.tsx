@@ -7,7 +7,7 @@ import {
   FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown,
   Bell, Sun, Moon, MessageSquare, BarChart3, BookOpen, Landmark,
   ShieldCheck, Globe, HelpCircle, TrendingUp, TrendingDown, DollarSign, Banknote, UserCheck, UserPlus, ClipboardList, Inbox,
-  Globe2, Facebook, Phone, MessageCircle, Cpu, Palette
+  Globe2, Facebook, Phone, MessageCircle, Cpu, Palette, Sparkles
 } from 'lucide-react';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
@@ -52,6 +52,7 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.bankAccounts', path: '/bank-accounts', icon: Landmark, roles: ['main_user'], permissions: ['bank.create', 'bank.approve'] },
   { labelKey: 'nav.cashBook', path: '/cashbook', icon: FileText, roles: ['main_user'], permissions: ['reports.view'] },
   { labelKey: 'nav.payments', path: '/payments', icon: CreditCard, roles: ['main_user', 'member'] },
+  { labelKey: 'nav.drawSavings', path: '/draw-savings', icon: Sparkles, roles: ['super_admin', 'main_user', 'member'] },
   {
     labelKey: 'nav.reports', path: '/reports', icon: BarChart3, roles: ['main_user'], permissions: ['reports.view'],
     children: [
