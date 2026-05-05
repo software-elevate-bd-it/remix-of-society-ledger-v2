@@ -40,6 +40,7 @@ import RolesPage from "@/pages/roles/RolesPage";
 import ApprovalsPage from "@/pages/approvals/ApprovalsPage";
 import UsersPage from "@/pages/users/UsersPage";
 import LeadershipPage from "@/pages/leadership/LeadershipPage";
+import DrawSavingsPage from "@/pages/draw-savings/DrawSavingsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -135,6 +136,7 @@ const App = () => (
             <Route path="faq" element={<FAQPage />} />
             <Route path="api-docs" element={<ApiDocsPage />} />
             <Route path="theme-studio" element={<ThemeStudioPage />} />
+            <Route path="draw-savings" element={<DrawSavingsPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -96,7 +96,8 @@
     "settings": "Settings",
     "faqHelp": "FAQ & Help",
     "apiDocs": "API Docs",
-    "themeStudio": "Branding & Theme Studio"
+    "themeStudio": "Branding & Theme Studio",
+    "drawSavings": "Draw Savings"
   },
   "dashboard": {
     "totalMembers": "Total Members",
