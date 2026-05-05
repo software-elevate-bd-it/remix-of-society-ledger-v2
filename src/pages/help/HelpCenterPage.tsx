@@ -314,7 +314,7 @@ function Landing({ onOpen }: { onOpen: (id: string) => void }) {
 function ArticleView({
   article, categoryTitle, onNavigate, onBack, copyLink, share, downloadPdf,
 }: {
-  article: ReturnType<typeof findArticle> extends infer T ? T extends null ? never : T['article'] : never;
+  article: import('@/data/helpCenterData').HelpArticle;
   categoryTitle: string;
   onNavigate: (id: string) => void;
   onBack: () => void;
