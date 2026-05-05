@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDrawSavingsStore, DrawGroup, DrawType, DrawMethod, DrawGroupStatus } from '@/stores/drawSavingsStore';
+import { seedDrawDemoData } from '@/stores/drawSavingsDemo';
 import { useMembersStore } from '@/stores/membersStore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Trophy, Gift, Users as UsersIcon, Calendar, Plus, Sparkles, Wallet, CheckCircle2, XCircle, Coins, ListChecks, ArrowLeft, Dice5 } from 'lucide-react';
+import { Trophy, Gift, Users as UsersIcon, Calendar, Plus, Sparkles, Wallet, CheckCircle2, XCircle, Coins, ListChecks, ArrowLeft, Dice5, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -50,9 +51,14 @@ export default function DrawSavingsPage() {
           </h1>
           <p className="text-muted-foreground">Rotating savings groups with digital draws and winner management.</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> New Draw Group
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => { seedDrawDemoData(); toast.success('Demo data loaded'); }} className="gap-2">
+            <Database className="h-4 w-4" /> Load Demo Data
+          </Button>
+          <Button onClick={() => setCreateOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> New Draw Group
+          </Button>
+        </div>
       </div>
 
       {/* Dashboard widgets */}
