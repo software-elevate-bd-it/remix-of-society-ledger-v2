@@ -95,7 +95,8 @@
     "myLedger": "My Ledger",
     "settings": "Settings",
     "faqHelp": "FAQ & Help",
-    "userManual": "How to Work the System",
+    "howToWork": "📚 How to Work the System",
+    "userManual": "User Manual",
     "apiDocs": "API Docs",
     "themeStudio": "Branding & Theme Studio",
     "drawSavings": "Draw Savings"
