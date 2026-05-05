@@ -36,6 +36,7 @@ import SettingsPage from "@/pages/settings/SettingsPage";
 import SomiteesPage from "@/pages/somitees/SomiteesPage";
 import FAQPage from "@/pages/faq/FAQPage";
 import ApiDocsPage from "@/pages/docs/ApiDocsPage";
+import UserManualPage from "@/pages/docs/UserManualPage";
 import RolesPage from "@/pages/roles/RolesPage";
 import ApprovalsPage from "@/pages/approvals/ApprovalsPage";
 import UsersPage from "@/pages/users/UsersPage";
@@ -135,6 +136,7 @@ const App = () => (
             <Route path="approvals" element={<ApprovalsPage />} />
             <Route path="faq" element={<FAQPage />} />
             <Route path="api-docs" element={<ApiDocsPage />} />
+            <Route path="user-manual" element={<UserManualPage />} />
             <Route path="theme-studio" element={<ThemeStudioPage />} />
             <Route path="draw-savings" element={<DrawSavingsPage />} />
           </Route>
