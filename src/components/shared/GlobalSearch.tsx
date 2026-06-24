@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Users, Wallet, CreditCard, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { members, transactions } from '@/data/dummyData';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,6 +18,7 @@ interface SearchResult {
 export default function GlobalSearch() {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -45,23 +48,17 @@ export default function GlobalSearch() {
   const icons = { member: Users, transaction: Wallet, payment: CreditCard };
   const labels = { member: t('search.members'), transaction: t('search.transactions'), payment: t('search.payments') };
 
-  return (
-    <div ref={ref} className="relative hidden md:block">
-      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-      <Input
-        placeholder={t('search.placeholder')}
-        className="pl-9 w-72 h-9"
-        value={query}
-        onChange={e => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={() => query.length >= 2 && setOpen(true)}
-      />
-      {query && (
-        <button onClick={() => { setQuery(''); setOpen(false); }} className="absolute right-2.5 top-2.5">
-          <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-        </button>
-      )}
-      {open && results.length > 0 && (
-        <div className="absolute top-full mt-1 w-96 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    setOpen(false);
+    setMobileOpen(false);
+    setQuery('');
+  };
+
+  const renderResults = (mobile = false) => (
+    <>
+      {results.length > 0 && (
+        <div className={mobile ? '' : 'absolute top-full mt-1 w-96 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto'}>
           {(Object.keys(grouped) as Array<keyof typeof grouped>).map(key => {
             const items = grouped[key];
             if (!items.length) return null;
@@ -75,7 +72,7 @@ export default function GlobalSearch() {
                   <button
                     key={item.id}
                     className="w-full px-3 py-2 text-left hover:bg-accent flex flex-col transition-colors"
-                    onClick={() => { navigate(item.path); setOpen(false); setQuery(''); }}
+                    onClick={() => handleNavigate(item.path)}
                   >
                     <span className="text-sm font-medium">{item.title}</span>
                     <span className="text-xs text-muted-foreground">{item.subtitle}</span>
@@ -86,11 +83,63 @@ export default function GlobalSearch() {
           })}
         </div>
       )}
-      {open && query.length >= 2 && results.length === 0 && (
-        <div className="absolute top-full mt-1 w-96 bg-popover border border-border rounded-lg shadow-lg z-50 p-4 text-center text-sm text-muted-foreground">
+      {query.length >= 2 && results.length === 0 && (
+        <div className={mobile ? 'p-4 text-center text-sm text-muted-foreground' : 'absolute top-full mt-1 w-96 bg-popover border border-border rounded-lg shadow-lg z-50 p-4 text-center text-sm text-muted-foreground'}>
           {t('search.noResults', { query })}
         </div>
       )}
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop inline search */}
+      <div ref={ref} className="relative hidden md:block">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={t('search.placeholder')}
+          className="pl-9 w-72 h-9"
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => query.length >= 2 && setOpen(true)}
+        />
+        {query && (
+          <button onClick={() => { setQuery(''); setOpen(false); }} className="absolute right-2.5 top-2.5">
+            <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          </button>
+        )}
+        {open && renderResults(false)}
+      </div>
+
+      {/* Mobile/tablet: icon trigger */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={() => setMobileOpen(true)}
+        aria-label={t('search.placeholder')}
+      >
+        <Search className="h-4 w-4" />
+      </Button>
+
+      <Dialog open={mobileOpen} onOpenChange={(o) => { setMobileOpen(o); if (!o) setQuery(''); }}>
+        <DialogContent className="top-[10%] translate-y-0 p-0 gap-0 max-w-[95vw] sm:max-w-md">
+          <DialogTitle className="sr-only">{t('search.placeholder')}</DialogTitle>
+          <div className="relative border-b border-border">
+            <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              autoFocus
+              placeholder={t('search.placeholder')}
+              className="pl-9 border-0 h-11 focus-visible:ring-0 rounded-none"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="max-h-[60vh] overflow-y-auto">
+            {renderResults(true)}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
