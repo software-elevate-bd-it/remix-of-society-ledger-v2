@@ -17,7 +17,7 @@ import SignaturePad from '@/components/shared/SignaturePad';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import { UserPlus, ArrowRight, ArrowLeft, Save, Eye, Printer } from 'lucide-react';
+import { UserPlus, ArrowRight, ArrowLeft, Save, Eye, Printer, Loader } from 'lucide-react';
 
 const registrationSchema = z.object({
   nameBn: z.string().min(2, 'বাংলায় নাম আবশ্যক').max(100),
