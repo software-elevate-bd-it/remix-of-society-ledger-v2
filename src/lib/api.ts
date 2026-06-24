@@ -86,7 +86,8 @@ export const CompanySettingsSchema = z.object({
   phone: z.string().optional(),
   email: z.string().optional(),
   signature: z.string().optional(),
-});
+  founders: z.array(z.any()).optional(),
+}).catchall(z.any());
 
 // Member schemas
 export const MemberSchema = z.object({
