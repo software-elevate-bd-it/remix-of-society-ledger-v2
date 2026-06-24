@@ -54,6 +54,7 @@ export default function PublicRegistrationPage() {
   const [nidBack, setNidBack] = useState<string>('');
   const [signature, setSignature] = useState<string>('');
   const [memberId] = useState(`MEM-${Date.now().toString(36).toUpperCase()}`);
+  const [isLoading, setIsLoading] = useState(false);
   const today = new Date().toISOString().split('T')[0];
 
   const form = useForm<RegistrationData>({
