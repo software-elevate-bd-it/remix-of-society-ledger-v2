@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, BookOpen } from 'lucide-react';
 
-export default function UserManualPage() {
+export default function UserManualPage({ publicView }: { publicView?: boolean } = {}) {
   const [markdown, setMarkdown] = useState('');
   const [search, setSearch] = useState('');
 
