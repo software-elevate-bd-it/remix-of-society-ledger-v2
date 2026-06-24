@@ -111,7 +111,8 @@ export const MemberSchema = z.object({
 // Member Request schemas
 export const MemberRequestSchema = z.object({
   id: z.string(),
-
+  name: z.string().optional(),
+  photo: z.string().nullable().optional(),
   memberId: z.string().optional(),
   memberRegNumber: z.string().optional(),
 
