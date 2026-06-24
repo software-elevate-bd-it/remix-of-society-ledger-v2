@@ -26,7 +26,7 @@ interface CollectionsState {
   }) => Promise<void>;
 
   createCollection: (collectionData: {
-    memberId: string;
+    memberId: string | number;
     amount: number;
     date: string;
     category?: string;
