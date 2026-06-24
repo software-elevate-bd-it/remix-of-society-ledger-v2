@@ -732,7 +732,9 @@ return data;
     category?: string;
     dateFrom?: string;
     dateTo?: string;
-    memberId?: number;
+    memberId?: string | number;
+    financialYear?: string;
+    [key: string]: any;
   }) {
     const searchParams = new URLSearchParams();
     if (params) {
