@@ -288,9 +288,11 @@ export const DashboardStatsSchema = z.object({
   activeMembers: z.number(),
   monthlyIncome: z.number(),
   monthlyExpense: z.number(),
+  monthlyCollection: z.number().optional(),
+  totalExpense: z.number().optional(),
   pendingPayments: z.number(),
   recentTransactions: z.array(z.any()),
-});
+}).catchall(z.any());
 
 // Role schemas
 export const RoleSchema = z.object({
