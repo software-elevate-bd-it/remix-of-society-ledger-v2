@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, UserRole } from '@/stores/authStore';
@@ -21,10 +21,23 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+
+function useIsBelowDesktop() {
+  const [below, setBelow] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 1023px)');
+    const onChange = () => setBelow(mql.matches);
+    onChange();
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return below;
+}
 
 interface NavItem {
   labelKey: string;
