@@ -746,7 +746,7 @@ return data;
   }
 
   async createCollection(collectionData: {
-    memberId: number;
+    memberId: string | number;
     amount: number;
     date: string;
     category?: string;
@@ -759,6 +759,7 @@ return data;
     lateFee?: number;
     discount?: number;
     totalPaid?: number;
+    [key: string]: any;
   }) {
     return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>('/collections', {
       method: 'POST',
