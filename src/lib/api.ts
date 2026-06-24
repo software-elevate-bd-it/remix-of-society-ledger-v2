@@ -337,12 +337,13 @@ export const PaymentSchema = z.object({
   id: z.string(),
   memberId: z.string(),
   memberName: z.string(),
+  member: z.any().optional(),
   amount: z.number(),
   date: z.string(),
   method: z.string(),
-  status: z.enum(['pending', 'verified', 'failed']),
+  status: z.string(),
   transactionId: z.string().optional(),
-});
+}).catchall(z.any());
 
 export type Payment = z.infer<typeof PaymentSchema>;
 
