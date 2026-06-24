@@ -56,7 +56,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.getDashboardStats();
-      set({ stats: response.data, isLoading: false });
+      // console.log('Dashboard Stats Response:', response);
+      // console.log('Stats data type:', typeof response.data, 'Is Array:', Array.isArray(response.data));
+      const statsData = response.data;
+      //console.log('Stats keys:', Object.keys(statsData));
+      set({ stats: statsData || get().stats, isLoading: false });
     } catch (error) {
       console.error('Failed to load dashboard stats:', error);
       set({ error: 'Failed to load dashboard stats', isLoading: false });

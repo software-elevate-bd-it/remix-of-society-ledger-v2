@@ -14,6 +14,13 @@ import HelpModal from '@/components/shared/HelpModal';
 import CompanyHeader from '@/components/shared/CompanyHeader';
 import { useCompanyStore } from '@/stores/companyStore';
 import { toast } from 'sonner';
+import { ImProfile } from "react-icons/im";
+import { AiFillCloud } from "react-icons/ai";
+import { RiSecurePaymentFill } from "react-icons/ri";
+import { MdOutlineSaveAlt, MdOutlineSms } from "react-icons/md";
+import { MdDynamicFeed } from "react-icons/md";
+import { IoPrintOutline } from "react-icons/io5";
+
 
 const profileSchema = z.object({ name: z.string().min(2), email: z.string().email(), password: z.string().optional() });
 const companySchema = z.object({ companyName: z.string().min(2), address: z.string().optional(), phone: z.string().optional(), email: z.string().email().optional().or(z.literal('')) });
@@ -55,13 +62,12 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="profile">
         <TabsList className="flex-wrap">
-          <TabsTrigger value="profile">{t('settings.profile')}</TabsTrigger>
-          <TabsTrigger value="company">{t('settings.company')}</TabsTrigger>
-          <TabsTrigger value="founders">{t('settings.founders') || 'Founders'}</TabsTrigger>
-          <TabsTrigger value="fees">{t('settings.feeSetup')}</TabsTrigger>
-          <TabsTrigger value="sms">{t('settings.smsConfig')}</TabsTrigger>
-          <TabsTrigger value="payment">{t('settings.paymentGateway')}</TabsTrigger>
-          <TabsTrigger value="print">{t('settings.printLayout')}</TabsTrigger>
+          <TabsTrigger value="profile"><ImProfile  className='mr-2 text-xl text-orange-500'/> {t('settings.profile')}</TabsTrigger>
+          <TabsTrigger value="company"><AiFillCloud  className='mr-2 text-xl text-orange-500'/>{t('settings.company')}</TabsTrigger>
+          <TabsTrigger value="fees"><MdDynamicFeed  className='mr-2 text-xl text-orange-500'/>{t('settings.feeSetup')}</TabsTrigger>
+          <TabsTrigger value="sms"><MdOutlineSms  className='mr-2 text-xl text-orange-500'/>{t('settings.smsConfig')}</TabsTrigger>
+          <TabsTrigger value="payment"><RiSecurePaymentFill  className='mr-2 text-xl text-orange-500'/>{t('settings.paymentGateway')}</TabsTrigger>
+          <TabsTrigger value="print"><IoPrintOutline  className='mr-2 text-xl text-orange-500'/>{t('settings.printLayout')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -75,7 +81,7 @@ export default function SettingsPage() {
                   </div>
                   <FormField control={profileForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>{t('settings.newPassword')}</FormLabel><FormControl><Input type="password" placeholder={t('settings.keepCurrent')} {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <div className="space-y-1"><Label>{t('settings.profilePhoto')}</Label><Input type="file" accept="image/*" /></div>
-                  <Button type="submit">{t('common.save')}</Button>
+                  <Button type="submit"><MdOutlineSaveAlt className='text-xl'/>{t('common.save')}</Button>
                 </form>
               </Form>
             </CardContent>
@@ -114,89 +120,6 @@ export default function SettingsPage() {
                   <Button type="submit">{t('common.save')}</Button>
                 </form>
               </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="founders">
-          <Card>
-            <CardHeader><CardTitle className="font-heading">{t('settings.foundersTitle') || 'Founders & Leadership'}</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">{t('settings.foundersDesc') || 'Manage the leadership shown on the dashboard. Add up to 3 people (Founder, President, Secretary).'}</p>
-              {(company.founders || []).map((f, idx) => (
-                <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end p-3 border rounded-lg">
-                  <div className="md:col-span-4 space-y-1">
-                    <Label>{t('common.name')}</Label>
-                    <Input
-                      value={f.name}
-                      onChange={(e) => {
-                        const next = [...(company.founders || [])];
-                        next[idx] = { ...next[idx], name: e.target.value };
-                        updateCompany({ founders: next });
-                      }}
-                    />
-                  </div>
-                  <div className="md:col-span-3 space-y-1">
-                    <Label>{t('settings.role') || 'Role'}</Label>
-                    <Input
-                      placeholder="Founder / President / Secretary"
-                      value={f.title}
-                      onChange={(e) => {
-                        const next = [...(company.founders || [])];
-                        next[idx] = { ...next[idx], title: e.target.value };
-                        updateCompany({ founders: next });
-                      }}
-                    />
-                  </div>
-                  <div className="md:col-span-4 space-y-1">
-                    <Label>{t('settings.photo') || 'Photo'}</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          const next = [...(company.founders || [])];
-                          next[idx] = { ...next[idx], photo: reader.result as string };
-                          updateCompany({ founders: next });
-                        };
-                        reader.readAsDataURL(file);
-                      }}
-                    />
-                    {f.photo && <img src={f.photo} alt={f.name} className="h-10 mt-1 rounded border object-cover" />}
-                  </div>
-                  <div className="md:col-span-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const next = (company.founders || []).filter((_, i) => i !== idx);
-                        updateCompany({ founders: next });
-                      }}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                </div>
-              ))}
-              <div className="flex gap-2">
-                {(company.founders?.length || 0) < 10 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const next = [...(company.founders || []), { name: '', title: '', photo: '' }];
-                      updateCompany({ founders: next });
-                    }}
-                  >
-                    + {t('settings.addFounder') || 'Add Person'}
-                  </Button>
-                )}
-                <Button onClick={() => toast.success(t('settings.foundersSaved') || 'Leadership updated')}>{t('common.save')}</Button>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

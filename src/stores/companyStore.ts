@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { apiClient, type CompanySettings } from '@/lib/api';
 import leader1 from '@/assets/leader-1.jpg';
@@ -18,7 +19,7 @@ interface CompanyState {
 
 export const useCompanyStore = create<CompanyState>((set, get) => ({
   company: {
-    name: 'বৃহত্তর মুরাদপুর ব্যবসায়ী সমিতি',
+    name: 'মুরাদপুর ব্যবসায়ী সমবায় সমিতি লিঃ',
     logo: '',
     address: 'মুরাদপুর, চট্টগ্রাম',
     phone: '01711111111',
@@ -42,23 +43,35 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       const response = await apiClient.updateCompanySettings(data);
       set({ company: response.data, isLoading: false });
     } catch (error) {
-      console.error('Failed to update company settings:', error);
+      // console.error('Failed to update company settings:', error);
       set({ error: 'Failed to update company settings', isLoading: false });
       throw error;
     }
   },
 
   loadCompany: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await apiClient.getCompanySettings();
-      set({ company: response.data, isLoading: false });
-    } catch (error) {
-      console.error('Failed to load company settings:', error);
-      set({ error: 'Failed to load company settings', isLoading: false });
-      // Keep default values on error
-    }
-  },
+  set({ isLoading: true, error: null });
+
+  try {
+    const response = await apiClient.getCompanySettings();
+    // console.log('Loaded company settings:', response);
+
+    set((state) => ({
+      company: {
+        ...state.company, // keep existing founders
+        ...response.data?.data, // overwrite only API fields
+      },
+      isLoading: false,
+    }));
+  } catch (error) {
+    console.error('Failed to load company settings:', error);
+
+    set({
+      error: 'Failed to load company settings',
+      isLoading: false,
+    });
+  }
+},
 
   uploadLogo: async (file) => {
     const formData = new FormData();
@@ -66,6 +79,8 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
     try {
       const response = await apiClient.uploadCompanyLogo(formData);
+      // console.log('logo upload response', response);
+
       const logoUrl = response.data.logoUrl;
 
       // Update local state

@@ -38,21 +38,22 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { labelKey: 'nav.analytics', path: '/dashboard', icon: LayoutDashboard, roles: ['super_admin', 'main_user', 'member'] },
   { labelKey: 'nav.leadership', path: '/leadership', icon: Users, roles: ['super_admin', 'main_user', 'member'] },
+  { labelKey: 'nav.analytics', path: '/dashboard', icon: LayoutDashboard, roles: ['super_admin', 'main_user', 'member'] },
   { labelKey: 'nav.somiteeManagement', path: '/somitees', icon: Building2, roles: ['super_admin'] },
   { labelKey: 'nav.subscriptions', path: '/subscriptions', icon: CreditCard, roles: ['super_admin'] },
   { labelKey: 'nav.globalAnalytics', path: '/analytics', icon: BarChart3, roles: ['super_admin'] },
   { labelKey: 'nav.globalSettings', path: '/global-settings', icon: Globe, roles: ['super_admin'] },
   { labelKey: 'nav.memberRegistration', path: '/member-registration', icon: UserPlus, roles: ['main_user'], permissions: ['member.create'] },
-  { labelKey: 'nav.memberRequests', path: '/member-requests', icon: UserCheck, roles: ['main_user'], permissions: ['member.approve'], badge: '2' },
+  { labelKey: 'nav.memberRequests', path: '/member-requests', icon: UserCheck, roles: ['main_user'], permissions: ['member.approve'] },
   { labelKey: 'nav.collections', path: '/collections', icon: Wallet, roles: ['main_user', 'member'], permissions: ['collection.create', 'collection.approve'] },
   { labelKey: 'nav.expenses', path: '/expenses', icon: Receipt, roles: ['main_user'], permissions: ['expense.create', 'expense.approve'] },
+  { labelKey: 'nav.income', path: '/income', icon: DollarSign, roles: ['main_user'], permissions: ['income.create', 'income.approve'] },
   { labelKey: 'nav.ledger', path: '/ledger', icon: BookOpen, roles: ['main_user'], permissions: ['reports.view'] },
   { labelKey: 'nav.bankAccounts', path: '/bank-accounts', icon: Landmark, roles: ['main_user'], permissions: ['bank.create', 'bank.approve'] },
   { labelKey: 'nav.cashBook', path: '/cashbook', icon: FileText, roles: ['main_user'], permissions: ['reports.view'] },
-  { labelKey: 'nav.payments', path: '/payments', icon: CreditCard, roles: ['main_user', 'member'] },
-  { labelKey: 'nav.drawSavings', path: '/draw-savings', icon: Sparkles, roles: ['super_admin', 'main_user', 'member'] },
+  // { labelKey: 'nav.payments', path: '/payments', icon: CreditCard, roles: ['main_user', 'member'] },
+  // { labelKey: 'nav.drawSavings', path: '/draw-savings', icon: Sparkles, roles: ['super_admin', 'main_user', 'member'] },
   {
     labelKey: 'nav.reports', path: '/reports', icon: BarChart3, roles: ['main_user'], permissions: ['reports.view'],
     children: [
@@ -70,10 +71,10 @@ const navItems: NavItem[] = [
   { labelKey: 'nav.myLedger', path: '/my-ledger', icon: BookOpen, roles: ['member'] },
   { labelKey: 'nav.settings', path: '/settings', icon: Settings, roles: ['main_user', 'member'] },
   { labelKey: 'nav.themeStudio', path: '/theme-studio', icon: Palette, roles: ['super_admin', 'main_user'] },
-  { labelKey: 'nav.faqHelp', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
-  { labelKey: 'nav.howToWork', path: '/help', icon: BookOpen, roles: ['super_admin', 'main_user', 'member'] },
-  { labelKey: 'nav.userManual', path: '/user-manual', icon: BookOpen, roles: ['super_admin', 'main_user', 'member'] },
-  { labelKey: 'nav.apiDocs', path: '/api-docs', icon: FileText, roles: ['super_admin', 'main_user'] },
+  // { labelKey: 'nav.faqHelp', path: '/faq', icon: HelpCircle, roles: ['super_admin', 'main_user', 'member'] },
+  // { labelKey: 'nav.howToWork', path: '/help', icon: BookOpen, roles: ['super_admin', 'main_user', 'member'] },
+  // { labelKey: 'nav.userManual', path: '/user-manual', icon: BookOpen, roles: ['super_admin', 'main_user', 'member'] },
+  // { labelKey: 'nav.apiDocs', path: '/api-docs', icon: FileText, roles: ['super_admin', 'main_user'] },
 ];
 
 export default function DashboardLayout() {
@@ -82,12 +83,18 @@ export default function DashboardLayout() {
   const location = useLocation();
   const { t } = useTranslation();
   const { company } = useCompanyStore();
+
+  // console.log('Current company', company);
+  
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
   const [aboutOpen, setAboutOpen] = useState(false);
 
-  const pendingApprovals = useApprovalsStore((s) => s.items.filter(i => i.status === 'pending').length);
+  const pendingApprovals = useApprovalsStore(
+    (s) => s.items.filter(i => i.status === 'pending').length
+  );
+
   const { has } = usePermissions();
 
   const filteredNav = navItems
@@ -208,7 +215,7 @@ export default function DashboardLayout() {
         </div>
 
         {/* Branding Section */}
-        <div className="border-t border-sidebar-border bg-sidebar-accent/30">
+        {/* <div className="border-t border-sidebar-border bg-sidebar-accent/30">
           {sidebarOpen ? (
             <div className="px-3 py-3 space-y-1.5">
               <div className="flex items-center gap-1.5">
@@ -284,7 +291,7 @@ export default function DashboardLayout() {
               </a>
             </div>
           )}
-        </div>
+        </div> */}
       </aside>
 
       {/* Main Content */}
@@ -314,10 +321,10 @@ export default function DashboardLayout() {
             <Button variant="ghost" size="icon" onClick={toggleDark}>
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="icon" className="relative">
+            {/* <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-4 w-4" />
               <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-destructive rounded-full text-[8px] text-destructive-foreground flex items-center justify-center">3</span>
-            </Button>
+            </Button> */}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

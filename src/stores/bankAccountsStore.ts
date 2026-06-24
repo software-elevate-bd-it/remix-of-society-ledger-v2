@@ -1,13 +1,23 @@
 import { create } from 'zustand';
 import { apiClient, type BankAccount } from '@/lib/api';
 
+interface LoadingState {
+  accounts: boolean;
+  deposit: boolean;
+  withdraw: boolean;
+  transfer: boolean;
+  create: boolean;
+  update: boolean;
+  delete: boolean;
+}
+
 interface BankAccountsState {
   accounts: BankAccount[];
-  isLoading: boolean;
+  loading: LoadingState;
   error: string | null;
 
-  // Actions
   loadAccounts: () => Promise<void>;
+
   createAccount: (accountData: {
     bankName: string;
     accountName: string;
@@ -15,149 +25,268 @@ interface BankAccountsState {
     openingBalance: number;
   }) => Promise<BankAccount>;
 
-  updateAccount: (id: string, accountData: Partial<BankAccount>) => Promise<void>;
+  updateAccount: (
+    id: string,
+    accountData: Partial<BankAccount>
+  ) => Promise<void>;
+
   deleteAccount: (id: string) => Promise<void>;
-  deposit: (id: string, depositData: {
-    amount: number;
-    date: string;
-    note?: string;
-    reference?: string;
-  }) => Promise<void>;
 
-  withdraw: (id: string, withdrawData: {
-    amount: number;
-    date: string;
-    note?: string;
-  }) => Promise<void>;
+  deposit: (
+    id: string,
+    depositData: {
+      amount: number;
+      date: string;
+      note?: string;
+      reference?: string;
+    }
+  ) => Promise<void>;
 
-  transfer: (fromId: string, transferData: {
-    toAccountId: string;
-    amount: number;
-    date: string;
-    note?: string;
-  }) => Promise<void>;
+  withdraw: (
+    id: string,
+    withdrawData: {
+      amount: number;
+      date: string;
+      note?: string;
+    }
+  ) => Promise<void>;
 
-  getTransactions: (id: string, params?: {
-    page?: number;
-    limit?: number;
-    type?: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }) => Promise<any>;
+  transfer: (
+    fromId: string,
+    transferData: {
+      toAccountId: string;
+      amount: number;
+      date: string;
+      note?: string;
+    }
+  ) => Promise<void>;
+
+  getTransactions: (
+    id: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      type?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ) => Promise<any>;
 }
 
-export const useBankAccountsStore = create<BankAccountsState>((set, get) => ({
-  accounts: [],
-  isLoading: false,
-  error: null,
+const initialLoading: LoadingState = {
+  accounts: false,
+  deposit: false,
+  withdraw: false,
+  transfer: false,
+  create: false,
+  update: false,
+  delete: false,
+};
 
-  loadAccounts: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await apiClient.getBankAccounts();
-      set({ accounts: response.data, isLoading: false });
-    } catch (error) {
-      console.error('Failed to load bank accounts:', error);
-      set({ error: 'Failed to load bank accounts', isLoading: false });
-    }
-  },
+export const useBankAccountsStore = create<BankAccountsState>(
+  (set, get) => ({
+    accounts: [],
+    loading: initialLoading,
+    error: null,
 
-  createAccount: async (accountData) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await apiClient.createBankAccount(accountData);
-      const newAccount = response.data;
+    // =========================
+    // LOAD ACCOUNTS
+    // =========================
+    loadAccounts: async () => {
       set((state) => ({
-        accounts: [...state.accounts, newAccount],
-        isLoading: false,
+        loading: { ...state.loading, accounts: true },
+        error: null,
       }));
-      return newAccount;
-    } catch (error) {
-      console.error('Failed to create bank account:', error);
-      set({ error: 'Failed to create bank account', isLoading: false });
-      throw error;
-    }
-  },
 
-  updateAccount: async (id, accountData) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await apiClient.updateBankAccount(id, accountData);
-      const updatedAccount = response.data;
+      try {
+        const res = await apiClient.getBankAccounts();
+
+        console.log('Load accounts response from store:', res);
+      
+        const accounts = res?.data?.data ?? [];
+
+        set((state) => ({
+          accounts,
+          loading: { ...state.loading, accounts: false },
+        }));
+      } catch (err) {
+        set((state) => ({
+          error: 'Failed to load bank accounts',
+          loading: { ...state.loading, accounts: false },
+        }));
+      }
+    },
+
+    // =========================
+    // CREATE
+    // =========================
+    createAccount: async (accountData) => {
       set((state) => ({
-        accounts: state.accounts.map((a) => (a.id === id ? updatedAccount : a)),
-        isLoading: false,
+        loading: { ...state.loading, create: true },
+        error: null,
       }));
-    } catch (error) {
-      console.error('Failed to update bank account:', error);
-      set({ error: 'Failed to update bank account', isLoading: false });
-      throw error;
-    }
-  },
 
-  deleteAccount: async (id) => {
-    set({ isLoading: true, error: null });
-    try {
-      await apiClient.deleteBankAccount(id);
+      try {
+        const res = await apiClient.createBankAccount(accountData);
+        console.log('Create account response:', res);
+
+        const newAccount = res?.data;
+
+        if (!newAccount) throw new Error('Invalid response');
+
+        set((state) => ({
+          accounts: [...state.accounts, newAccount],
+          loading: { ...state.loading, create: false },
+        }));
+
+        return newAccount;
+      } catch (err) {
+        set((state) => ({
+          error: 'Failed to create account',
+          loading: { ...state.loading, create: false },
+        }));
+        throw err;
+      }
+    },
+
+    // =========================
+    // UPDATE
+    // =========================
+    updateAccount: async (id, accountData) => {
       set((state) => ({
-        accounts: state.accounts.filter((a) => a.id !== id),
-        isLoading: false,
+        loading: { ...state.loading, update: true },
+        error: null,
       }));
-    } catch (error) {
-      console.error('Failed to delete bank account:', error);
-      set({ error: 'Failed to delete bank account', isLoading: false });
-      throw error;
-    }
-  },
 
-  deposit: async (id, depositData) => {
-    set({ isLoading: true, error: null });
-    try {
-      await apiClient.depositToBank(id, depositData);
-      // Reload accounts to get updated balances
-      await get().loadAccounts();
-      set({ isLoading: false });
-    } catch (error) {
-      console.error('Failed to deposit to bank:', error);
-      set({ error: 'Failed to deposit to bank', isLoading: false });
-      throw error;
-    }
-  },
+      try {
+        const res = await apiClient.updateBankAccount(id, accountData);
+        const updated = res?.data?.data;
 
-  withdraw: async (id, withdrawData) => {
-    set({ isLoading: true, error: null });
-    try {
-      await apiClient.withdrawFromBank(id, withdrawData);
-      // Reload accounts to get updated balances
-      await get().loadAccounts();
-      set({ isLoading: false });
-    } catch (error) {
-      console.error('Failed to withdraw from bank:', error);
-      set({ error: 'Failed to withdraw from bank', isLoading: false });
-      throw error;
-    }
-  },
+        if (!updated) throw new Error('Invalid response');
 
-  transfer: async (fromId, transferData) => {
-    set({ isLoading: true, error: null });
-    try {
-      await apiClient.transferBetweenBanks(fromId, transferData);
-      // Reload accounts to get updated balances
-      await get().loadAccounts();
-      set({ isLoading: false });
-    } catch (error) {
-      console.error('Failed to transfer between banks:', error);
-      set({ error: 'Failed to transfer between banks', isLoading: false });
-      throw error;
-    }
-  },
+        set((state) => ({
+          accounts: state.accounts.map((a) =>
+            a.id === id ? updated : a
+          ),
+          loading: { ...state.loading, update: false },
+        }));
+      } catch (err) {
+        set((state) => ({
+          error: 'Failed to update account',
+          loading: { ...state.loading, update: false },
+        }));
+        throw err;
+      }
+    },
 
-  getTransactions: async (id, params) => {
-    try {
-      return await apiClient.getBankTransactions(id, params);
-    } catch (error) {
-      console.error('Failed to get bank transactions:', error);
-      throw error;
-    }
-  },
-}));
+    // =========================
+    // DELETE
+    // =========================
+    deleteAccount: async (id) => {
+      set((state) => ({
+        loading: { ...state.loading, delete: true },
+        error: null,
+      }));
+
+      try {
+        await apiClient.deleteBankAccount(id);
+
+        set((state) => ({
+          accounts: state.accounts.filter((a) => a.id !== id),
+          loading: { ...state.loading, delete: false },
+        }));
+      } catch (err) {
+        set((state) => ({
+          error: 'Failed to delete account',
+          loading: { ...state.loading, delete: false },
+        }));
+        throw err;
+      }
+    },
+
+    // =========================
+    // DEPOSIT
+    // =========================
+    deposit: async (id, depositData) => {
+      set((state) => ({
+        loading: { ...state.loading, deposit: true },
+        error: null,
+      }));
+
+      try {
+        await apiClient.depositToBank(id, depositData);
+        await get().loadAccounts();
+      } catch (err) {
+        set((state) => ({
+          error: 'Failed to deposit',
+        }));
+        throw err;
+      } finally {
+        set((state) => ({
+          loading: { ...state.loading, deposit: false },
+        }));
+      }
+    },
+
+    // =========================
+    // WITHDRAW
+    // =========================
+    withdraw: async (id, withdrawData) => {
+      set((state) => ({
+        loading: { ...state.loading, withdraw: true },
+        error: null,
+      }));
+
+      try {
+        await apiClient.withdrawFromBank(id, withdrawData);
+        await get().loadAccounts();
+      } catch (err) {
+        set((state) => ({
+          error: 'Failed to withdraw',
+        }));
+        throw err;
+      } finally {
+        set((state) => ({
+          loading: { ...state.loading, withdraw: false },
+        }));
+      }
+    },
+
+    // =========================
+    // TRANSFER
+    // =========================
+    transfer: async (fromId, transferData) => {
+      set((state) => ({
+        loading: { ...state.loading, transfer: true },
+        error: null,
+      }));
+
+      try {
+        await apiClient.transferBetweenBanks(fromId, transferData);
+        await get().loadAccounts();
+      } catch (err) {
+        set((state) => ({
+          error: 'Failed to transfer',
+        }));
+        throw err;
+      } finally {
+        set((state) => ({
+          loading: { ...state.loading, transfer: false },
+        }));
+      }
+    },
+
+    // =========================
+    // TRANSACTIONS
+    // =========================
+    getTransactions: async (id, params) => {
+      try {
+        const res = await apiClient.getBankTransactions(id, params);
+        return res?.data?.data ?? [];
+      } catch (err) {
+        console.error('Failed to get transactions:', err);
+        throw err;
+      }
+    },
+  })
+);

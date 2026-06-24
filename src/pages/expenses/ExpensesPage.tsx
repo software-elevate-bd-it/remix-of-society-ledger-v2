@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import { useExpensesStore } from '@/stores/expensesStore';
 import { useApprovalsStore } from '@/stores/approvalsStore';
 import { useAuthStore } from '@/stores/authStore';
-import type { Expense } from '@/lib/api';
+import { apiClient, type Expense } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,23 +13,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Receipt, Clock } from 'lucide-react';
+import { Plus, UserPlus, Loader, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PermissionGuard } from '@/components/shared/PermissionGuard';
+import { resolve } from 'path';
+
 
 const columns: Column<Expense>[] = [
   { key: 'category', label: 'Category', sortable: true },
-  { key: 'amount', label: 'Amount', render: (t) => `৳${t.amount.toLocaleString()}`, sortable: true },
-  { key: 'method', label: 'Method', render: (t) => <span className="capitalize">{t.method}</span> },
+  { key: 'amount', label: 'Amount', render: (t) => `৳${t.amount ? t.amount.toLocaleString() : '0'}`, sortable: true },
+  { key: 'method', label: 'Method', render: (t) => <span className="capitalize">{t.method || 'N/A'}</span> },
   { key: 'note', label: 'Note' },
-  { key: 'date', label: 'Date', sortable: true },
-  { key: 'status', label: 'Status', render: (t) => <Badge variant={t.status === 'approved' ? 'default' : t.status === 'pending' ? 'secondary' : 'destructive'}>{t.status}</Badge> },
+  { key: 'date', label: 'Date', sortable: true,  render: (row) => 
+      row.date ? new Date(row.date).toISOString().split('T')[0]:'Not Set'},
+  { key: 'status', label: 'Status', render: (t) => <Badge variant={t.status === 'approved' ? 'default' : t.status === 'pending' ? 'secondary' : 'destructive'}>{t.status || 'pending'}</Badge> },
 ];
 
 export default function ExpensesPage() {
-  const { expenses, isLoading, loadExpenses, createExpense, loadCategories, categories } = useExpensesStore();
-  const [expenseCategories, setExpenseCategories] = useState<string[]>([]);
+  const { t } = useTranslation();
+  const expenses = useExpensesStore((s) => s.expenses) || [];
+  const loadExpenses = useExpensesStore((s) => s.loadExpenses);
+  const loadCategories = useExpensesStore((s) => s.loadCategories);
+  const categories = useExpensesStore((s) => s.categories);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -37,44 +46,82 @@ export default function ExpensesPage() {
   }, [loadExpenses, loadCategories]);
   const [form, setForm] = useState({ category: '', amount: '', date: new Date().toISOString().split('T')[0], note: '', method: 'cash' });
   const submit = useApprovalsStore((s) => s.submit);
-  const pendingExpenses = useApprovalsStore((s) => s.items.filter(i => i.type === 'expense'));
+  const items = useApprovalsStore((s) => s.items);
+  const pendingExpenses = useMemo(
+  () => items.filter(i => i.type === 'expense'),
+  [items]
+);
+
+
   const user = useAuthStore((s) => s.user);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.category || !form.amount || !user) return toast.error('Fill required fields');
-    submit({
-      type: 'expense',
-      title: form.category,
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!form.category || !form.amount || !user)
+    return toast.error('Fill required fields');
+
+  try {
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    await apiClient.createExpense({
       amount: Number(form.amount),
-      description: form.note || `${form.method} expense on ${form.date}`,
-      payload: { ...form, amount: Number(form.amount) },
-      createdBy: user.id,
-      createdByName: user.name,
+      date: form.date,
+      category: form.category,
+      method: form.method,
+      receiptUrl: "", 
+      note: form.note,
+      status: 'pending',
     });
-    toast.success('Expense submitted for approval', { description: 'Approver will review it shortly.' });
-    setForm({ category: '', amount: '', date: new Date().toISOString().split('T')[0], note: '', method: 'cash' });
+
+    toast.success('Expense submitted successfully');
+
+    setForm({
+      category: '',
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      note: '',
+      method: 'cash',
+    });
+
     setOpen(false);
-  };
+
+    // refresh list
+    loadExpenses();
+
+  } catch (err) {
+    toast.error('Failed to create expense');
+  }
+};
+
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-heading font-bold">Expenses</h1><p className="text-muted-foreground">All expenses require approval before being recorded</p></div>
         <Dialog open={open} onOpenChange={setOpen}>
+          <PermissionGuard permission="expense.create" message="You don't have permission to create expenses">
           <DialogTrigger asChild>
-            <PermissionGuard permission="expense.create" message="You don't have permission to create expenses">
-              <Button><Plus className="h-4 w-4 mr-2" /> Add Expense</Button>
-            </PermissionGuard>
+            <Button><Plus className="h-4 w-4 mr-2" /> Add Expense</Button>
           </DialogTrigger>
+          </PermissionGuard>
           <DialogContent>
             <DialogHeader><DialogTitle className="font-heading">Record Expense</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1"><Label>Category *</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent>{expenseCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                </Select>
+              <div className="space-y-1">
+                <Label>Title *</Label>
+                <Input
+                  placeholder='Enter Title'
+                  value={form.category}
+                  onChange={
+                    (e) =>
+                      setForm({
+                        ...form,
+                        category: e.target.value,
+                      })
+                  }
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label>Amount *</Label><Input type="number" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
@@ -92,7 +139,23 @@ export default function ExpensesPage() {
                 </Select>
               </div>
               <div className="space-y-1"><Label>Note</Label><Textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Description..." /></div>
-              <Button type="submit" className="w-full"><Clock className="h-4 w-4 mr-2" /> Submit for Approval</Button>
+              <Button
+  type="submit"
+  className="w-full"
+  disabled={isLoading}
+>
+  {isLoading ? (
+    <>
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      Adding...
+    </>
+  ) : (
+    <>
+      <UserPlus className="h-4 w-4 mr-2" />
+      Add Expense
+    </>
+  )}
+</Button>
             </form>
           </DialogContent>
         </Dialog>

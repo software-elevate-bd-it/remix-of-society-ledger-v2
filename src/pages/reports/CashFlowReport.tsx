@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,28 +6,77 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import HelpModal from '@/components/shared/HelpModal';
-import { transactions, Transaction } from '@/data/dummyData';
 import { Download, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiClient } from '@/lib/api';
+
+interface CashFlowTransaction {
+  id: string;
+  date: string;
+  memberName: string;
+  type: 'collection' | 'expense';
+  category: string;
+  amount: number;
+  method: string;
+  status: string;
+}
 
 export default function CashFlowReport() {
   const { t } = useTranslation();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [transactions, setTransactions] = useState<CashFlowTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalInflow, setTotalInFlow] = useState('');
+  const [totalOutflow, setTotalOutflow] = useState('');
+  const [netCashFlow, setNetCashFlow] = useState('');
 
-  const totalIn = transactions.filter(tx => tx.type === 'collection' && tx.status === 'approved').reduce((s, tx) => s + tx.amount, 0);
-  const totalOut = transactions.filter(tx => tx.type === 'expense' && tx.status === 'approved').reduce((s, tx) => s + tx.amount, 0);
+
+  useEffect(() => {
+    loadReport();
+  }, [dateFrom, dateTo]);
+
+  const loadReport = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiClient.getCashFlowReport({
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      });
+      console.log('Cash Flow Report:', response);
+      setTotalInFlow(response.data.totalInflow)
+      setTotalOutflow(response.data.totalOutflow);
+      setNetCashFlow(response.data.netCashFlow);
+      // Extract the breakdown or transactions from response
+      // =========== need customize ===================
+      let transactionsData = [];
+      if (response.data?.breakdown && Array.isArray(response.data.breakdown)) {
+        transactionsData = response.data.breakdown;
+      } else if (Array.isArray(response.data?.data?.breakdown)) {
+        transactionsData = response.data.data.breakdown;
+      } else if (Array.isArray(response.data)) {
+        transactionsData = response.data;
+      }
+      console.log('Extracted transactions:', transactionsData);
+      setTransactions(transactionsData);
+      // ===== cutomize korte hba ============
+    } catch (error) {
+      console.error('Failed to load report:', error);
+      toast.error('Failed to load report');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   let filtered = [...transactions];
-  if (dateFrom) filtered = filtered.filter(tx => tx.date >= dateFrom);
-  if (dateTo) filtered = filtered.filter(tx => tx.date <= dateTo);
 
-  const columns: Column<Transaction>[] = [
+  const columns: Column<CashFlowTransaction>[] = [
     { key: 'date', label: t('common.date'), sortable: true },
     { key: 'memberName', label: t('nav.members') },
     { key: 'type', label: t('common.type') },
     { key: 'category', label: t('common.category') },
-    { key: 'amount', label: t('common.amount'), render: (tx) => `৳${tx.amount.toLocaleString()}` },
+    { key: 'amount', label: t('common.amount'), render: (tx) => `৳${tx.amount}` },
     { key: 'method', label: t('common.method') },
     { key: 'status', label: t('common.status') },
   ];
@@ -50,15 +99,15 @@ export default function CashFlowReport() {
       <div className="grid grid-cols-3 gap-4">
         <Card><CardContent className="p-4 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-green-500/10"><TrendingUp className="h-5 w-5 text-green-600" /></div>
-          <div><p className="text-xs text-muted-foreground">{t('reports.totalIncome')}</p><p className="text-xl font-heading font-bold">৳{totalIn.toLocaleString()}</p></div>
+          <div><p className="text-xs text-muted-foreground">{t('reports.totalIncome')}</p><p className="text-xl font-heading font-bold">৳{totalInflow}</p></div>
         </CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-red-500/10"><TrendingDown className="h-5 w-5 text-red-600" /></div>
-          <div><p className="text-xs text-muted-foreground">{t('reports.totalExpense')}</p><p className="text-xl font-heading font-bold">৳{totalOut.toLocaleString()}</p></div>
+          <div><p className="text-xs text-muted-foreground">{t('reports.totalExpense')}</p><p className="text-xl font-heading font-bold">৳{totalOutflow}</p></div>
         </CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-blue-500/10"><Wallet className="h-5 w-5 text-blue-600" /></div>
-          <div><p className="text-xs text-muted-foreground">{t('reports.netProfit')}</p><p className="text-xl font-heading font-bold">৳{(totalIn - totalOut).toLocaleString()}</p></div>
+          <div><p className="text-xs text-muted-foreground">{t('reports.netProfit')}</p><p className="text-xl font-heading font-bold">৳{(netCashFlow)}</p></div>
         </CardContent></Card>
       </div>
 
@@ -67,7 +116,11 @@ export default function CashFlowReport() {
           <div className="space-y-1"><Label className="text-xs">{t('dashboard.dateFrom')}</Label><Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-8 text-xs" /></div>
           <div className="space-y-1"><Label className="text-xs">{t('dashboard.dateTo')}</Label><Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-8 text-xs" /></div>
         </div>
-        <DataTable data={filtered} columns={columns} searchKey="memberName" pageSize={10} />
+        {isLoading ? (
+          <p className="text-muted-foreground text-center py-8">Loading...</p>
+        ) : (
+          <DataTable data={filtered} columns={columns} searchKey="memberName" pageSize={10} emptyMessage="No transactions found" />
+        )}
       </CardContent></Card>
     </div>
   );

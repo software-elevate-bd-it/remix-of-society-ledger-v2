@@ -53,8 +53,10 @@ export const useExpensesStore = create<ExpensesState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.getExpenses(params);
+      console.log('Expenses API response:',response);
+      const expenses = Array.isArray(response.data) ? response.data : response.data?.data || [];
       set({
-        expenses: response.data,
+        expenses,
         pagination: response.meta || get().pagination,
         isLoading: false,
       });

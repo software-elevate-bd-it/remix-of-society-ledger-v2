@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRolesStore, ALL_PERMISSIONS, Permission, Role } from '@/stores/rolesStore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,21 @@ import { toast } from 'sonner';
 const PERM_GROUPS = Array.from(new Set(ALL_PERMISSIONS.map((p) => p.group)));
 
 export default function RolesPage() {
-  const { roles, assignments, addRole, updateRole, deleteRole, assignRole, unassignRole } = useRolesStore();
+  const roles = useRolesStore((s) => s.roles);
+  const assignmentsData = useRolesStore((s) => s.assignments);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [open, setOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', permissions: [] as Permission[] });
   const [assignForm, setAssignForm] = useState({ userId: '', userName: '', roleId: '' });
+
+  // Load assignments on mount
+  useEffect(() => {
+    useRolesStore.getState().loadAssignments();
+  }, []);
+
+  // Ensure assignments is always an array
+  const assignmentsArray = Array.isArray(assignmentsData) ? assignmentsData : [];
 
   const openNew = () => {
     setEditingRole(null);
@@ -46,10 +55,10 @@ export default function RolesPage() {
     if (!form.name.trim()) return toast.error('Role name is required');
     if (form.permissions.length === 0) return toast.error('Select at least one permission');
     if (editingRole) {
-      updateRole(editingRole.id, { name: form.name, description: form.description, permissions: form.permissions });
+      useRolesStore.getState().updateRole(editingRole.id, { name: form.name, description: form.description, permissions: form.permissions });
       toast.success('Role updated');
     } else {
-      addRole({ name: form.name, description: form.description, permissions: form.permissions });
+      useRolesStore.getState().addRole({ name: form.name, description: form.description, permissions: form.permissions });
       toast.success('Role created');
     }
     setOpen(false);
@@ -59,7 +68,7 @@ export default function RolesPage() {
     if (!assignForm.userId || !assignForm.userName || !assignForm.roleId) {
       return toast.error('All fields required');
     }
-    assignRole(assignForm.userId, assignForm.userName, assignForm.roleId);
+    useRolesStore.getState().assignRole(assignForm.userId, assignForm.userName, assignForm.roleId);
     toast.success('Role assigned');
     setAssignForm({ userId: '', userName: '', roleId: '' });
     setAssignOpen(false);
@@ -104,7 +113,7 @@ export default function RolesPage() {
       <Tabs defaultValue="roles">
         <TabsList>
           <TabsTrigger value="roles">Roles ({roles.length})</TabsTrigger>
-          <TabsTrigger value="assignments">Assignments ({assignments.length})</TabsTrigger>
+          <TabsTrigger value="assignments">Assignments ({assignmentsArray.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="roles" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
@@ -124,7 +133,7 @@ export default function RolesPage() {
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     {!role.isPreset && (
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => { deleteRole(role.id); toast.success('Role deleted'); }}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => { useRolesStore.getState().deleteRole(role.id); toast.success('Role deleted'); }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     )}
@@ -146,11 +155,11 @@ export default function RolesPage() {
         <TabsContent value="assignments" className="mt-4">
           <Card>
             <CardContent className="pt-6">
-              {assignments.length === 0 ? (
+              {assignmentsArray.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No role assignments yet</p>
               ) : (
                 <div className="space-y-2">
-                  {assignments.map((a) => {
+                  {assignmentsArray.map((a) => {
                     const role = roles.find((r) => r.id === a.roleId);
                     return (
                       <div key={`${a.userId}-${a.roleId}`} className="flex items-center justify-between p-3 border rounded-md">
@@ -158,7 +167,7 @@ export default function RolesPage() {
                           <p className="font-medium text-sm">{a.userName}</p>
                           <p className="text-xs text-muted-foreground">{a.userId} • {role?.name ?? 'Unknown role'}</p>
                         </div>
-                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => unassignRole(a.userId, a.roleId)}>
+                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => useRolesStore.getState().unassignRole(a.userId, a.roleId)}>
                           <X className="h-4 w-4" />
                         </Button>
                       </div>

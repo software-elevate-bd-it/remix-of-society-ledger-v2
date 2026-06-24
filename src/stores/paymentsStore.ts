@@ -38,13 +38,20 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.getPayments(params);
+      console.log('Payments response:', response);
+      // Handle both response.data as array and as object with data property
+      const paymentsData = Array.isArray(response.data) 
+        ? response.data 
+        : Array.isArray(response.data?.data)
+        ? response.data.data
+        : [];
       set({
-        payments: response.data,
+        payments: paymentsData,
         pagination: response.meta || {
           page: params?.page || 1,
           limit: params?.limit || 10,
-          total: response.data.length,
-          totalPages: Math.ceil((response.data.length) / (params?.limit || 10)),
+          total: paymentsData.length,
+          totalPages: Math.ceil(paymentsData.length / (params?.limit || 10)),
         },
         isLoading: false,
       });

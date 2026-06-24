@@ -3,13 +3,14 @@ import { persist } from 'zustand/middleware';
 import { useUsersStore } from './usersStore';
 import { useRolesStore } from './rolesStore';
 import { apiClient, type User } from '@/lib/api';
-import { findDemoUser } from '@/data/demoUsers';
+
 
 export type UserRole = 'super_admin' | 'main_user' | 'member';
 
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken?: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
@@ -24,57 +25,19 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
       login: async (email, password) => {
         set({ isLoading: true });
 
-        // 1) Try demo users first (offline / no-backend mode)
-        const demo = findDemoUser(email, password);
-        if (demo) {
-          const token = `demo-token-${demo.user.id}`;
-          apiClient.setToken(token);
-          set({
-            user: { ...demo.user, someiteeName: demo.user.somiteeName } as User,
-            token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return true;
-        }
-
-        // 2) Try managed sub-users created via UsersPage
-        const managed = useUsersStore.getState().findByEmail(email);
-        if (managed && managed.password === password) {
-          if (managed.status !== 'active') {
-            set({ isLoading: false });
-            return false;
-          }
-          const token = `managed-token-${managed.id}`;
-          apiClient.setToken(token);
-          set({
-            user: {
-              id: managed.id,
-              name: managed.name,
-              email: managed.email,
-              role: managed.role,
-              somiteeId: managed.somiteeId,
-              somiteeName: managed.someiteeName,
-              someiteeName: managed.someiteeName,
-              roleIds: managed.roleIds,
-              profilePhoto: null,
-            } as User,
-            token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return true;
-        }
-
         // 3) Fallback to real API
         try {
           const response = await apiClient.login({ email, password });
-          const { user, token } = response.data;
+
+          const { user, token, refreshToken } = response.data;
+          console.log('Token after login:',token);
+          console.log('Refresh token after login:', refreshToken);
 
           // Set token for future API calls
           apiClient.setToken(token);
@@ -82,6 +45,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             token,
+            refreshToken,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -122,12 +86,20 @@ export const useAuthStore = create<AuthState>()(
       },
       logout: () => {
         apiClient.setToken(null);
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ 
+          user: null, 
+          token: null, 
+          refreshToken: null,
+          isAuthenticated: false 
+        });
       },
       switchRole: (role) => set((state) => state.user ? { user: { ...state.user, role } } : {}),
       setToken: (token) => {
         apiClient.setToken(token);
-        set({ token });
+        set(state =>({
+          token,
+          refreshToken: state.refreshToken,
+        }));
       },
     }),
     {
@@ -135,6 +107,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

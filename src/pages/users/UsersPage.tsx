@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUsersStore, ManagedUser } from '@/stores/usersStore';
 import { useRolesStore, ALL_PERMISSIONS } from '@/stores/rolesStore';
 import { useAuthStore, UserRole } from '@/stores/authStore';
@@ -44,6 +44,14 @@ export default function UsersPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [form, setForm] = useState<FormState>(blank(currentUser?.somiteeId));
   const [search, setSearch] = useState('');
+
+  // Load roles once on mount
+  useEffect(() => {
+    useRolesStore.getState().loadRoles();
+  }, []);
+
+  // Ensure roles is always an array
+  const rolesArray = Array.isArray(roles) ? roles : [];
 
   const openNew = () => {
     setEditing(null);
@@ -110,11 +118,11 @@ export default function UsersPage() {
   );
 
   const getRoleNames = (ids: string[]) =>
-    ids.map((id) => roles.find((r) => r.id === id)?.name ?? '?').join(', ');
+    ids.map((id) => rolesArray.find((r) => r.id === id)?.name ?? '?').join(', ');
 
   const getEffectivePerms = (ids: string[]) => {
     const set = new Set<string>();
-    ids.forEach((rid) => roles.find((r) => r.id === rid)?.permissions.forEach((p) => set.add(p)));
+    ids.forEach((rid) => rolesArray.find((r) => r.id === rid)?.permissions.forEach((p) => set.add(p)));
     return set.size;
   };
 
@@ -162,7 +170,7 @@ export default function UsersPage() {
                       <Badge variant="outline" className="text-[10px] text-destructive">No role</Badge>
                     ) : (
                       u.roleIds.map((rid) => {
-                        const role = roles.find((r) => r.id === rid);
+                        const role = rolesArray.find((r) => r.id === rid);
                         return <Badge key={rid} variant="outline" className="text-[10px]">{role?.name ?? '?'}</Badge>;
                       })
                     )}
@@ -234,7 +242,7 @@ export default function UsersPage() {
             <div>
               <Label className="mb-2 block">Assign Roles * <span className="text-xs text-muted-foreground font-normal">(controls what this user can do)</span></Label>
               <div className="border rounded-md p-3 space-y-2 max-h-64 overflow-y-auto">
-                {roles.map((role) => (
+                {rolesArray.map((role) => (
                   <label key={role.id} className="flex items-start gap-3 p-2 rounded hover:bg-accent cursor-pointer">
                     <Checkbox checked={form.roleIds.includes(role.id)} onCheckedChange={() => toggleRole(role.id)} className="mt-0.5" />
                     <div className="flex-1">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import leader5 from '@/assets/leader-5.jpg';
 import { useTranslation } from 'react-i18next';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import { useMemberRequestsStore } from '@/stores/memberRequestsStore';
@@ -18,6 +19,8 @@ import StatsCard from '@/components/shared/StatsCard';
 export default function MemberRequestsPage() {
   const { t } = useTranslation();
   const { requests, isLoading, loadMemberRequests, approveMemberRequest, rejectMemberRequest } = useMemberRequestsStore();
+  console.log('member requests', requests);
+  
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
   const [rejectNote, setRejectNote] = useState('');
@@ -52,7 +55,7 @@ export default function MemberRequestsPage() {
     
     try {
       await approveMemberRequest(selectedRequest.id, parseFloat(monthlyFee), billingCycle);
-      toast.success(t('memberRequests.approved', { name: selectedRequest.name }));
+      toast.success(t('memberRequests.approved', { name: selectedRequest.nameEn }));
       setApproveDialogOpen(false);
       setViewDialogOpen(false);
       setSelectedRequest(null);
@@ -69,7 +72,7 @@ export default function MemberRequestsPage() {
     
     try {
       await rejectMemberRequest(selectedRequest.id, rejectNote);
-      toast.success(t('memberRequests.rejected', { name: selectedRequest.name }));
+      toast.success(t('memberRequests.rejected', { name: selectedRequest.nameEn }));
       setRejectDialogOpen(false);
       setViewDialogOpen(false);
       setSelectedRequest(null);
@@ -80,7 +83,9 @@ export default function MemberRequestsPage() {
   };
 
   const columns: Column<MemberRequest>[] = [
-    { key: 'name', label: t('common.name'), sortable: true },
+    // =========================================================
+    { key: 'nameEn', label: t('common.name'), sortable: true },
+    // =========================================================
     { key: 'shopName', label: t('members.shopName') },
     { key: 'phone', label: t('common.phone') },
     { key: 'appliedAt', label: t('memberRequests.appliedDate'), sortable: true },
@@ -91,7 +96,11 @@ export default function MemberRequestsPage() {
     )},
     { key: 'id', label: t('common.actions'), render: (r) => (
       <div className="flex gap-1">
-        <Button size="sm" variant="ghost" onClick={() => { setSelectedRequest(r); setViewDialogOpen(true); }}>
+        <Button size="sm" variant="ghost" onClick={() => {
+          console.log('viewing request',r);
+           setSelectedRequest(r); 
+           setViewDialogOpen(true); 
+           }}>
           <Eye className="h-3.5 w-3.5" />
         </Button>
         {r.status === 'pending' && (
@@ -132,44 +141,187 @@ export default function MemberRequestsPage() {
           </SelectContent>
         </Select>
       </div>
-
+{/* ======================== */}
       <Card>
         <CardContent className="pt-6">
-          <DataTable data={filtered} columns={columns} searchKey="name" pageSize={10} />
+          <DataTable data={filtered} columns={columns} searchKey="nameEn" pageSize={10} />
         </CardContent>
       </Card>
+      {/* ================== */}
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent>
+        <DialogContent className='sm:max-w-2xl'>
           <DialogHeader><DialogTitle className="font-heading">{t('memberRequests.viewRequest')}</DialogTitle></DialogHeader>
           {selectedRequest && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">{t('common.name')}:</span> <strong>{selectedRequest.name}</strong></div>
-                <div><span className="text-muted-foreground">{t('members.shopName')}:</span> <strong>{selectedRequest.shopName || '-'}</strong></div>
-                <div><span className="text-muted-foreground">{t('common.phone')}:</span> <strong>{selectedRequest.phone}</strong></div>
-                <div><span className="text-muted-foreground">{t('common.address')}:</span> <strong>{selectedRequest.address || '-'}</strong></div>
-                {selectedRequest.nid && <div><span className="text-muted-foreground">{t('members.nid')}:</span> <strong>{selectedRequest.nid}</strong></div>}
-                <div><span className="text-muted-foreground">{t('common.status')}:</span> <Badge variant={selectedRequest.status === 'approved' ? 'default' : selectedRequest.status === 'pending' ? 'secondary' : 'destructive'}>{t(`common.${selectedRequest.status}`)}</Badge></div>
-              </div>
-              {selectedRequest.rejectionNote && (
-                <div className="p-3 bg-destructive/10 rounded text-sm">
-                  <strong>{t('memberRequests.rejectionNote')}:</strong> {selectedRequest.rejectionNote}
-                </div>
-              )}
-              {selectedRequest.status === 'pending' && (
-                <div className="flex gap-2 pt-2">
-                  <Button className="flex-1" onClick={() => setApproveDialogOpen(true)} disabled={isLoading}>
-                    <CheckCircle className="h-4 w-4 mr-2" /> {t('memberRequests.approve')}
-                  </Button>
-                  <Button variant="destructive" className="flex-1" onClick={() => setRejectDialogOpen(true)} disabled={isLoading}>
-                    <XCircle className="h-4 w-4 mr-2" /> {t('memberRequests.reject')}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+  <div className="space-y-6 max-h-[80vh] overflow-y-auto">
+
+    {/* Profile Image */}
+    <div className="flex justify-center">
+      <img
+        src={selectedRequest.photo && selectedRequest.photo.trim() !== '' ? selectedRequest.photo.startsWith('http') ? selectedRequest.photo : `http://localhost:5000${selectedRequest.photo}` : leader5}
+        alt="Profile"
+        className="w-28 h-28 rounded-full border object-cover"
+        onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = leader5; }}
+      />
+    </div>
+
+    {/* Basic Information */}
+    <div>
+      <h2 className="font-bold text-lg mb-3">Basic Information</h2>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+
+        <div>
+          <span className="text-muted-foreground">Name (EN): </span>
+          <strong>{selectedRequest.nameEn || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Name (BN): </span>
+          <strong>{selectedRequest.nameBn || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Phone: </span>
+          <strong>{selectedRequest.phone || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">NID: </span>
+          <strong>{selectedRequest.nid || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Blood Group: </span>
+          <strong>{selectedRequest.bloodGroup || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Religion: </span>
+          <strong>{selectedRequest.religion || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Nationality: </span>
+          <strong>{selectedRequest.nationality || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Date of Birth: </span>
+          <strong>
+            {selectedRequest?.dob ?
+              new Date(selectedRequest.dob).toISOString().split('T')[0]:'N/A'
+            }
+            </strong>
+        </div>
+
+      </div>
+    </div>
+
+    {/* Family Information */}
+    <div>
+      <h2 className="font-bold text-lg mb-3">Family Information</h2>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+
+        <div>
+          <span className="text-muted-foreground">Father Name: </span>
+          <strong>{selectedRequest.fatherName}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Mother Name: </span>
+          <strong>{selectedRequest.motherName}</strong>
+        </div>
+
+      </div>
+    </div>
+
+    {/* Address Information */}
+    <div>
+      <h2 className="font-bold text-lg mb-3">Address Information</h2>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+
+        <div>
+          <span className="text-muted-foreground">Village: </span>
+          <strong>{selectedRequest.village || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Union: </span>
+          <strong>{selectedRequest.union || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Upazila: </span>
+          <strong>{selectedRequest.upazila || "N/A"}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">District: </span>
+          <strong>{selectedRequest.district || "N/A"}</strong>
+        </div>
+
+      </div>
+    </div>
+
+    {/* Nominee Information */}
+    <div>
+      <h2 className="font-bold text-lg mb-3">Nominee Information</h2>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+
+        <div>
+          <span className="text-muted-foreground">Nominee Name: </span>
+          <strong>{selectedRequest.nomineeName}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Relation: </span>
+          <strong>{selectedRequest.nomineeRelation}</strong>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Nominee NID: </span>
+          <strong>{selectedRequest.nomineeNid}</strong>
+        </div>
+
+      </div>
+    </div>
+
+    {/* Images */}
+    <div>
+      <h2 className="font-bold text-lg mb-3">Documents</h2>
+
+      <div className="grid grid-cols-2 gap-4">
+
+        <div>
+          <p className="mb-2 text-sm font-medium">NID Front</p>
+
+          <img
+            src={`https://somitiapi.mbssl.com/${selectedRequest.nidFrontUrl}`}
+            alt="NID Front"
+            className="rounded border"
+          />
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-medium">NID Back</p>
+
+          <img
+            src={`https://somitiapi.mbssl.com/${selectedRequest.nidBackUrl}`}
+            alt="NID Back"
+            className="rounded border"
+          />
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+)}
         </DialogContent>
       </Dialog>
 
@@ -180,9 +332,20 @@ export default function MemberRequestsPage() {
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t('memberRequests.approveConfirm', { name: selectedRequest?.name })}</p>
             <div className="space-y-2">
+
               <Label>{t('members.monthlyFee')} *</Label>
-              <Input type="number" placeholder="500" value={monthlyFee} onChange={(e) => setMonthlyFee(e.target.value)} />
+               <select
+                value={monthlyFee}
+                onChange={(e) => setMonthlyFee(e.target.value)}
+                className="w-full border rounded-md p-2"
+              >
+                <option value="">Select Monthly Fee</option>
+                <option value="300">300</option>
+                <option value="500">500</option>
+              </select>            
             </div>
+
+
             <div className="space-y-2">
               <Label>{t('members.billingCycle')}</Label>
               <Select value={billingCycle} onValueChange={setBillingCycle}>

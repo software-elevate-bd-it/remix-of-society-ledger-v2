@@ -96,7 +96,24 @@ export const useRolesStore = create<RolesState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.getRoles();
-          set({ roles: response.data, isLoading: false });
+          // console.log('Roles API Response:', response); // Debug log
+          // console.log('Response data type:', typeof response.data, 'Is Array:', Array.isArray(response.data)); // Debug
+          // console.log('Response data keys:', Object.keys(response.data || {})); // Debug
+          
+          // Handle both array and nested response structures
+          let rolesArray = Array.isArray(response.data)
+            ? response.data
+            : Array.isArray(response.data?.roles)
+            ? response.data.roles
+            : response.data?.data && Array.isArray(response.data.data)
+            ? response.data.data
+            : [];
+          
+          // console.log('Extracted roles array:', rolesArray, 'length:', rolesArray.length); // Debug
+          
+          // Merge with preset roles (preset roles are essential)
+          const allRoles = [...PRESET_ROLES, ...rolesArray.filter((r: Role) => !r.isPreset)];
+          set({ roles: allRoles, isLoading: false });
         } catch (error) {
           console.error('Failed to load roles:', error);
           set({ error: 'Failed to load roles', isLoading: false });
@@ -187,7 +204,20 @@ export const useRolesStore = create<RolesState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.getRoleAssignments(userId ? { userId } : undefined);
-          set({ assignments: response.data, isLoading: false });
+          // console.log('Role Assignments API Response:', response); // Debug log
+          // console.log('Response data type:', typeof response.data, 'Is Array:', Array.isArray(response.data)); // Debug
+          
+          // Handle both array and nested response structures
+          let assignmentsArray = Array.isArray(response.data)
+            ? response.data
+            : Array.isArray(response.data?.assignments)
+            ? response.data.assignments
+            : response.data?.data && Array.isArray(response.data.data)
+            ? response.data.data
+            : [];
+          
+          // console.log('Extracted assignments array:', assignmentsArray, 'length:', assignmentsArray.length); // Debug
+          set({ assignments: assignmentsArray, isLoading: false });
         } catch (error) {
           console.error('Failed to load role assignments:', error);
           set({ error: 'Failed to load role assignments', isLoading: false });

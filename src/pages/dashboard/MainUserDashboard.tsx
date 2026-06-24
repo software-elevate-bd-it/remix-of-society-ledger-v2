@@ -11,10 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuthStore } from '@/stores/authStore';
-import { useCompanyStore } from '@/stores/companyStore';
 
 interface Transaction {
   id: string;
@@ -28,7 +26,6 @@ interface Transaction {
 
 export default function MainUserDashboard() {
   const user = useAuthStore((s) => s.user);
-  const { company } = useCompanyStore();
   const { t } = useTranslation();
   const { stats, isLoading, loadStats } = useDashboardStore();
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -48,22 +45,45 @@ export default function MainUserDashboard() {
     { key: 'status', label: t('common.status'), render: (tx) => (
       <Badge variant={tx.status === 'approved' ? 'default' : tx.status === 'pending' ? 'secondary' : 'destructive'}>{tx.status}</Badge>
     )},
-    { key: 'date', label: t('common.date') },
+    { key: 'date', label: t('common.date'), render: (row) => 
+      row.date ? new Date(row.date).toISOString().split('T')[0]:'Not Set' },
   ];
 
-  // Use real stats from API
-  const totalCollection = stats.monthlyIncome;
-  const totalExpense = stats.monthlyExpense;
-  const totalBank = stats.totalBankBalance;
-  const todayCollection = stats.todayCollection;
-  const pendingDue = stats.pendingDue;
+  // Use real stats from API with fallbacks
+  const totalCollection = stats?.monthlyIncome || 0;
+  const totalExpense = stats?.monthlyExpense || 0;
+  const totalBank = stats?.totalBankBalance || 0;
+  const todayCollection = stats?.todayCollection || 0;
+  const pendingDue = stats?.pendingDue || 0;
 
   // For now, use empty array for recent transactions until we implement the API
-  const filteredTx: Transaction[] = stats.recentTransactions || [];
-  if (filterStatus !== 'all') filteredTx.filter(t => t.status === filterStatus);
-  if (filterType !== 'all') filteredTx.filter(t => t.type === filterType);
-  if (dateFrom) filteredTx.filter(t => t.date >= dateFrom);
-  if (dateTo) filteredTx.filter(t => t.date <= dateTo);
+  let filteredTx: Transaction[] = stats.recentTransactions || [];
+
+ if (filterStatus !== 'all') {
+  filteredTx = filteredTx.filter(
+    t => t.status === filterStatus
+  );
+}
+
+if (filterType !== 'all') {
+  filteredTx = filteredTx.filter(
+    t => t.type === filterType
+  );
+}
+
+if (dateFrom) {
+  filteredTx = filteredTx.filter(
+    t =>
+      new Date(t.date) >= new Date(dateFrom)
+  );
+}
+
+if (dateTo) {
+  filteredTx = filteredTx.filter(
+    t =>
+      new Date(t.date) <= new Date(dateTo)
+  );
+}
 
   const quickLinks = [
     { label: t('dashboard.addMember'), icon: UserPlus, path: '/members', color: 'bg-blue-500/10 text-blue-600' },
@@ -83,11 +103,15 @@ export default function MainUserDashboard() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatsCard title={t('dashboard.totalMembers')} value={stats.totalMembers} icon={Users} change="+2 new" changeType="positive" />
-        <StatsCard title={t('dashboard.monthlyCollection')} value={`৳${totalCollection.toLocaleString()}`} icon={Wallet} change="+12%" changeType="positive" />
-        <StatsCard title={t('dashboard.totalExpense')} value={`৳${totalExpense.toLocaleString()}`} icon={Receipt} />
-        <StatsCard title={t('dashboard.todayCollection')} value={`৳${todayCollection.toLocaleString()}`} icon={TrendingUp} changeType="positive" />
-        <StatsCard title={t('dashboard.pendingDue')} value={`৳${pendingDue.toLocaleString()}`} icon={Clock} changeType="negative" />
-        <StatsCard title={t('dashboard.bankBalance')} value={`৳${totalBank.toLocaleString()}`} icon={Landmark} />
+        <StatsCard title={t('dashboard.monthlyCollection')} value={`৳${stats.monthlyCollection}`} icon={Wallet} change="+12%" changeType="positive" />
+        <StatsCard title={t('dashboard.totalExpense')} value={`৳${stats.totalExpense}`} icon={Receipt} />
+        <StatsCard title={t('dashboard.todayCollection')} value={`৳${stats.todayCollection}`} icon={TrendingUp} changeType="positive" />
+        <StatsCard title={t('dashboard.pendingDue')} value={`৳${stats.pendingDue}`} icon={Clock} changeType="negative" />
+        <StatsCard 
+        title={t('dashboard.bankBalance')} 
+        value={`৳${totalBank.toLocaleString()}`} 
+        icon={Landmark} 
+        />
       </div>
 
       <Card>

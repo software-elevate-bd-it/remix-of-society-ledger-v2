@@ -1,24 +1,39 @@
 import DataTable, { Column } from '@/components/shared/DataTable';
-import { transactions, members, Transaction } from '@/data/dummyData';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLedgerStore, type Transaction } from '@/stores/ledgerStore';
+import { useMembersStore } from '@/stores/membersStore';
 
 const allColumns: Column<Transaction>[] = [
-  { key: 'date', label: 'Date', sortable: true },
+  { key: 'date', label: 'Date', sortable: true, render: (row) =>
+    row.date ? new Date(row.date).toISOString().split('T')[0]:'Not Set'
+   },
   { key: 'memberName', label: 'Member' },
-  { key: 'type', label: 'Type', render: (t) => <Badge variant={t.type === 'collection' ? 'default' : 'secondary'}>{t.type}</Badge> },
-  { key: 'category', label: 'Category' },
-  { key: 'amount', label: 'Amount', render: (t) => `৳${t.amount.toLocaleString()}` },
-  { key: 'status', label: 'Status', render: (t) => <Badge variant={t.status === 'approved' ? 'default' : 'secondary'}>{t.status}</Badge> },
+  { key: 'type', label: 'Type', render: (t) => <Badge variant={t.type === 'collection' ? 'default' : 'secondary'}>{t.type || 'N/A'}</Badge> },
+  { key: 'category', label: 'Category', render: (t)=>`${t.referenceType}`},
+  { key: 'amount', label: 'Amount', render: (t) => `৳${t.balance}` },
+  // { key: 'status', label: 'Status', render: (t) => <Badge variant={t.status === 'approved' ? 'default' : 'secondary'}>{t.status || 'N/A'}</Badge> },
 ];
 
 export default function LedgerPage() {
   const [selectedMember, setSelectedMember] = useState<string>('all');
+  
+  const transactions = useLedgerStore((s) => s.transactions) || [];
+  const isLoading = useLedgerStore((s) => s.isLoading);
+  const loadLedger = useLedgerStore((s) => s.loadLedger);
+  
+  const members = useMembersStore((s) => s.members);
+  const loadMembers = useMembersStore((s) => s.loadMembers);
 
-  const filtered = selectedMember === 'all' ? transactions : transactions.filter(t => t.memberId === selectedMember);
+  useEffect(() => {
+    loadLedger();
+    loadMembers();
+  }, [loadLedger, loadMembers]);
+
+  const filtered = Array.isArray(transactions) ? (selectedMember === 'all' ? transactions : transactions.filter(t => t.memberId === selectedMember)) : [];
 
   return (
     <div className="space-y-6">
@@ -37,7 +52,7 @@ export default function LedgerPage() {
             <SelectTrigger className="w-64"><SelectValue placeholder="Select member" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Members</SelectItem>
-              {members.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+              {Array.isArray(members) && members.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Card><CardContent className="pt-6"><DataTable data={filtered} columns={allColumns} searchKey="category" /></CardContent></Card>

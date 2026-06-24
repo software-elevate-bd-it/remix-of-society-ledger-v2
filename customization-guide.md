@@ -1,6 +1,3 @@
-# Customization Guide — Somitee HQ
-
-এই ডকুমেন্টে তিনটি জিনিস কোথায় কোথায় পরিবর্তন করতে হবে তার বিস্তারিত তালিকা দেয়া আছে:
 
 1. **Branding / "Powered by" Footer**
 2. **Theme Color Studio**

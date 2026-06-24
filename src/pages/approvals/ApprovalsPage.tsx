@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApprovalsStore, ApprovalItem, ApprovalType } from '@/stores/approvalsStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,15 +14,45 @@ import { formatDistanceToNow } from 'date-fns';
 import { PermissionGuard } from '@/components/shared/PermissionGuard';
 import type { Permission } from '@/stores/rolesStore';
 
-const TYPE_META: Record<ApprovalType, { label: string; icon: typeof Wallet; color: string }> = {
-  collection: { label: 'Collection', icon: Wallet, color: 'text-success' },
-  expense: { label: 'Expense', icon: Receipt, color: 'text-destructive' },
-  bank: { label: 'Bank Transaction', icon: Landmark, color: 'text-primary' },
-  member: { label: 'Member', icon: UserPlus, color: 'text-accent-foreground' },
+import {
+  TrendingUp
+} from "lucide-react";
+
+const TYPE_META = {
+  collection: {
+    label: "Collection",
+    icon: Wallet,
+    color: "text-success",
+  },
+  expense: {
+    label: "Expense",
+    icon: Receipt,
+    color: "text-destructive",
+  },
+  bank: {
+    label: "Bank Transaction",
+    icon: Landmark,
+    color: "text-primary",
+  },
+  member: {
+    label: "Member",
+    icon: UserPlus,
+    color: "text-accent-foreground",
+  },
+  income: {
+    label: "Income",
+    icon: TrendingUp,
+    color: "text-green-600",
+  },
 };
 
 export default function ApprovalsPage() {
-  const { items, approve, reject } = useApprovalsStore();
+  const { items, approve, reject, loadApprovals } = useApprovalsStore();
+
+  useEffect(()=>{
+    loadApprovals()
+  },[loadApprovals])
+
   const user = useAuthStore((s) => s.user);
   const [tab, setTab] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
   const [typeFilter, setTypeFilter] = useState<ApprovalType | 'all'>('all');
@@ -41,13 +71,13 @@ export default function ApprovalsPage() {
     rejected: items.filter((i) => i.status === 'rejected').length,
   };
 
-  const handleApprove = (item: ApprovalItem) => {
+  const handleApprove = async(item: ApprovalItem) => {
     if (!user) return;
     approve(item.id);
     toast.success(`${TYPE_META[item.type].label} approved`);
   };
 
-  const handleReject = () => {
+  const handleReject = async() => {
     if (!rejectTarget || !user) return;
     if (!rejectNote.trim()) return toast.error('Rejection reason is required');
     reject(rejectTarget.id, rejectNote.trim());
@@ -72,6 +102,7 @@ export default function ApprovalsPage() {
           <p className="text-[11px] text-muted-foreground">pending</p>
         </button>
         {(Object.keys(TYPE_META) as ApprovalType[]).map((t) => {
+    
           const meta = TYPE_META[t];
           const Icon = meta.icon;
           const count = items.filter((i) => i.type === t && i.status === 'pending').length;
@@ -88,9 +119,9 @@ export default function ApprovalsPage() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
           <TabsTrigger value="pending">Pending {counts.pending > 0 && <Badge variant="destructive" className="ml-2 h-5 px-1.5">{counts.pending}</Badge>}</TabsTrigger>
-          <TabsTrigger value="approved">Approved ({counts.approved})</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected ({counts.rejected})</TabsTrigger>
-          <TabsTrigger value="all">All ({items.length})</TabsTrigger>
+          {/* <TabsTrigger value="approved">Approved ({counts.approved})</TabsTrigger> */}
+         {/* <TabsTrigger value="rejected">Rejected ({counts.rejected})</TabsTrigger> */}
+         {/* <TabsTrigger value="all">All ({items.length})</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value={tab} className="mt-4">

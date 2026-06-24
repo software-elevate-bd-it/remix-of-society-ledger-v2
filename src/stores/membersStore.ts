@@ -68,8 +68,8 @@ export const useMembersStore = create<MembersState>((set, get) => ({
     try {
       const response = await apiClient.getMembers(params);
       set({
-        members: response.data,
-        pagination: response.meta || get().pagination,
+        members: response.data.data,
+        pagination: response.data.meta || get().pagination,
         isLoading: false,
       });
     } catch (error) {

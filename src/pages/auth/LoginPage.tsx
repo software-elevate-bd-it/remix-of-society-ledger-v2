@@ -6,19 +6,15 @@ import { useCompanyStore } from '@/stores/companyStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  ShieldCheck, Globe, ChevronDown, ChevronUp, Copy, Users, Wallet, TrendingUp,
-  Globe2, Facebook, Phone, MessageCircle, MapPin, Mail
-} from 'lucide-react';
+import { ShieldCheck, Globe, Facebook, Phone, MessageCircle, Globe2, MapPin, Mail, Users, Wallet, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-import { DEMO_USERS } from '@/data/demoUsers';
 import loginHero from '@/assets/login-hero.jpg';
+import { Loader } from '@/components/ui/loader';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
   const login = useAuthStore((s) => s.login);
   const { company } = useCompanyStore();
   const navigate = useNavigate();
@@ -31,7 +27,7 @@ export default function LoginPage() {
       const success = await login(email, password);
       if (success) {
         toast.success(t('auth.loginSuccess', 'Logged in successfully'));
-        navigate('/dashboard');
+        navigate('/leadership');
       } else {
         toast.error(t('auth.invalidCredentials', 'Invalid credentials'));
       }
@@ -50,7 +46,7 @@ export default function LoginPage() {
       const success = await login(demoEmail, demoPassword);
       if (success) {
         toast.success(`Logged in as ${demoEmail.split('@')[0]}`);
-        navigate('/dashboard');
+        navigate('/leadership');
       } else {
         toast.error('Demo login failed');
       }
@@ -68,7 +64,7 @@ export default function LoginPage() {
   const toggleLang = () => i18n.changeLanguage(i18n.language === 'en' ? 'bn' : 'en');
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+   <div className="min-h-screen flex flex-col bg-background">
       {/* Main split */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* LEFT — Somitee info with hero image */}
@@ -203,6 +199,7 @@ export default function LoginPage() {
                 />
               </div>
               <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                {isLoading ? <Loader className="h-5 w-5 mr-2 text-white" /> : null}
                 {isLoading ? t('common.loading', 'Loading...') : t('auth.login')}
               </Button>
               <p className="text-center text-sm text-muted-foreground">
@@ -213,7 +210,7 @@ export default function LoginPage() {
               </p>
             </form>
 
-            {/* Demo accounts panel */}
+            {/* Demo accounts panel
             <div className="mt-6 border-t border-border pt-4">
               <button
                 type="button"
@@ -259,12 +256,13 @@ export default function LoginPage() {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
 
       {/* FOOTER — Software company info */}
+      {/* ======================== */}
       <footer className="border-t border-border bg-card/80 backdrop-blur-sm">
         <div className="px-4 sm:px-6 py-3 flex flex-col lg:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-center sm:text-left">
@@ -327,3 +325,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

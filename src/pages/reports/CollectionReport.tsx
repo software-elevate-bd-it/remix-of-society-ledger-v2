@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { members, memberPayments, FINANCIAL_YEARS, MONTHS, getPaidMonths, getDueMonths } from '@/data/dummyData';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,40 +8,129 @@ import StatsCard from '@/components/shared/StatsCard';
 import { Download, Users, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
+import { apiClient } from '@/lib/api';
+
+interface PaymentMonth {
+  month:number;
+  paid:boolean;
+}
+
+interface MemberInfo {
+  id: string;
+  name: string;
+  shopName: string;
+}
+
+interface MemberCollectionData {
+  id?: string;
+  amount: number;
+  method: string;
+  status: string;
+  date: string;
+
+  member: MemberInfo;
+  months: PaymentMonth[];
+}
+
+interface MonthlyCollectionData {
+  month: string;
+  label: string;
+  paidCount: number;
+  dueCount: number;
+  collected: number;
+  pending: number;
+}
+
+const FINANCIAL_YEARS = [
+  '2021-2022',
+  '2022-2023',
+  '2023-2024',
+  '2024-2025',
+  '2025-2026',
+  '2026-2027',
+];
 
 export default function CollectionReport() {
   const { t } = useTranslation();
-  const [selectedYear, setSelectedYear] = useState('2024-2025');
   const [viewType, setViewType] = useState<'member' | 'monthly'>('member');
+  const [memberData, setMemberData] = useState<MemberCollectionData[]>([]);
+  const [monthlyData, setMonthlyData] = useState<MonthlyCollectionData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [financialYear, setFinancialYear] = useState('2024-2025');
   const isBn = i18n.language === 'bn';
+  const [ totalCollection, setTotalCollection] = useState(0);
+  const [ totalDue, setTotalDue] = useState(0);
+  const [ activeMembers, setActiveMembers] = useState(0);
+  const [fullyPaidMembers, setFullyPaidMembers] = useState(0);
 
-  const activeMembers = members.filter(m => m.status === 'active');
+  console.log("Member data:", memberData);
 
-  const memberData = useMemo(() => {
-    return activeMembers.map(member => {
-      const paid = getPaidMonths(member.id, selectedYear);
-      const due = getDueMonths(member.id, selectedYear);
-      const totalPaid = memberPayments
-        .filter(p => p.memberId === member.id && p.financialYear === selectedYear && p.status === 'approved')
-        .reduce((s, p) => s + p.totalPaid, 0);
-      const totalDue = due.length * member.monthlyFee;
-      return { ...member, paidMonths: paid, dueMonths: due, yearPaid: totalPaid, yearDue: totalDue };
-    });
-  }, [selectedYear]);
+  useEffect(() => {
+    loadReport();
+  }, [dateFrom, dateTo, financialYear]);
 
-  const monthlyData = useMemo(() => {
-    return MONTHS.map(month => {
-      const paidMembers = activeMembers.filter(m => getPaidMonths(m.id, selectedYear).includes(month.value));
-      const dueMembers = activeMembers.filter(m => !getPaidMonths(m.id, selectedYear).includes(month.value));
-      const collected = paidMembers.reduce((s, m) => s + m.monthlyFee, 0);
-      const pending = dueMembers.reduce((s, m) => s + m.monthlyFee, 0);
-      return { month: month.value, label: isBn ? month.labelBn : month.label, paidCount: paidMembers.length, dueCount: dueMembers.length, collected, pending };
-    });
-  }, [selectedYear, isBn]);
+  const loadReport = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiClient.getCollectionReport({
+         financialYear,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      });
+// ===================================================================
+      setTotalCollection(response.data.summary.totalCollection);
+      setTotalDue(response.data.summary.totalDue);
+      setActiveMembers(response.data.summary.activeMembers);
+      setFullyPaidMembers(response.data.summary.fullyPaidMembers);
+      
+      // Extract member data
+      let members = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.members)
+        ? response.data.members
+        : response.data?.data || [];
+      
+      members = Array.isArray(members) ? members : [];
+      setMemberData(members);
+      
+      // Extract or calculate monthly data
+      let monthly = Array.isArray(response.data?.monthly)
+        ? response.data.monthly
+        : response.data?.monthlyBreakdown || [];
+      
+      monthly = Array.isArray(monthly) ? monthly : [];
+      setMonthlyData(monthly);
+    } catch (error) {
+      console.error('Failed to load collection report:', error);
+      toast.error('Failed to load collection report');
+      setMemberData([]);
+      setMonthlyData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const totalCollected = memberData.reduce((s, m) => s + m.yearPaid, 0);
-  const totalDue = memberData.reduce((s, m) => s + m.yearDue, 0);
-  const fullPaidCount = memberData.filter(m => m.dueMonths.length === 0).length;
+  const MONTHS = [
+    { value: '1', label: 'January', labelBn: 'জানুয়ারি' },
+    { value: '2', label: 'February', labelBn: 'ফেব্রুয়ারি' },
+    { value: '3', label: 'March', labelBn: 'মার্চ' },
+    { value: '4', label: 'April', labelBn: 'এপ্রিল' },
+    { value: '5', label: 'May', labelBn: 'মে' },
+    { value: '6', label: 'June', labelBn: 'জুন' },
+    { value: '7', label: 'July', labelBn: 'জুলাই' },
+    { value: '8', label: 'August', labelBn: 'আগস্ট' },
+    { value: '9', label: 'September', labelBn: 'সেপ্টেম্বর' },
+    { value: '10', label: 'October', labelBn: 'অক্টোবর' },
+    { value: '11', label: 'November', labelBn: 'নভেম্বর' },
+    { value: '12', label: 'December', labelBn: 'ডিসেম্বর' },
+  ];
+
+  const totalCollected = totalCollection;
+  const fullPaidCount = memberData.filter(
+    m => m.months?.every(month => month.paid)).length;
+
 
   const handleExport = (format: string) => toast.success(t('reports.exportedAs', { format }));
 
@@ -60,12 +148,36 @@ export default function CollectionReport() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {FINANCIAL_YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="px-3 py-2 border rounded-md text-sm"
+          placeholder="From date"
+        />
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="px-3 py-2 border rounded-md text-sm"
+          placeholder="To date"
+        />
+        <Select
+  value={financialYear}
+  onValueChange={setFinancialYear}
+>
+  <SelectTrigger className="w-40">
+    <SelectValue placeholder="Financial Year" />
+  </SelectTrigger>
+
+  <SelectContent>
+    {FINANCIAL_YEARS.map((year) => (
+      <SelectItem key={year} value={year}>
+        {year}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
         <Select value={viewType} onValueChange={(v: 'member' | 'monthly') => setViewType(v)}>
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -78,86 +190,137 @@ export default function CollectionReport() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatsCard title={t('collectionReport.totalCollected')} value={`৳${totalCollected.toLocaleString()}`} icon={DollarSign} />
         <StatsCard title={t('collectionReport.totalDue')} value={`৳${totalDue.toLocaleString()}`} icon={AlertCircle} />
-        <StatsCard title={t('collectionReport.fullyPaid')} value={fullPaidCount} icon={CheckCircle} />
-        <StatsCard title={t('collectionReport.activeMembers')} value={activeMembers.length} icon={Users} />
+        <StatsCard title={t('collectionReport.fullyPaid')} value={fullyPaidMembers} icon={CheckCircle} />
+        <StatsCard title={t('collectionReport.activeMembers')} value={activeMembers} icon={Users} />
       </div>
 
       {viewType === 'member' ? (
         <Card>
-          <CardHeader><CardTitle className="font-heading">{t('collectionReport.memberWise')} — {selectedYear}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="font-heading">{t('collectionReport.memberWise')}</CardTitle></CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">{t('common.name')}</th>
-                    {MONTHS.map(m => (
-                      <th key={m.value} className="text-center p-1 text-xs">{isBn ? m.labelBn.slice(0, 3) : m.label.slice(0, 3)}</th>
-                    ))}
-                    <th className="text-right p-2">{t('common.paid')}</th>
-                    <th className="text-right p-2">{t('members.due')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {memberData.map(member => (
-                    <tr key={member.id} className="border-b hover:bg-muted/50">
-                      <td className="p-2 font-medium">{member.name}</td>
-                      {MONTHS.map(m => {
-                        const isPaid = member.paidMonths.includes(m.value);
-                        return (
-                          <td key={m.value} className="text-center p-1">
-                            {isPaid ? (
-                              <span className="inline-block w-5 h-5 rounded-full bg-green-500 text-white text-xs leading-5">✓</span>
-                            ) : (
-                              <span className="inline-block w-5 h-5 rounded-full bg-red-100 text-red-500 text-xs leading-5">✗</span>
-                            )}
-                          </td>
-                        );
-                      })}
-                      <td className="text-right p-2 text-green-600 font-bold">৳{member.yearPaid.toLocaleString()}</td>
-                      <td className="text-right p-2 text-destructive font-bold">৳{member.yearDue.toLocaleString()}</td>
+            {isLoading ? (
+              <p className="text-muted-foreground text-center py-8">Loading...</p>
+            ) : memberData.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">{t('common.name')}</th>
+                      {MONTHS.map(m => (
+                        <th key={m.value} className="text-center p-1 text-xs">{isBn ? m.labelBn.slice(0, 3) : m.label.slice(0, 3)}</th>
+                      ))}
+                      <th className="text-right p-2">{t('common.paid')}</th>
+                      <th className="text-right p-2">{t('members.due')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {memberData.map(member => {
+
+  const paidMonthsCount =
+    member.months?.filter(m => m.paid).length || 0;
+
+  const dueMonthsCount =
+    member.months?.filter(m => !m.paid).length || 0;
+
+  const monthlyAmount = member.amount / 12;
+
+  const yearPaid =
+    paidMonthsCount * monthlyAmount;
+
+  const yearDue =
+    dueMonthsCount * monthlyAmount;
+
+  return (
+    <tr
+      key={member.id || member.member.name}
+      className="border-b hover:bg-muted/50"
+    >
+      <td className="p-2 font-medium">
+        {member.member.name}
+      </td>
+
+      {MONTHS.map(m => {
+
+        const isPaid = member.months?.some(
+          (month) =>
+            month.month === Number(m.value) &&
+            month.paid
+        );
+
+        return (
+          <td key={m.value} className="text-center p-1">
+            {isPaid ? (
+              <span className="inline-block w-5 h-5 rounded-full bg-green-500 text-white text-xs leading-5">
+                ✓
+              </span>
+            ) : (
+              <span className="inline-block w-5 h-5 rounded-full bg-red-100 text-red-500 text-xs leading-5">
+                ✗
+              </span>
+            )}
+          </td>
+        );
+      })}
+
+      <td className="text-right p-2 text-green-600 font-bold">
+        ৳{yearPaid.toLocaleString()}
+      </td>
+
+      <td className="text-right p-2 text-destructive font-bold">
+        ৳{yearDue.toLocaleString()}
+      </td>
+    </tr>
+  );
+})}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">No collection data found</p>
+            )}
           </CardContent>
         </Card>
       ) : (
         <Card>
-          <CardHeader><CardTitle className="font-heading">{t('collectionReport.monthlyBreakdown')} — {selectedYear}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="font-heading">{t('collectionReport.monthlyBreakdown')}</CardTitle></CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">{t('advancedCollection.month')}</th>
-                    <th className="text-center p-2">{t('collectionReport.paidMembers')}</th>
-                    <th className="text-center p-2">{t('collectionReport.dueMembers')}</th>
-                    <th className="text-right p-2">{t('collectionReport.collected')}</th>
-                    <th className="text-right p-2">{t('common.pending')}</th>
-                    <th className="text-center p-2">{t('collectionReport.rate')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monthlyData.map(row => {
-                    const rate = activeMembers.length > 0 ? Math.round((row.paidCount / activeMembers.length) * 100) : 0;
-                    return (
-                      <tr key={row.month} className="border-b hover:bg-muted/50">
-                        <td className="p-2 font-medium">{row.label}</td>
-                        <td className="text-center p-2"><Badge variant="default">{row.paidCount}</Badge></td>
-                        <td className="text-center p-2"><Badge variant="destructive">{row.dueCount}</Badge></td>
-                        <td className="text-right p-2 text-green-600 font-bold">৳{row.collected.toLocaleString()}</td>
-                        <td className="text-right p-2 text-destructive">৳{row.pending.toLocaleString()}</td>
-                        <td className="text-center p-2">
-                          <Badge variant={rate >= 80 ? 'default' : rate >= 50 ? 'secondary' : 'destructive'}>{rate}%</Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            {isLoading ? (
+              <p className="text-muted-foreground text-center py-8">Loading...</p>
+            ) : monthlyData.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">{t('advancedCollection.month')}</th>
+                      <th className="text-center p-2">{t('collectionReport.paidMembers')}</th>
+                      <th className="text-center p-2">{t('collectionReport.dueMembers')}</th>
+                      <th className="text-right p-2">{t('collectionReport.collected')}</th>
+                      <th className="text-right p-2">{t('common.pending')}</th>
+                      <th className="text-center p-2">{t('collectionReport.rate')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyData.map(row => {
+                      const rate = activeMembers > 0 ? Math.round(((row.paidCount || 0) / activeMembers) * 100) : 0;
+                      return (
+                        <tr key={row.month} className="border-b hover:bg-muted/50">
+                          <td className="p-2 font-medium">{row.label}</td>
+                          <td className="text-center p-2"><Badge variant="default">{row.paidCount || 0}</Badge></td>
+                          <td className="text-center p-2"><Badge variant="destructive">{row.dueCount || 0}</Badge></td>
+                          <td className="text-right p-2 text-green-600 font-bold">৳{(row.collected || 0).toLocaleString()}</td>
+                          <td className="text-right p-2 text-destructive">৳{(row.pending || 0).toLocaleString()}</td>
+                          <td className="text-center p-2">
+                            <Badge variant={rate >= 80 ? 'default' : rate >= 50 ? 'secondary' : 'destructive'}>{rate}%</Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">No collection data found</p>
+            )}
           </CardContent>
         </Card>
       )}

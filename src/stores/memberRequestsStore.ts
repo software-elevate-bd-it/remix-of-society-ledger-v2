@@ -12,6 +12,8 @@ interface MemberRequestsState {
     totalPages: number;
   };
 
+  // createMemberRequest: (formData: FormData) => Promise<void>;
+
   // Actions
   loadMemberRequests: (params?: {
     page?: number;
@@ -39,17 +41,27 @@ export const useMemberRequestsStore = create<MemberRequestsState>((set, get) => 
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.getMemberRequests(params);
+     
+      // Handle both nested and flat response structures
+      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      console.log('Extracted data:', data);
+      
       set({
-        requests: response.data,
+        requests: (data || []).map((item:any) =>({
+          ...item,
+          phone: item.phone || item.mobile,     
+          appliedAt: item.appliedAt || item.createdAt
+        })),
         pagination: response.meta || {
           page: params?.page || 1,
           limit: params?.limit || 10,
-          total: response.data.length,
-          totalPages: Math.ceil((response.data.length) / (params?.limit || 10)),
+          total: data?.length || 0,
+          totalPages: Math.ceil((data?.length || 0) / (params?.limit || 10)),
         },
         isLoading: false,
       });
     } catch (error) {
+      console.error('Member requests error:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to load member requests',
         isLoading: false,
@@ -72,6 +84,26 @@ export const useMemberRequestsStore = create<MemberRequestsState>((set, get) => 
       throw error;
     }
   },
+
+//   createMemberRequest: async (formData) => {
+//   set({ isLoading: true, error: null });
+//   try {
+//     const res = await apiClient.createMemberRequest(formData);
+
+//     // optional: add to state instantly
+//     set((state) => ({
+//       requests: [res.data, ...state.requests],
+//       isLoading: false,
+//     }));
+
+//   } catch (error) {
+//     set({
+//       error: error instanceof Error ? error.message : 'Failed to create request',
+//       isLoading: false,
+//     });
+//     throw error;
+//   }
+// },
 
   rejectMemberRequest: async (id, rejectionNote) => {
     set({ isLoading: true, error: null });

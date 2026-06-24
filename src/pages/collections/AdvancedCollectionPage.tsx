@@ -1,9 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { members, FINANCIAL_YEARS, MONTHS, memberPayments, getPaidMonths, getDueMonths, MemberPayment } from '@/data/dummyData';
+import { FINANCIAL_YEARS, MemberPayment, MONTHS } from '@/data/dummyData';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,13 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DataTable, { Column } from '@/components/shared/DataTable';
-import { Wallet, CheckCircle, CalendarDays, Users, DollarSign, Search, Zap, CreditCard } from 'lucide-react';
+import { Wallet, CheckCircle, CalendarDays, Users, DollarSign, Search, Zap, CreditCard, Loader } from 'lucide-react';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
 import { useCollectionsStore } from '@/stores/collectionsStore';
+import { apiClient, Collection, Member } from '@/lib/api';
+import z from 'zod';
+
 
 const collectionSchema = z.object({
-  memberId: z.string().min(1, 'Select a member'),
+  memberId: z.string().min(1,'Select a member'),
   financialYear: z.string().min(1, 'Select year'),
   months: z.array(z.number()).min(1, 'Select at least one month'),
   method: z.enum(['cash', 'bkash', 'nagad', 'bank', 'sslcommerz']),
@@ -30,8 +32,16 @@ type CollectionFormData = z.infer<typeof collectionSchema>;
 
 export default function AdvancedCollectionPage() {
   const { t } = useTranslation();
-  const [payments, setPayments] = useState(memberPayments);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [payments, setPayments] = useState<MemberPayment[]>([]);
   const [memberSearch, setMemberSearch] = useState('');
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [activeTab, setActiveTab] = useState("history");
+  const [isLoading, setIsLoading] = useState(false);
+
+const paidMonths = useMemo(() => {
+  return collections.flatMap(c => c.months || []);
+}, [collections]);
 
   const form = useForm<CollectionFormData>({
     resolver: zodResolver(collectionSchema),
@@ -45,13 +55,19 @@ export default function AdvancedCollectionPage() {
   const method = form.watch('method');
 
   const selectedMember = members.find(m => m.id === selectedMemberId);
-  const paidMonths = selectedMemberId && selectedYear ? getPaidMonths(selectedMemberId, selectedYear) : [];
-  const dueMonths = selectedMemberId && selectedYear ? getDueMonths(selectedMemberId, selectedYear) : [];
   const isBn = i18n.language === 'bn';
 
   const monthlyFee = selectedMember?.monthlyFee || 0;
+
   const subtotal = selectedMonths.length * monthlyFee;
+  
   const lateFee = 0;
+  const allMonths = MONTHS.map(m => m.value);
+
+const dueMonths = allMonths.filter(
+  m => !paidMonths.includes(m)
+);
+
   const total = subtotal + lateFee - (discount || 0);
 
   const filteredMembers = members.filter(m =>
@@ -61,6 +77,7 @@ export default function AdvancedCollectionPage() {
       m.phone.includes(memberSearch)
     )
   );
+  
 
   const toggleMonth = (monthVal: number) => {
     if (paidMonths.includes(monthVal)) return;
@@ -80,50 +97,68 @@ export default function AdvancedCollectionPage() {
   };
 
   const { createCollection } = useCollectionsStore();
+   useEffect(() => {
+  if (!selectedMemberId || !selectedYear) return;
 
-  const handleSubmit = async (data: CollectionFormData) => {
-    const existingPaid = getPaidMonths(data.memberId, data.financialYear);
-    if (data.months.some(m => existingPaid.includes(m))) {
+  apiClient.getCollections({
+    memberId: Number(selectedMemberId),
+    financialYear: selectedYear,
+  }).then(res => {
+    setCollections(res.data.data);
+  });
+}, [selectedMemberId, selectedYear]);
+
+useEffect(() =>{
+   apiClient.getMembers().then(res => {
+    setMembers(res.data.data);
+  });
+},[])
+  useEffect(()=>{
+   apiClient.getCollections().then(res => {
+    setPayments(res.data.data);
+  });
+},[])
+
+const handleSubmit = async (data: CollectionFormData) => {
+  setIsLoading(true);
+  try {
+    if (data.months.some(m => paidMonths.includes(m))) {
       toast.error(t('advancedCollection.duplicatePayment'));
       return;
     }
-    try {
-      await createCollection({
-        memberId: data.memberId,
-        amount: subtotal,
-        date: new Date().toISOString().split('T')[0],
-        category: 'Monthly Fee',
-        method: data.method,
-        transactionId: data.transactionId,
-        financialYear: data.financialYear,
-        months: data.months,
-        lateFee,
-        discount: data.discount,
-        totalPaid: total,
-      });
-    } catch (e) {
-      // API may be unavailable in demo; still record locally below
-    }
-    const newPayment: MemberPayment = {
-      id: `mp${Date.now()}`,
-      memberId: data.memberId,
-      memberName: selectedMember?.name || '',
+
+    const response = {
+      memberId: Number(data.memberId),
+      amount: subtotal,
+      date: new Date().toISOString().split('T')[0],
+      category: 'Monthly Fee',
+      method: data.method,
+      transactionId: data.transactionId,
       financialYear: data.financialYear,
       months: data.months,
-      amount: subtotal,
       lateFee,
       discount: data.discount,
       totalPaid: total,
-      method: data.method,
-      transactionId: data.transactionId,
-      date: new Date().toISOString().split('T')[0],
-      status: 'approved',
     };
-    setPayments([newPayment, ...payments]);
+
+    // 2 second loader visible thakbe
+    // await new Promise(resolve => setTimeout(resolve, 2000));
+
+
+    await createCollection(response);
+
+    
     toast.success(t('advancedCollection.paymentRecorded'));
-    form.reset({ memberId: '', financialYear: '2024-2025', months: [], method: 'cash', transactionId: '', discount: 0 });
-    setMemberSearch('');
-  };
+
+    setActiveTab('history');
+
+  } catch (error) {
+    toast.error('Payment failed');
+  }finally{
+    setIsLoading(false);
+  }
+};
+
 
   const historyColumns: Column<MemberPayment>[] = [
     { key: 'memberName', label: t('common.name'), sortable: true },
@@ -134,16 +169,25 @@ export default function AdvancedCollectionPage() {
         return <Badge key={m} variant="outline" className="text-xs">{isBn ? month?.labelBn : month?.label}</Badge>;
       })}</div>
     )},
-    { key: 'totalPaid', label: t('common.amount'), render: (p) => `৳${p.totalPaid.toLocaleString()}`, sortable: true },
+   {
+  key: 'amount',
+  label: t('common.amount'),
+  render: (p) => `৳${p.amount ?? 0}`,
+  sortable: true,
+},
     { key: 'method', label: t('common.method'), render: (p) => <span className="capitalize">{p.method}</span> },
     { key: 'status', label: t('common.status'), render: (p) => (
       <Badge variant={p.status === 'approved' ? 'default' : p.status === 'pending' ? 'secondary' : 'destructive'}>{t(`common.${p.status}`)}</Badge>
     )},
-    { key: 'date', label: t('common.date'), sortable: true },
+    { key: 'date', label: t('common.date'), sortable: true, 
+      render: (row) => 
+      row.date ? new Date(row.date).toISOString().split('T')[0]:'Not Set' 
+    },
   ];
 
-  const totalCollected = payments.filter(p => p.status === 'approved').reduce((s, p) => s + p.totalPaid, 0);
-  const pendingPayments = payments.filter(p => p.status === 'pending').length;
+  const totalCollected = payments.filter(p => 
+    p.status === 'approved').reduce((s, p) => s + p.amount, 0);
+    const pendingPayments = payments.filter(p => p.status === 'pending').length;
 
   const PAYMENT_METHODS = [
     { value: 'cash', label: t('collections.cash'), icon: '💵' },
@@ -153,6 +197,9 @@ export default function AdvancedCollectionPage() {
     { value: 'sslcommerz', label: 'SSLCommerz', icon: '🌐' },
   ];
 
+  console.log("payments", payments);
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -160,10 +207,10 @@ export default function AdvancedCollectionPage() {
         <p className="text-muted-foreground">{t('advancedCollection.subtitle')}</p>
       </div>
 
-      <Tabs defaultValue="collect">
+      <Tabs defaultValue="history" onValueChange={(value) => setActiveTab(value)}>
         <TabsList>
-          <TabsTrigger value="collect">{t('advancedCollection.collectPayment')}</TabsTrigger>
           <TabsTrigger value="history">{t('advancedCollection.paymentHistory')}</TabsTrigger>
+          <TabsTrigger value="collect">{t('advancedCollection.collectPayment')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="collect" className="space-y-4 mt-4">
@@ -188,17 +235,22 @@ export default function AdvancedCollectionPage() {
                       {memberSearch && !selectedMemberId && (
                         <div className="border rounded-lg max-h-40 overflow-y-auto divide-y">
                           {filteredMembers.map(m => (
+                            
                             <button
                               key={m.id}
                               type="button"
-                              onClick={() => { form.setValue('memberId', m.id); setMemberSearch(m.name); }}
+                              onClick={() => { 
+                                form.setValue('memberId', m.id); 
+                                setMemberSearch(m.name); }
+                              }
                               className="w-full text-left px-3 py-2 hover:bg-muted/50 text-sm flex justify-between"
                             >
                               <span className="font-medium">{m.name}</span>
                               <span className="text-muted-foreground text-xs">{m.shopName} • ৳{m.monthlyFee}/{t('advancedCollection.month')}</span>
                             </button>
                           ))}
-                          {filteredMembers.length === 0 && <p className="p-3 text-sm text-muted-foreground">{t('common.noData')}</p>}
+                          {filteredMembers.length === 0 && <p className="p-3 text-sm text-muted-foreground">
+                            {t('common.noData')}</p>}
                         </div>
                       )}
 
@@ -206,9 +258,14 @@ export default function AdvancedCollectionPage() {
                         <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 flex items-center justify-between">
                           <div>
                             <p className="font-bold text-sm">{selectedMember.name} — {selectedMember.shopName}</p>
-                            <p className="text-xs text-muted-foreground">{t('members.monthlyFee')}: ৳{selectedMember.monthlyFee} • {t('members.totalDue')}: <span className="text-destructive font-bold">৳{selectedMember.totalDue}</span></p>
+                            <p className="text-xs text-muted-foreground">
+                              {t('members.monthlyFee')}: ৳{selectedMember.monthlyFee} • {t('members.totalDue')}: <span className="text-destructive font-bold">৳{selectedMember.totalDue}</span></p>
                           </div>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => { form.setValue('memberId', ''); form.setValue('months', []); setMemberSearch(''); }}>✕</Button>
+                          <Button type="button" variant="ghost" size="sm"
+                           onClick={() => { 
+                            form.setValue('memberId', ''); 
+                           form.setValue('months', []); 
+                           setMemberSearch(''); }}>✕</Button>
                         </div>
                       )}
                     </CardContent>
@@ -231,10 +288,13 @@ export default function AdvancedCollectionPage() {
                       <CardContent className="space-y-4">
                         {/* Quick actions */}
                         <div className="flex flex-wrap gap-2">
-                          <Button type="button" variant="outline" size="sm" onClick={() => quickSelect('full')} className="text-xs">
-                            <Zap className="h-3 w-3 mr-1" /> {t('advancedCollection.fullYear')}
+                          <Button type="button" variant="outline" size="sm" 
+                          onClick={() => quickSelect('full')} className="text-xs">
+                            <Zap className="h-3 w-3 mr-1" /> 
+                            {t('advancedCollection.fullYear')}
                           </Button>
-                          <Button type="button" variant="outline" size="sm" onClick={() => quickSelect('6months')} className="text-xs">
+                          <Button type="button" variant="outline" size="sm" 
+                          onClick={() => quickSelect('6months')} className="text-xs">
                             6 {t('advancedCollection.months')}
                           </Button>
                           <Button type="button" variant="outline" size="sm" onClick={() => quickSelect('due')} className="text-xs text-destructive border-destructive/30">
@@ -353,8 +413,21 @@ export default function AdvancedCollectionPage() {
                             <span className="text-primary">৳{total.toLocaleString()}</span>
                           </div>
 
-                          <Button type="submit" disabled={selectedMonths.length === 0} className="w-full mt-2" size="lg">
-                            <Wallet className="h-4 w-4 mr-2" /> {t('advancedCollection.confirmPayment')}
+                          <Button type="submit" disabled={selectedMonths.length === 0 || isLoading} className="w-full mt-2" size="lg">
+                            {isLoading ?
+                             (
+                              <>
+                               <Loader className="h-5 w-5 mr-2 text-white animate-spin" />
+                             Confirming......
+                             </>
+                             )
+                              :(
+                                <>
+                                 <Wallet className="h-4 w-4 mr-2" />
+                                  {t('advancedCollection.confirmPayment')}
+                                </>
+                              )
+                            }
                           </Button>
                         </>
                       ) : (
@@ -375,7 +448,11 @@ export default function AdvancedCollectionPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-4 flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center"><DollarSign className="h-5 w-5 text-green-600" /></div>
-              <div><p className="text-xs text-muted-foreground">{t('advancedCollection.totalCollected')}</p><p className="text-xl font-bold">৳{totalCollected.toLocaleString()}</p></div>
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t('advancedCollection.totalCollected')}
+                  </p>
+                  <p className="text-xl font-bold">৳{totalCollected.toLocaleString()}</p></div>
             </Card>
             <Card className="p-4 flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center"><CalendarDays className="h-5 w-5 text-blue-600" /></div>

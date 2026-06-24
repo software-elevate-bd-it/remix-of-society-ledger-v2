@@ -30,10 +30,10 @@ type CollectionFormData = z.infer<typeof collectionSchema>;
 
 export default function CollectionsPage() {
   const { t } = useTranslation();
-  const { collections, isLoading, loadCollections, createCollection } = useCollectionsStore();
+  const { collections, loadCollections, createCollection } = useCollectionsStore();
   const { members, loadMembers } = useMembersStore();
   const [open, setOpen] = useState(false);
-  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);  
 
   useEffect(() => {
     loadCollections();

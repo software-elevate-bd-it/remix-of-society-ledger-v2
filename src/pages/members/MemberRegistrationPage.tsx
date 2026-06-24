@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,9 +15,15 @@ import { Separator } from '@/components/ui/separator';
 import CompanyHeader from '@/components/shared/CompanyHeader';
 import SignaturePad from '@/components/shared/SignaturePad';
 import { toast } from 'sonner';
-import { UserPlus, ArrowRight, ArrowLeft, Save, Eye } from 'lucide-react';
+import { UserPlus, ArrowRight, ArrowLeft, Eye } from 'lucide-react';
+import { Loader } from '@/components/ui/loader';
+import { apiClient } from '@/lib/api';
+import { Navigate, useNavigate } from 'react-router-dom';
+
 
 const registrationSchema = z.object({
+  memberRegNumber: z.number().min(1, 'Member registration number required'),
+  monthlyFee: z.number().min(0, 'Registration fee required'),
   nameBn: z.string().min(2, 'বাংলায় নাম আবশ্যক').max(100),
   nameEn: z.string().min(2, 'Name in English required').max(100),
   shopName: z.string().min(2, 'Shop name required').max(100),
@@ -29,7 +35,7 @@ const registrationSchema = z.object({
   union: z.string().max(100).optional(),
   upazila: z.string().max(100).optional(),
   district: z.string().min(1, 'District required').max(100),
-  nid: z.string().min(10, 'Valid NID required').max(20),
+  nid: z.string().max(20).optional(),
   dob: z.string().min(1, 'Date of birth required'),
   nationality: z.string().default('বাংলাদেশী'),
   religion: z.string().default('ইসলাম'),
@@ -45,18 +51,33 @@ const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const RELIGIONS = ['ইসলাম', 'হিন্দু', 'বৌদ্ধ', 'খ্রিস্টান', 'অন্যান্য'];
 
 export default function MemberRegistrationPage() {
+   const navigate = useNavigate();
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
-  const [profileImg, setProfileImg] = useState<string>('');
-  const [nidFront, setNidFront] = useState<string>('');
-  const [nidBack, setNidBack] = useState<string>('');
-  const [signature, setSignature] = useState<string>('');
-  const [memberId] = useState(`MEM-${Date.now().toString(36).toUpperCase()}`);
-  const today = new Date().toISOString().split('T')[0];
+
+const [profileImgFile, setProfileImgFile] = useState<File | null>(null);
+const [profileImgPreview, setProfileImgPreview] = useState<string>('');
+
+const [nidFrontFile, setNidFrontFile] = useState<File | null>(null);
+const [nidFrontPreview, setNidFrontPreview] = useState<string>('');
+
+const [nidBackFile, setNidBackFile] = useState<File | null>(null);
+const [nidBackPreview, setNidBackPreview] = useState<string>('');
+
+const [signature, setSignature] = useState<string>('');
+const [submitting, setSubmitting] = useState(false);
+const submittingRef = useRef(false);
+
+
+
+const [memberId] = useState(`MEM-${Date.now().toString(36).toUpperCase()}`);
+const today = new Date().toISOString().split('T')[0];
 
   const form = useForm<RegistrationData>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
+      memberRegNumber: 0,
+      monthlyFee: 1000,
       nameBn: '', nameEn: '', shopName: '', fatherName: '', motherName: '',
       mobile: '', village: '', wardNo: '', union: '', upazila: '', district: '',
       nid: '', dob: '', nationality: 'বাংলাদেশী', religion: 'ইসলাম',
@@ -66,73 +87,88 @@ export default function MemberRegistrationPage() {
 
   const watchAll = form.watch();
 
-  // Auto-save draft every 5 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const data = form.getValues();
-      localStorage.setItem('memberRegistrationDraft', JSON.stringify(data));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [form]);
-
-  // Load draft on mount
-  useEffect(() => {
-    const draft = localStorage.getItem('memberRegistrationDraft');
-    if (draft) {
-      try {
-        const data = JSON.parse(draft);
-        Object.entries(data).forEach(([key, value]) => {
-          if (value) form.setValue(key as keyof RegistrationData, value as string);
-        });
-      } catch {}
-    }
-  }, [form]);
-
-  const handleImageUpload = useCallback((setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+const handleImageUpload =
+  (setFile: (file: File) => void, setPreview: (url: string) => void) =>
+  (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setter(reader.result as string);
-    reader.readAsDataURL(file);
-  }, []);
 
-  const saveDraft = () => {
-    localStorage.setItem('memberRegistrationDraft', JSON.stringify(form.getValues()));
-    toast.success(t('registration.draftSaved'));
+    setFile(file);
+    setPreview(URL.createObjectURL(file));
   };
 
-  const handleSubmit = (data: RegistrationData) => {
-    // Save member to localStorage registry
-    const existingMembers = JSON.parse(localStorage.getItem('registeredMembers') || '[]');
-    const newMember = {
-      ...data,
-      memberId,
-      profileImg,
-      nidFront,
-      nidBack,
-      signature,
-      status: 'pending',
-      registeredAt: new Date().toISOString(),
-      registrationDate: today,
-    };
-    existingMembers.push(newMember);
-    localStorage.setItem('registeredMembers', JSON.stringify(existingMembers));
-    localStorage.removeItem('memberRegistrationDraft');
-    toast.success(`${t('memberRequests.applicationSubmitted')} — ID: ${memberId}`, {
-      description: `${data.nameEn} (${data.nameBn}) — ${data.shopName}`,
-      duration: 5000,
-    });
-    form.reset();
-    setStep(1);
-    setProfileImg('');
-    setNidFront('');
-    setNidBack('');
-    setSignature('');
-  };
+  const handleSubmit = async (data: RegistrationData) => {
+     if (submittingRef.current) return;
+
+  submittingRef.current = true;
+  setSubmitting(true);
+
+  try {
+    const formData = new FormData();
+
+    // TEXT FIELDS
+    formData.append('memberRegNumber', String(data.memberRegNumber));
+    formData.append('monthlyFee', String(data.monthlyFee));
+    formData.append('nameBn', data.nameBn);
+    formData.append('nameEn', data.nameEn);
+    formData.append('shopName', data.shopName);
+    formData.append('fatherName', data.fatherName);
+    formData.append('motherName', data.motherName);
+    formData.append('mobile', data.mobile);
+    formData.append('village', data.village);
+    formData.append('wardNo', data.wardNo || '');
+    formData.append('union', data.union || '');
+    formData.append('upazila', data.upazila || '');
+    formData.append('district', data.district);
+    if (data.nid) formData.append('nid', data.nid);
+    formData.append('dob', data.dob);
+    formData.append('nationality', data.nationality || '');
+    formData.append('religion', data.religion || '');
+    formData.append('bloodGroup', data.bloodGroup || '');
+    formData.append('nomineeName', data.nomineeName || '');
+    formData.append('nomineeRelation', data.nomineeRelation || '');
+    if (data.nomineeNid) formData.append('nomineeNid', data.nomineeNid);
+
+
+    // FILES (IMPORTANT)
+    if (profileImgFile) formData.append('profileImage', profileImgFile);
+    if (nidFrontFile) formData.append('nidFront', nidFrontFile);
+    if (nidBackFile) formData.append('nidBack', nidBackFile);
+    if (signature) {
+      const blob = await fetch(signature).then(res => res.blob());
+      formData.append('signature', blob, 'signature.png');
+    }
+
+// setSubmitting(true);
+      await new Promise((resolve) =>
+      setTimeout(resolve, 3000)
+    );
+      const res = await apiClient.createMemberRequest(formData);
+
+    toast.success('Application submitted successfully');
+     navigate('/member-requests'); 
+
+  } catch (error: any) {
+    if (error?.name === 'ApiError' && Array.isArray(error.errors) && error.errors.length > 0) {
+      const details = error.errors.map((e: any) => `${e.field ? `${e.field}: ` : ''}${e.message}`).join('\n');
+      toast.error(`${error.message}\n${details}`);
+    } else {
+      toast.error(error?.message || 'Failed to submit');
+    }
+  }
+  finally{
+      submittingRef.current = false;
+    setSubmitting(false)
+  }
+};
+
 
   const progress = step === 1 ? 50 : 100;
-  const step1Fields = ['nameBn', 'nameEn', 'shopName', 'fatherName', 'motherName', 'mobile', 'village', 'district'] as const;
-  const canProceed = step1Fields.every(f => form.getValues(f)?.length >= 1);
+  const step1Fields = ['memberRegNumber', 'monthlyFee', 'nameBn', 'nameEn', 'shopName', 'fatherName', 'motherName', 'mobile','union','upazila', 'village', 'district'] as const;
+  const canProceed = step1Fields.every(f => {
+    const value = form.getValues(f as any);
+    return typeof value === 'number' ? value > 0 : (value?.length ?? 0) >= 1;
+  });
 
   return (
     <div className="space-y-6">
@@ -178,6 +214,14 @@ export default function MemberRegistrationPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <FormField control={form.control} name="memberRegNumber" render={({ field }) => (
+                          <FormItem><FormLabel>{t('registration.memberRegNumber')} *</FormLabel><FormControl><Input type="number" placeholder="Enter registration number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="monthlyFee" render={({ field }) => (
+                          <FormItem><FormLabel>{t('registration.monthlyFee')} *</FormLabel><FormControl><Input type="number" placeholder="Enter Registration fee" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <FormField control={form.control} name="nameBn" render={({ field }) => (
                           <FormItem><FormLabel>{t('registration.nameBn')} *</FormLabel><FormControl><Input placeholder="বাংলায় নাম" {...field} /></FormControl><FormMessage /></FormItem>
@@ -234,9 +278,6 @@ export default function MemberRegistrationPage() {
                   </Card>
 
                   <div className="flex gap-2">
-                    <Button type="button" variant="outline" onClick={saveDraft}>
-                      <Save className="h-4 w-4 mr-2" /> {t('registration.saveDraft')}
-                    </Button>
                     <Button type="button" disabled={!canProceed} onClick={() => setStep(2)} className="flex-1">
                       {t('advancedCollection.next')} <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
@@ -256,7 +297,7 @@ export default function MemberRegistrationPage() {
                     <CardContent className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <FormField control={form.control} name="nid" render={({ field }) => (
-                          <FormItem><FormLabel>{t('members.nid')} *</FormLabel><FormControl><Input placeholder="1234567890" {...field} /></FormControl><FormMessage /></FormItem>
+                          <FormItem><FormLabel>{t('members.nid')}</FormLabel><FormControl><Input placeholder="1234567890" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="dob" render={({ field }) => (
                           <FormItem><FormLabel>{t('registration.dob')} *</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
@@ -321,18 +362,18 @@ export default function MemberRegistrationPage() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label>{t('members.profileImage')}</Label>
-                          <Input type="file" accept="image/*" onChange={handleImageUpload(setProfileImg)} />
-                          {profileImg && <img src={profileImg} alt="Profile" className="h-20 w-20 object-cover rounded-lg border" />}
+                          <Input type="file" onChange={handleImageUpload(setProfileImgFile, setProfileImgPreview)}/>
+                        {profileImgPreview && <img src={profileImgPreview} className='h-20 w-20 object-cover rounded-lg border'/>}
                         </div>
                         <div className="space-y-2">
                           <Label>{t('registration.nidFront')}</Label>
-                          <Input type="file" accept="image/*" onChange={handleImageUpload(setNidFront)} />
-                          {nidFront && <img src={nidFront} alt="NID Front" className="h-20 object-cover rounded border" />}
+                          <Input type="file" accept="image/*" onChange={handleImageUpload(setNidFrontFile, setNidFrontPreview)} />
+                          {nidFrontPreview && <img src={nidFrontPreview} alt="NID Front" className="h-20 object-cover rounded border" />}
                         </div>
                         <div className="space-y-2">
                           <Label>{t('registration.nidBack')}</Label>
-                          <Input type="file" accept="image/*" onChange={handleImageUpload(setNidBack)} />
-                          {nidBack && <img src={nidBack} alt="NID Back" className="h-20 object-cover rounded border" />}
+                          <Input type="file" accept="image/*" onChange={handleImageUpload(setNidBackFile, setNidBackPreview)} />
+                          {nidBackPreview && <img src={nidBackPreview} alt="NID Back" className="h-20 object-cover rounded border" />}
                         </div>
                       </div>
                       <Separator />
@@ -347,11 +388,21 @@ export default function MemberRegistrationPage() {
                     <Button type="button" variant="outline" onClick={() => setStep(1)}>
                       <ArrowLeft className="h-4 w-4 mr-2" /> {t('common.back')}
                     </Button>
-                    <Button type="button" variant="outline" onClick={saveDraft}>
-                      <Save className="h-4 w-4 mr-2" /> {t('registration.saveDraft')}
-                    </Button>
-                    <Button type="submit" className="flex-1">
-                      <UserPlus className="h-4 w-4 mr-2" /> {t('memberRequests.submitApplication')}
+                    
+                    <Button type="submit" 
+                    disabled={submitting} 
+                    className="flex-1">
+                      {submitting ? (
+                        <>
+                          <Loader className="h-5 w-5 mr-2 text-white" />
+                          {t('memberRequests.submitApplication')}
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          {t('memberRequests.submitApplication')}
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -370,8 +421,8 @@ export default function MemberRegistrationPage() {
             </CardHeader>
             <CardContent className="text-sm space-y-3">
               <div className="flex items-center gap-3">
-                {profileImg ? (
-                  <img src={profileImg} alt="" className="h-14 w-14 rounded-full object-cover border-2 border-primary" />
+                {profileImgFile ? (
+                  <img src={profileImgPreview} alt="" className="h-14 w-14 rounded-full object-cover border-2 border-primary" />
                 ) : (
                   <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-lg font-bold">
                     {watchAll.nameBn?.charAt(0) || '?'}
@@ -418,8 +469,8 @@ export default function MemberRegistrationPage() {
                 </>
               )}
               <div className="flex gap-1 mt-3">
-                {nidFront && <img src={nidFront} alt="NID" className="h-12 rounded border flex-1 object-cover" />}
-                {nidBack && <img src={nidBack} alt="NID" className="h-12 rounded border flex-1 object-cover" />}
+                {nidFrontPreview && <img src={nidFrontPreview} alt="NID" className="h-12 rounded border flex-1 object-cover" />}
+                {nidBackPreview && <img src={nidBackPreview} alt="NID" className="h-12 rounded border flex-1 object-cover" />}
               </div>
             </CardContent>
           </Card>

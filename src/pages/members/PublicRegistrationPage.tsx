@@ -340,8 +340,9 @@ export default function PublicRegistrationPage() {
                       <Button type="button" variant="outline" onClick={saveDraft}>
                         <Save className="h-4 w-4 mr-2" /> {t('registration.saveDraft')}
                       </Button>
-                      <Button type="submit" className="flex-1">
-                        <UserPlus className="h-4 w-4 mr-2" /> {t('memberRequests.submitApplication')}
+                      <Button type="submit" className="flex-1" disabled={isLoading}>
+                        {isLoading ? <Loader className="h-5 w-5 mr-2 text-white" /> : <UserPlus className="h-4 w-4 mr-2" />}
+                        {t('memberRequests.submitApplication')}
                       </Button>
                     </div>
                   </div>

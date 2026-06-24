@@ -79,12 +79,6 @@ export const RegisterResponseSchema = ApiResponseSchema(z.object({
 }));
 
 // Company schemas
-export const FounderSchema = z.object({
-  name: z.string(),
-  title: z.string(),
-  photo: z.string().optional(),
-});
-
 export const CompanySettingsSchema = z.object({
   name: z.string(),
   logo: z.string().optional(),
@@ -92,7 +86,6 @@ export const CompanySettingsSchema = z.object({
   phone: z.string().optional(),
   email: z.string().optional(),
   signature: z.string().optional(),
-  founders: z.array(FounderSchema).optional(),
 });
 
 // Member schemas
@@ -117,16 +110,67 @@ export const MemberSchema = z.object({
 // Member Request schemas
 export const MemberRequestSchema = z.object({
   id: z.string(),
-  name: z.string(),
-  shopName: z.string().optional(),
+
+  memberId: z.string().optional(),
+  memberRegNumber: z.string().optional(),
+
+  status: z.enum(['pending', 'approved', 'rejected']).optional(),
+
+  nameBn: z.string().optional(),
+  nameEn: z.string().optional(),
+
+  fatherName: z.string().optional(),
+  motherName: z.string().optional(),
+
+  mobile: z.string().optional(),
   phone: z.string().optional(),
-  address: z.string().optional(),
+
+  shopName: z.string().optional(),
+
+  village: z.string().nullable().optional(),
+  wardNo: z.string().nullable().optional(),
+  union: z.string().nullable().optional(),
+  upazila: z.string().nullable().optional(),
+  district: z.string().nullable().optional(),
+
   nid: z.string().optional(),
-  photo: z.string().nullable().optional(),
-  status: z.enum(['pending', 'approved', 'rejected']),
-  appliedAt: z.string(),
-  somiteeId: z.string(),
-  rejectionNote: z.string().optional(),
+
+  dob: z.string().optional(),
+
+  nationality: z.string().optional(),
+  religion: z.string().optional(),
+  bloodGroup: z.string().optional(),
+
+  nomineeName: z.string().optional(),
+  nomineeRelation: z.string().optional(),
+  nomineeNid: z.string().optional(),
+
+  monthlyFee: z.number().optional(),
+  registrationFee: z.number().optional(),
+
+  billingCycle: z.string().optional(),
+
+  profileImageUrl: z.string().nullable().optional(),
+  nidFrontUrl: z.string().nullable().optional(),
+  nidBackUrl: z.string().nullable().optional(),
+  signatureUrl: z.string().nullable().optional(),
+
+  somiteeId: z.string().optional(),
+
+  rejectionNote: z.string().nullable().optional(),
+
+  approvedAt: z.string().nullable().optional(),
+  approvedBy: z.string().nullable().optional(),
+
+  rejectedAt: z.string().nullable().optional(),
+
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+
+  createdById: z.string().nullable().optional(),
+  updatedById: z.string().nullable().optional(),
+
+  appliedAt: z.string().optional(),
 });
 
 export type MemberRequest = z.infer<typeof MemberRequestSchema>;
@@ -173,6 +217,52 @@ export const ExpenseSchema = z.object({
   receiptUrl: z.string().optional(),
   createdAt: z.string(),
 });
+export const IncomeSchema =
+z.object({
+
+id:
+z.number(),
+
+title:
+z.string(),
+
+type:
+z.string(),
+
+amount:
+z.number(),
+
+incomeDate:
+z.string(),
+
+source:
+z.string(),
+
+referenceNo:
+z.string(),
+
+description:
+z.string().optional(),
+
+note:
+z.string().optional(),
+
+bankAccountId:
+z.number(),
+
+status:
+z.enum([
+'received',
+'pending'
+]),
+
+});
+
+export type Income =
+z.infer<
+typeof IncomeSchema
+>;
+
 
 // Bank Account schemas
 export const BankAccountSchema = z.object({
@@ -271,27 +361,132 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
 
+    const isFormData = options.body instanceof FormData;
+    
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : {'Content-Type':'application/json'}),
       ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
+      // console.log(`[API] Request to ${endpoint} with token: ${this.token.substring(0, 20)}...`);
+    } else {
+      console.warn(`[API] Request to ${endpoint} WITHOUT token!`);
     }
+
+    // console.log(`[API] ${options.method || 'GET'} ${url}`);
 
     const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+  ...options,
+  headers,
+});
 
-    const data = await response.json();
+// =========================
+// AUTO REFRESH TOKEN
+// =========================
 
-    if (!response.ok) {
-      throw new ApiError(data.message || 'Request failed', data.errors || []);
+if (
+  response.status === 401 &&
+  endpoint !== '/auth/refresh-token'
+) {
+
+  try {
+
+    const {
+      useAuthStore
+    } = await import(
+      '@/stores/authStore'
+    );
+
+    const auth =
+      useAuthStore.getState();
+
+    if (
+      auth.refreshToken
+    ) {
+
+      console.log(
+        '[AUTH] Refreshing token...'
+      );
+
+      const refresh =
+        await this.refreshToken(
+          auth.refreshToken
+        );
+
+      const newToken =
+        refresh.data
+          ?.accessToken;
+
+      if (
+        !newToken
+      ) {
+
+        auth.logout();
+
+        throw new Error(
+          'Refresh failed'
+        );
+      }
+
+      auth.setToken(
+        newToken
+      );
+
+      headers.Authorization =
+        `Bearer ${newToken}`;
+
+      const retry =
+        await fetch(
+          url,
+          {
+            ...options,
+            headers,
+          }
+        );
+
+      const retryData =
+        await retry.json();
+
+      return retryData;
+
     }
 
-    return data;
+  } catch {
+
+    const {
+      useAuthStore
+    } =
+      await import(
+        '@/stores/authStore'
+      );
+
+    useAuthStore
+      .getState()
+      .logout();
+  }
+}
+
+const data =
+await response.json();
+
+if (
+  !response.ok
+) {
+
+  throw new ApiError(
+    data.message ||
+    'Request failed',
+
+    data.errors ||
+    []
+  );
+
+}
+
+return data;
+    
   }
 
   // Auth endpoints
@@ -473,7 +668,7 @@ class ApiClient {
         if (value !== undefined) searchParams.set(key, value.toString());
       });
     }
-    return this.request<ApiResponse<z.infer<typeof MemberRequestSchema>[]>>(`/member-requests?${searchParams}`);
+    return this.request<ApiResponse<z.infer<typeof MemberRequestSchema>[]>>(`/memberRequests?${searchParams}`);
   }
 
   async approveMemberRequest(id: string, approvalData: {
@@ -486,7 +681,7 @@ class ApiClient {
       name: string;
       status: string;
       approvedAt: string;
-    }>>(`/member-requests/${id}/approve`, {
+    }>>(`/memberRequests/requests/${id}/approve`, {
       method: 'PATCH',
       body: JSON.stringify(approvalData),
     });
@@ -500,17 +695,32 @@ class ApiClient {
       status: string;
       rejectionNote: string;
       rejectedAt: string;
-    }>>(`/member-requests/${id}/reject`, {
+    }>>(`/memberRequests/requests/${id}/reject`, {
       method: 'PATCH',
       body: JSON.stringify(rejectionData),
     });
   }
 
   async deleteMemberRequest(id: string) {
-    return this.request<ApiResponse<null>>(`/member-requests/${id}`, {
+    return this.request<ApiResponse<null>>(`/memberRequests/requests/${id}`, {
       method: 'DELETE',
     });
   }
+
+   async createMemberRequest(formData: FormData) {
+    
+  return this.request<
+    ApiResponse<{
+      id: string;
+      name: string;
+      status: string;
+      appliedAt: string;
+    }>
+  >('/memberRequests/register', {
+    method: 'POST',
+    body: formData,
+  });
+}
 
   // Collections endpoints
   async getCollections(params?: {
@@ -522,7 +732,7 @@ class ApiClient {
     category?: string;
     dateFrom?: string;
     dateTo?: string;
-    memberId?: string;
+    memberId?: number;
   }) {
     const searchParams = new URLSearchParams();
     if (params) {
@@ -534,7 +744,7 @@ class ApiClient {
   }
 
   async createCollection(collectionData: {
-    memberId: string;
+    memberId: number;
     amount: number;
     date: string;
     category?: string;
@@ -581,7 +791,73 @@ class ApiClient {
     });
   }
 
-  // Expenses endpoints
+    // Incomes endpoints
+    async getIncomes(params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      type?: string;
+      status?: string;
+      fromDate?: string;
+      toDate?: string;
+      bankAccountId?: string;
+    }) {
+      const searchParams = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) searchParams.set(key, value.toString());
+        });
+      }
+      return this.request<ApiResponse<any>>(`/incomes?${searchParams}`);
+    }
+
+    async createIncome(incomeData: {
+      title: string;
+      type: string;
+      amount: number;
+      incomeDate: string;
+      source: string;
+      referenceNo: string;
+      description?: string;
+      note?: string;
+      bankAccountId: number;
+      status: 'received' | 'pending';
+    }) {
+      return this.request<ApiResponse<{ id: number }>>('/incomes', {
+        method: 'POST',
+        body: JSON.stringify(incomeData),
+      });
+    }
+
+    async updateIncome(id: number, incomeData: {
+      title: string;
+      type: string;
+      amount: number;
+      incomeDate: string;
+      source: string;
+      referenceNo: string;
+      description?: string;
+      note?: string;
+      bankAccountId: number;
+      status: 'received' | 'pending';
+    }) {
+      return this.request<ApiResponse<any>>(`/incomes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(incomeData),
+      });
+    }
+
+    async deleteIncome(id: number) {
+      return this.request<ApiResponse<any>>(`/incomes/${id}`, {
+        method: 'DELETE',
+      });
+    }
+
+    async getIncomeTypes() {
+      return this.request<ApiResponse<string[]>>('/incomes/types');
+    }
+
+
   async getExpenses(params?: {
     page?: number;
     limit?: number;
@@ -606,6 +882,8 @@ class ApiClient {
     category: string;
     method: string;
     note?: string;
+    receiptUrl?: string;
+    status?: 'pending' | 'approved' | 'rejected';
   }) {
     return this.request<ApiResponse<z.infer<typeof ExpenseSchema>>>('/expenses', {
       method: 'POST',
@@ -709,6 +987,21 @@ class ApiClient {
       });
     }
     return this.request<ApiResponse<any>>(`/bank-accounts/${id}/transactions?${searchParams}`);
+  }
+  async getBankStatement(id: string, params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) searchParams.set(key, value.toString());
+      });
+    }
+    return this.request<ApiResponse<any>>(`/bank-accounts/${id}/statement?${searchParams}`);
   }
 
   // Ledger endpoints
@@ -938,20 +1231,32 @@ class ApiClient {
     return this.request<ApiResponse<any>>('/reports/bank-vs-cash');
   }
 
-  async getCollectionReport(params?: {
-    dateFrom?: string;
-    dateTo?: string;
-    method?: string;
-    status?: string;
-  }) {
-    const searchParams = new URLSearchParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) searchParams.set(key, value.toString());
-      });
-    }
-    return this.request<ApiResponse<any>>(`/reports/collection?${searchParams}`);
+async getCollectionReport(params?: {
+  financialYear?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  method?: string;
+  status?: string;
+}) {
+  const searchParams = new URLSearchParams();
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        searchParams.set(key, value.toString());
+      }
+    });
   }
+
+  console.log(
+    "Collection Report URL:",
+    `/reports/collection?${searchParams}`
+  );
+
+  return this.request<ApiResponse<any>>(
+    `/reports/collection?${searchParams}`
+  );
+}
 
   // Global search
   async globalSearch(query: string, limit?: number) {

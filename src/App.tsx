@@ -1,4 +1,5 @@
-import React from "react";
+
+import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -44,6 +45,7 @@ import UsersPage from "@/pages/users/UsersPage";
 import LeadershipPage from "@/pages/leadership/LeadershipPage";
 import DrawSavingsPage from "@/pages/draw-savings/DrawSavingsPage";
 import NotFound from "@/pages/NotFound";
+import IncomePage from "./pages/income/IncomePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -121,6 +123,7 @@ const App = () => (
             <Route path="collections" element={<AdvancedCollectionPage />} />
             <Route path="collections/simple" element={<CollectionsPage />} />
             <Route path="expenses" element={<ExpensesPage />} />
+            <Route path="income" element={<IncomePage />} />
             <Route path="ledger" element={<LedgerPage />} />
             <Route path="bank-accounts" element={<BankAccountsPage />} />
             <Route path="cashbook" element={<CashBookPage />} />

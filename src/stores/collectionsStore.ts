@@ -26,7 +26,7 @@ interface CollectionsState {
   }) => Promise<void>;
 
   createCollection: (collectionData: {
-    memberId: string;
+    memberId: number;
     amount: number;
     date: string;
     category?: string;
@@ -61,9 +61,10 @@ export const useCollectionsStore = create<CollectionsState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.getCollections(params);
+      console.log('Collection Response:',response);
       set({
-        collections: response.data,
-        pagination: response.meta || get().pagination,
+        collections: response.data.data,
+        pagination: response.data.meta || get().pagination,
         isLoading: false,
       });
     } catch (error) {
