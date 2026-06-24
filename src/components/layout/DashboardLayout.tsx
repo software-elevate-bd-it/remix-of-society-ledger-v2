@@ -267,12 +267,12 @@ export default function DashboardLayout() {
             >
               {(!isBelowDesktop && sidebarOpen) ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
-            <div className="hidden md:flex items-center text-sm text-muted-foreground">
-              <Link to="/dashboard" className="hover:text-foreground">{t('common.home')}</Link>
+            <div className="flex items-center text-sm text-muted-foreground min-w-0">
+              <Link to="/dashboard" className="hover:text-foreground shrink-0">{t('common.home')}</Link>
               {breadcrumbs.map((crumb, i) => (
-                <span key={i} className="flex items-center">
-                  <ChevronRight className="h-3 w-3 mx-1" />
-                  <span className={i === breadcrumbs.length - 1 ? 'text-foreground font-medium capitalize' : 'capitalize'}>
+                <span key={i} className="flex items-center min-w-0">
+                  <ChevronRight className="h-3 w-3 mx-1 shrink-0" />
+                  <span className={`truncate ${i === breadcrumbs.length - 1 ? 'text-foreground font-medium capitalize' : 'capitalize'}`}>
                     {crumb.replace(/-/g, ' ')}
                   </span>
                 </span>
