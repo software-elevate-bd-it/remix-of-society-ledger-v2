@@ -14,6 +14,8 @@ export interface Transaction {
   note?: string;
   transactionId?: string;
   receiptUrl?: string;
+  referenceType?: string;
+  balance?: number;
 }
 
 interface LedgerState {
