@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, UserRole } from '@/stores/authStore';
@@ -21,10 +21,23 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+
+function useIsBelowDesktop() {
+  const [below, setBelow] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 1023px)');
+    const onChange = () => setBelow(mql.matches);
+    onChange();
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return below;
+}
 
 interface NavItem {
   labelKey: string;
@@ -87,9 +100,11 @@ export default function DashboardLayout() {
   // console.log('Current company', company);
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['/reports']);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const isBelowDesktop = useIsBelowDesktop();
 
   const pendingApprovals = useApprovalsStore(
     (s) => s.items.filter(i => i.status === 'pending').length
@@ -100,9 +115,7 @@ export default function DashboardLayout() {
   const filteredNav = navItems
     .filter((item) => {
       if (!user) return false;
-      // Role-based access (built-in roles)
       if (item.roles.includes(user.role)) return true;
-      // Permission-based access (managed users w/ assigned roles)
       if (item.permissions && item.permissions.some((p) => has(p as any))) return true;
       return false;
     })
@@ -124,183 +137,135 @@ export default function DashboardLayout() {
 
   const breadcrumbs = location.pathname.split('/').filter(Boolean);
 
+  const renderSidebarContent = (expanded: boolean, onNavigate?: () => void) => (
+    <div className="flex h-full flex-col bg-sidebar">
+      <div className="flex items-center gap-2 p-4 border-b border-sidebar-border">
+        {company.logo ? (
+          <img src={company.logo} alt={company.name} className="h-7 w-7 object-contain rounded shrink-0" />
+        ) : (
+          <ShieldCheck className="h-7 w-7 text-primary shrink-0" />
+        )}
+        {expanded && <h1 className="font-heading text-sm font-bold text-sidebar-foreground truncate">{company.name}</h1>}
+      </div>
+
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
+        {filteredNav.map((item) => {
+          const active = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+          const hasChildren = item.children && item.children.length > 0;
+          const isOpen = openMenus.includes(item.path);
+
+          if (hasChildren && expanded) {
+            return (
+              <Collapsible key={item.path} open={isOpen} onOpenChange={() => toggleMenu(item.path)}>
+                <CollapsibleTrigger asChild>
+                  <button
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full ${
+                      active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate flex-1 text-left">{t(item.labelKey)}</span>
+                    <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                  {item.children!.map((child) => {
+                    const childActive = location.pathname === child.path;
+                    return (
+                      <Link
+                        key={child.path}
+                        to={child.path}
+                        onClick={onNavigate}
+                        className={`flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                          childActive ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                        }`}
+                      >
+                        <child.icon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{t(child.labelKey)}</span>
+                      </Link>
+                    );
+                  })}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          }
+
+          return (
+            <Link
+              key={item.path}
+              to={hasChildren ? item.children![0].path : item.path}
+              onClick={onNavigate}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                active ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'
+              }`}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {expanded && <span className="truncate">{t(item.labelKey)}</span>}
+              {expanded && item.badge && (
+                <Badge variant="secondary" className="ml-auto text-xs">{item.badge}</Badge>
+              )}
+            </Link>
+          );
+        })}
+
+        <button
+          onClick={() => { setAboutOpen(true); onNavigate?.(); }}
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-sidebar-foreground hover:bg-sidebar-accent"
+        >
+          <Cpu className="h-4 w-4 shrink-0" />
+          {expanded && <span className="truncate text-left flex-1">About Developer</span>}
+        </button>
+
+        {onNavigate && (
+          <div className="pt-3 mt-3 border-t border-sidebar-border space-y-1">
+            <div className="px-3 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+              Preferences
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1">
+              <LanguageSwitcher />
+              <Button variant="ghost" size="icon" onClick={toggleDark}>
+                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      <div className="p-3 border-t border-sidebar-border">
+        <Button variant="ghost" size="sm" className="w-full justify-start text-destructive" onClick={handleLogout}>
+          <LogOut className="h-4 w-4 mr-2" />
+          {expanded && t('common.logout')}
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <WelcomeModal />
       <AboutDeveloperModal open={aboutOpen} onOpenChange={setAboutOpen} />
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 border-r border-sidebar-border bg-sidebar flex flex-col`}>
-        <div className="flex items-center gap-2 p-4 border-b border-sidebar-border">
-          {company.logo ? (
-            <img src={company.logo} alt={company.name} className="h-7 w-7 object-contain rounded shrink-0" />
-          ) : (
-            <ShieldCheck className="h-7 w-7 text-primary shrink-0" />
-          )}
-          {sidebarOpen && <h1 className="font-heading text-sm font-bold text-sidebar-foreground truncate">{company.name}</h1>}
-        </div>
 
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-          {filteredNav.map((item) => {
-            const active = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
-            const hasChildren = item.children && item.children.length > 0;
-            const isOpen = openMenus.includes(item.path);
-
-            if (hasChildren && sidebarOpen) {
-              return (
-                <Collapsible key={item.path} open={isOpen} onOpenChange={() => toggleMenu(item.path)}>
-                  <CollapsibleTrigger asChild>
-                    <button
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full ${
-                        active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                      }`}
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate flex-1 text-left">{t(item.labelKey)}</span>
-                      <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pl-4 mt-1 space-y-1">
-                    {item.children!.map((child) => {
-                      const childActive = location.pathname === child.path;
-                      return (
-                        <Link
-                          key={child.path}
-                          to={child.path}
-                          className={`flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                            childActive ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                          }`}
-                        >
-                          <child.icon className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{t(child.labelKey)}</span>
-                        </Link>
-                      );
-                    })}
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            }
-
-            return (
-              <Link
-                key={item.path}
-                to={hasChildren ? item.children![0].path : item.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  active ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                }`}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {sidebarOpen && <span className="truncate">{t(item.labelKey)}</span>}
-                {sidebarOpen && item.badge && (
-                  <Badge variant="secondary" className="ml-auto text-xs">{item.badge}</Badge>
-                )}
-              </Link>
-            );
-          })}
-
-          {/* About Developer */}
-          <button
-            onClick={() => setAboutOpen(true)}
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <Cpu className="h-4 w-4 shrink-0" />
-            {sidebarOpen && <span className="truncate text-left flex-1">About Developer</span>}
-          </button>
-        </nav>
-
-        <div className="p-3 border-t border-sidebar-border">
-          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            {sidebarOpen && t('common.logout')}
-          </Button>
-        </div>
-
-        {/* Branding Section */}
-        {/* <div className="border-t border-sidebar-border bg-sidebar-accent/30">
-          {sidebarOpen ? (
-            <div className="px-3 py-3 space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
-              </div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                Powered by
-              </p>
-              <a
-                href="https://www.softwareelevate.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-xs font-bold text-sidebar-foreground hover:text-primary transition-colors"
-              >
-                Software Elevated
-              </a>
-              <div className="flex flex-col gap-1 pt-1">
-                <a
-                  href="https://www.softwareelevate.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Globe2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">softwareelevate.com</span>
-                </a>
-                <a
-                  href="https://facebook.com/profile.php?id=61571454874255"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Facebook className="h-3 w-3 shrink-0" />
-                  <span className="truncate">Facebook</span>
-                </a>
-                <a
-                  href="tel:01922500433"
-                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Phone className="h-3 w-3 shrink-0" />
-                  <span className="truncate">01922500433</span>
-                </a>
-                <a
-                  href="https://wa.me/8801312978030"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-success transition-colors"
-                >
-                  <MessageCircle className="h-3 w-3 shrink-0" />
-                  <span className="truncate">WhatsApp: 01312978030</span>
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="py-2 flex flex-col items-center gap-2">
-              <a
-                href="https://www.softwareelevate.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Software Elevated"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Globe2 className="h-4 w-4" />
-              </a>
-              <a
-                href="https://wa.me/8801312978030"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="WhatsApp"
-                className="text-muted-foreground hover:text-success transition-colors"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </a>
-            </div>
-          )}
-        </div> */}
+      {/* Desktop sidebar (lg and up) */}
+      <aside className={`hidden lg:flex ${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 border-r border-sidebar-border bg-sidebar flex-col`}>
+        {renderSidebarContent(sidebarOpen)}
       </aside>
 
-      {/* Main Content */}
+      {/* Mobile/Tablet drawer */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="p-0 w-72 bg-sidebar border-sidebar-border [&>button]:text-sidebar-foreground">
+          {renderSidebarContent(true, () => setMobileOpen(false))}
+        </SheetContent>
+      </Sheet>
+
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
         <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 gap-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          <div className="flex items-center gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => isBelowDesktop ? setMobileOpen(true) : setSidebarOpen(!sidebarOpen)}
+            >
+              {(!isBelowDesktop && sidebarOpen) ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
             <div className="hidden md:flex items-center text-sm text-muted-foreground">
               <Link to="/dashboard" className="hover:text-foreground">{t('common.home')}</Link>
@@ -317,14 +282,13 @@ export default function DashboardLayout() {
 
           <div className="flex items-center gap-2">
             <GlobalSearch />
-            <LanguageSwitcher />
-            <Button variant="ghost" size="icon" onClick={toggleDark}>
-              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            {/* <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-destructive rounded-full text-[8px] text-destructive-foreground flex items-center justify-center">3</span>
-            </Button> */}
+            {/* Desktop-only header actions; on mobile/tablet these live in the drawer */}
+            <div className="hidden lg:flex items-center gap-2">
+              <LanguageSwitcher />
+              <Button variant="ghost" size="icon" onClick={toggleDark}>
+                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -353,14 +317,13 @@ export default function DashboardLayout() {
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
 
-        {/* Sticky Footer */}
         <AppFooter />
       </div>
     </div>
   );
 }
+
