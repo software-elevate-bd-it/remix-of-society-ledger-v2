@@ -86,7 +86,8 @@ export const CompanySettingsSchema = z.object({
   phone: z.string().optional(),
   email: z.string().optional(),
   signature: z.string().optional(),
-});
+  founders: z.array(z.any()).optional(),
+}).catchall(z.any());
 
 // Member schemas
 export const MemberSchema = z.object({
@@ -110,7 +111,8 @@ export const MemberSchema = z.object({
 // Member Request schemas
 export const MemberRequestSchema = z.object({
   id: z.string(),
-
+  name: z.string().optional(),
+  photo: z.string().nullable().optional(),
   memberId: z.string().optional(),
   memberRegNumber: z.string().optional(),
 
@@ -286,9 +288,11 @@ export const DashboardStatsSchema = z.object({
   activeMembers: z.number(),
   monthlyIncome: z.number(),
   monthlyExpense: z.number(),
+  monthlyCollection: z.number().optional(),
+  totalExpense: z.number().optional(),
   pendingPayments: z.number(),
   recentTransactions: z.array(z.any()),
-});
+}).catchall(z.any());
 
 // Role schemas
 export const RoleSchema = z.object({
@@ -333,12 +337,13 @@ export const PaymentSchema = z.object({
   id: z.string(),
   memberId: z.string(),
   memberName: z.string(),
+  member: z.any().optional(),
   amount: z.number(),
   date: z.string(),
   method: z.string(),
-  status: z.enum(['pending', 'verified', 'failed']),
+  status: z.string(),
   transactionId: z.string().optional(),
-});
+}).catchall(z.any());
 
 export type Payment = z.infer<typeof PaymentSchema>;
 
@@ -355,10 +360,10 @@ class ApiClient {
     this.token = token;
   }
 
-  private async request<T>(
+  private async request<T = any>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<T> {
+  ): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
 
     const isFormData = options.body instanceof FormData;
@@ -732,7 +737,9 @@ return data;
     category?: string;
     dateFrom?: string;
     dateTo?: string;
-    memberId?: number;
+    memberId?: string | number;
+    financialYear?: string;
+    [key: string]: any;
   }) {
     const searchParams = new URLSearchParams();
     if (params) {
@@ -744,7 +751,7 @@ return data;
   }
 
   async createCollection(collectionData: {
-    memberId: number;
+    memberId: string | number;
     amount: number;
     date: string;
     category?: string;
@@ -757,6 +764,7 @@ return data;
     lateFee?: number;
     discount?: number;
     totalPaid?: number;
+    [key: string]: any;
   }) {
     return this.request<ApiResponse<z.infer<typeof CollectionSchema>>>('/collections', {
       method: 'POST',
